@@ -136,11 +136,12 @@ bool AGameHUD::GetActorsInSelectionRectangle(const FVector2D& FirstPoint,
 			GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Cyan, str);*/
 			continue;
 		}
-		const FBox EachActorBounds = EachActor->GetRootComponent()->Bounds.GetBox();
+		FBox EachActorBounds = EachActor->GetRootComponent()->Bounds.GetBox();
 
-		/*AShip* Ship = Cast<AShip>(EachActor);
-		if (!Ship) continue;
-		const FBox EachActorBounds = Ship->StaticMesh->Bounds.GetBox();*/
+		// If selected actor is a ship then select not by ROotComp
+		// but by static mesh collision box
+		AShip* Ship = Cast<AShip>(EachActor);
+		if (Ship) EachActorBounds = Ship->StaticMesh->Bounds.GetBox();
 		
 		//Center
 		const FVector BoxCenter = EachActorBounds.GetCenter();

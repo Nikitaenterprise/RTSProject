@@ -56,7 +56,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Moving")
 	float TurnForwardSpeed = ForwardSpeed * 0.3;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
-	float DrawNavLineOncePerThisSeconds = 0.2;
+	float DrawNavLineOncePerThisSeconds = 1;
 	TArray<FVector> NavPathCoords;
 
 	// Turrets

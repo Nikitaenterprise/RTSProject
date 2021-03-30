@@ -84,7 +84,7 @@ void AGameHUD::DrawMarquee()
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Cyan, HoldingLocation.ToString());
 
 	// Original selection
-	GetActorsInSelectionRectangle<AActor>(StartClick, HoldingLocation, SelectedActors, true);
+	GetActorsInSelectionRectangle<AActor>(StartClick, HoldingLocation, SelectedActors, false);
 }
 
 void AGameHUD::DrawSelectionRectAndSelectActors()

@@ -57,15 +57,13 @@ void AShip::Tick(float _mainDeltaTime)
 	FString b = bIsSelected ? TEXT("true") : TEXT("false");
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("obj=%s, bSelected=%s"), *str, *b));
 
-	FString box = GetRootComponent()->Bounds.GetBox().ToString();
-	FString extent = GetRootComponent()->Bounds.BoxExtent.ToString();
-	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("box=%s, extent=%s"), *box, *extent));
-
 	DeltaTime = _mainDeltaTime;
 	PastTime += _mainDeltaTime;
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
 	bIsMoving = GetCharacterMovement()->Velocity.Size() > 0;
-	if (bIsMoving && ((int(PastTime) % int(DrawNavLineOncePerThisSeconds)) == 0)) DrawNavLine();
+	
+	if (bIsMoving && UKismetMathLibrary::NearlyEqual_FloatFloat(PastTime, DrawNavLineOncePerThisSeconds)) DrawNavLine();
+	
 }
 
 void AShip::BindHUD()
