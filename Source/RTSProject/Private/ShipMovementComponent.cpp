@@ -9,10 +9,10 @@
 
 UShipMovementComponent::UShipMovementComponent(const FObjectInitializer& ObjectInitializer)
 {
-	bOrientRotationToMovement = false;
+	/*bOrientRotationToMovement = false;
 	RotationRate = FRotator(15, 30, 0);
 	bUseRVOAvoidance = true;
-	AvoidanceWeight = 0.5;
+	AvoidanceWeight = 0.5;*/
 	NavAgentProps.bCanCrouch = false;
 	NavAgentProps.bCanJump = false;
 	NavAgentProps.bCanSwim = false;
@@ -25,7 +25,7 @@ void UShipMovementComponent::RequestTurnTo(const FRotator _TargetRotation)
 	FLatentActionInfo LInfo = FLatentActionInfo();
 	LInfo.CallbackTarget = this;
 
-	UKismetSystemLibrary::MoveComponentTo(
+	/*UKismetSystemLibrary::MoveComponentTo(
 		OwnerShip->GetCapsuleComponent(),
 		GetActorLocation(),
 		_TargetRotation,
@@ -34,7 +34,7 @@ void UShipMovementComponent::RequestTurnTo(const FRotator _TargetRotation)
 		OwnerShip->DeltaTime * TurnAngleSpeed,
 		true,
 		EMoveComponentAction::Move,
-		LInfo);
+		LInfo);*/
 }
 
 void UShipMovementComponent::RequestSimpleMove(const FVector _TargetLocation)

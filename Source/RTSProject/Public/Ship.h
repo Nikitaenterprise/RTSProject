@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Ship.generated.h"
 
+class UShipMovementComponent;
 class UStaticMeshComponent;
 class UWidgetComponent;
 class UHealthShield;
@@ -16,12 +17,13 @@ class UUserWidget;
 class UHealthShieldBarHUD;
 
 UCLASS()
-class RTSPROJECT_API AShip : public ACharacter, public IBaseBehavior
+class RTSPROJECT_API AShip : public APawn, public IBaseBehavior
 {
 	GENERATED_BODY()
 
 public:
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
+	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
@@ -32,7 +34,8 @@ public:
 	UWidgetComponent* HealthShieldBar = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UPawnSensingComponent* PawnSensing = nullptr;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
+	UShipMovementComponent* MovementComponent = nullptr;
 	
 	ARTSPlayerController* PlayerController = nullptr;
 	
@@ -67,7 +70,7 @@ public:
 
 public:
 
-	AShip();
+	AShip(const FObjectInitializer& ObjectInitializer);
 
 	virtual void Tick(float _mainDeltaTime) override;
 	
@@ -80,31 +83,21 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
 	virtual bool Destroy_Implementation(bool bNetForce = false, bool bShouldModifyLevel = false) override;
-
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Selected(bool _bIsSelected);
 	virtual void Selected_Implementation(bool _bIsSelected) override;
-
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Highlighted(bool _bIsHighlighted);
 	virtual void Highlighted_Implementation(bool _bIsHighlighted) override;
 
 	// Moving
 	UFUNCTION(BlueprintCallable, Category = "Moving")
-	bool SimpleMoving(const FVector& v);
-	UFUNCTION(BlueprintCallable, Category = "Moving")
 	bool Moving(const FVector& v);
-	UFUNCTION(BlueprintCallable, Category = "Moving")
-	bool StopMoving();
 	UFUNCTION(BlueprintCallable, Category = "Moving")
 	bool CustomMoving(const FVector& DestinationLocation);
 
 	void DrawNavLine();
 	
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 protected:
 	
 	virtual void BeginPlay() override;

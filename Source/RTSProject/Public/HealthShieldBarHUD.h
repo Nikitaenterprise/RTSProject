@@ -19,7 +19,7 @@ public:
 	virtual void HideUI_Implementation();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
-		float ShieldPercent = 0;
+	float ShieldPercent = 0;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
-		float HealthPercent = 0;
+	float HealthPercent = 0;
 };

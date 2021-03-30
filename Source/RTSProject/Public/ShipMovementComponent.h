@@ -16,7 +16,7 @@ enum EShipMovementState
 };
 
 UCLASS()
-class RTSPROJECT_API UShipMovementComponent : public UCharacterMovementComponent
+class RTSPROJECT_API UShipMovementComponent : public UPawnMovementComponent
 {
 	GENERATED_BODY()
 
@@ -36,7 +36,7 @@ public:
 	EShipMovementState MovementState;
 	
 public:
-	UShipMovementComponent(const FObjectInitializer& ObjectInitializer);
+	UShipMovementComponent(const FObjectInitializer& ObjectInitializer); 
 
 	void RequestTurnTo(const FRotator _TargetRotation);
 	void RequestSimpleMove(const FVector _TargetLocation);

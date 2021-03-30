@@ -17,7 +17,8 @@ class RTSPROJECT_API ABuilding : public AActor, public IBaseBehavior
 	GENERATED_BODY()
 	
 public:
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
+	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")

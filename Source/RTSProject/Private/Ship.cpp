@@ -5,8 +5,9 @@
 #include "Turret.h"
 #include "AnglesFunctions.h"
 #include "HealthShieldBarHUD.h"
+#include "GameHUD.h"
+#include "ShipMovementComponent.h"
 
-#include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Blueprint/UserWidget.h"
@@ -14,23 +15,24 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "AIController.h"
-#include "GameHUD.h"
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
 #include "DrawDebugHelpers.h"
+#include "Components/ArrowComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-AShip::AShip()
+AShip::AShip(const FObjectInitializer& OI)
+	: Super(OI.SetDefaultSubobjectClass<UShipMovementComponent>(FName("ShipMovementComponent")))
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
+	RootComponent = SceneComponent;
+	
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMesh->SetupAttachment(GetRootComponent());
+	RootComponent = StaticMesh;
 	
 	HealthShieldComponent = CreateDefaultSubobject<UHealthShield>(TEXT("HealthShield"));
-
-	GetCapsuleComponent()->SetCapsuleHalfHeight(150);
-	GetCapsuleComponent()->SetCapsuleRadius(150);
 	
 	SelectionCircle = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SelectionCircle"));
 	SelectionCircle->SetupAttachment(GetRootComponent());
@@ -42,6 +44,8 @@ AShip::AShip()
 	HealthShieldBar->SetWidgetSpace(EWidgetSpace::Screen);
 
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
+
+	MovementComponent = CreateDefaultSubobject<UShipMovementComponent>(TEXT("ShipMovementComponent"));
 }
 
 void AShip::BeginPlay()
@@ -60,15 +64,16 @@ void AShip::Tick(float _mainDeltaTime)
 	DeltaTime = _mainDeltaTime;
 	PastTime += _mainDeltaTime;
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
-	bIsMoving = GetCharacterMovement()->Velocity.Size() > 0;
-	
+
+	bIsMoving = MovementComponent->Velocity.Size() > 0;
 	if (bIsMoving && UKismetMathLibrary::NearlyEqual_FloatFloat(PastTime, DrawNavLineOncePerThisSeconds)) DrawNavLine();
 	
 }
 
 void AShip::BindHUD()
 {
-	if (PlayerController) {
+	if (PlayerController) 
+	{
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
 	}
 }
@@ -87,11 +92,6 @@ bool AShip::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
 		for (auto& Turret : Turrets) Turret->Destroy();
 	}
 	return Super::Destroy(bNetForce, bShouldModifyLevel);
-}
-
-void AShip::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	ACharacter::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 void AShip::Selected_Implementation(bool _bIsSelected)
@@ -139,39 +139,6 @@ void AShip::SetHealthShieldBar()
 	HealthShieldBarHUD->HealthPercent = HealthShieldComponent->getHealthPercent();
 }
 
-bool AShip::SimpleMoving(const FVector& v)
-{
-	FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(
-													GetActorForwardVector(),
-													v);
-	FLatentActionInfo LInfo = FLatentActionInfo();
-	LInfo.CallbackTarget = this;
-
-	UKismetSystemLibrary::MoveComponentTo(
-							GetCapsuleComponent(),
-							GetActorLocation(),
-							TargetRotation,
-							true,
-							true,
-							TurnAngleSpeed * DeltaTime,
-							true,
-							EMoveComponentAction::Move,
-							LInfo);
-	// Second time may not worling correct because dont know how 
-	// to control is the MoveComponentTo has completed or not
-	UKismetSystemLibrary::MoveComponentTo(
-							GetCapsuleComponent(),
-							FVector(v.X, v.Y, 0),
-							TargetRotation,
-							true,
-							true,
-							ForwardSpeed * DeltaTime,
-							true,
-							EMoveComponentAction::Move,
-							LInfo);
-	return true;
-}
-
 bool AShip::Moving(const FVector& v)
 {
 	bShouldMove = true;
@@ -217,22 +184,6 @@ bool AShip::Moving(const FVector& v)
 	return true;
 }
 
-bool AShip::StopMoving()
-{
-	FLatentActionInfo LInfo = FLatentActionInfo();
-	LInfo.CallbackTarget = this;
-	UKismetSystemLibrary::MoveComponentTo(
-							GetCapsuleComponent(),
-							GetActorLocation(),
-							FRotator(0,0,0),
-							true,
-							true,
-							2,
-							false,
-							EMoveComponentAction::Move,
-							LInfo);
-	return true;
-}
 
 bool AShip::CustomMoving(const FVector& DestinationLocation)
 {

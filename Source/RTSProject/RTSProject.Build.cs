@@ -6,11 +6,11 @@ public class RTSProject : ModuleRules
 {
 	public RTSProject(ReadOnlyTargetRules Target) : base(Target)
 	{
-		//PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-		//MinFilesUsingPrecompiledHeaderOverride = 1;
-		//bFasterWithoutUnity = true;
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        MinFilesUsingPrecompiledHeaderOverride = 1;
+        bFasterWithoutUnity = true;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "UMG", "Slate", "SlateCore", "AIModule", "NavigationSystem" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "UMG", "Slate", "SlateCore", "AIModule", "NavigationSystem" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
