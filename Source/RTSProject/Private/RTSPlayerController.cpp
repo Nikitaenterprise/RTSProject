@@ -3,18 +3,15 @@
 #include "Ship.h"
 #include "Building.h"
 #include "Camera.h"
-#include "ShipHUD.h"
-#include "BuildingHUD.h"
-#include "BasicButtonsHUD.h"
 #include "FactoryAssets.h"
 #include "GameHUD.h"
 
-#include "Engine/World.h"
+
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Blueprint/UserWidget.h"
-#include "Engine/Engine.h"
+//#include "Blueprint/UserWidget.h"
+//#include "Engine/Engine.h"
 
 
 ARTSPlayerController::ARTSPlayerController(){	
@@ -338,7 +335,7 @@ void ARTSPlayerController::MoveSelectedActors()
 			{
 				float Z = Ship->GetActorLocation().Z;
 				float X = Hit.Location.X, Y = Hit.Location.Y;
-				Ship->CustomMoving(FVector(X, Y, Z));
+				Ship->Move(FVector(X, Y, Z));
 			}
 		}
 	}

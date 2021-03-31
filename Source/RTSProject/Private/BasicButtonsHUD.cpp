@@ -24,7 +24,7 @@ void UBasicButtonsHUD::SpawnShip()
 	FVector v;
 	v.X = UKismetMathLibrary::RandomIntegerInRange(-1000, 1000);
 	v.Y = UKismetMathLibrary::RandomIntegerInRange(-1000, 1000);
-	v.Z = 200;
+	v.Z = 150;
 	ShipFactory::NewShip(GetWorld(), v, PlayerController);
 }
 

@@ -3,23 +3,23 @@
 #include "RTSPlayerController.h"
 #include "HealthShield.h"
 #include "Turret.h"
-#include "AnglesFunctions.h"
 #include "HealthShieldBarHUD.h"
 #include "GameHUD.h"
 #include "ShipMovementComponent.h"
 
 #include "Components/StaticMeshComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
-#include "Blueprint/UserWidget.h"
+//#include "Blueprint/UserWidget.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "AIController.h"
-#include "NavigationPath.h"
-#include "NavigationSystem.h"
+//#include "AIController.h"
+//#include "NavigationPath.h"
+//#include "NavigationSystem.h"
 #include "DrawDebugHelpers.h"
-#include "Components/ArrowComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
+//#include "Components/ArrowComponent.h"
+//#include "GameFramework/CharacterMovementComponent.h"
 
 AShip::AShip(const FObjectInitializer& OI)
 	: Super(OI.SetDefaultSubobjectClass<UShipMovementComponent>(FName("ShipMovementComponent")))
@@ -30,18 +30,21 @@ AShip::AShip(const FObjectInitializer& OI)
 	
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMesh->SetupAttachment(GetRootComponent());
-	RootComponent = StaticMesh;
-	
-	HealthShieldComponent = CreateDefaultSubobject<UHealthShield>(TEXT("HealthShield"));
+
+	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
+	CapsuleComponent->SetRelativeRotation(FRotator(0, 90, 0));
+	CapsuleComponent->SetupAttachment(GetRootComponent());
 	
 	SelectionCircle = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SelectionCircle"));
-	SelectionCircle->SetupAttachment(GetRootComponent());
 	SelectionCircle->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
+	SelectionCircle->SetupAttachment(GetRootComponent());
+	
 	HealthShieldBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthShieldBar"));
-	HealthShieldBar->SetupAttachment(GetRootComponent());
 	HealthShieldBar->SetDrawSize(FVector2D(150, 150));
 	HealthShieldBar->SetWidgetSpace(EWidgetSpace::Screen);
+	HealthShieldBar->SetupAttachment(GetRootComponent());
+	
+	HealthShieldComponent = CreateDefaultSubobject<UHealthShield>(TEXT("HealthShield"));
 
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 
@@ -57,9 +60,9 @@ void AShip::Tick(float _mainDeltaTime)
 {
 	Super::Tick(_mainDeltaTime);
 	
-	FString str = UKismetSystemLibrary::GetDisplayName(this);
+	/*FString str = UKismetSystemLibrary::GetDisplayName(this);
 	FString b = bIsSelected ? TEXT("true") : TEXT("false");
-	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("obj=%s, bSelected=%s"), *str, *b));
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("obj=%s, bSelected=%s"), *str, *b));*/
 
 	DeltaTime = _mainDeltaTime;
 	PastTime += _mainDeltaTime;
@@ -70,17 +73,23 @@ void AShip::Tick(float _mainDeltaTime)
 	
 }
 
-void AShip::BindHUD()
+void AShip::Initialize(ARTSPlayerController* _Controller)
 {
-	if (PlayerController) 
+	if (_Controller)
 	{
+		PlayerController = _Controller;
+		
+		MovementComponent->PlayerController = _Controller;
+		MovementComponent->OwnerShip = this;
+		MovementComponent->Initialize();
+		
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
 	}
-}
-
-void AShip::BindController(ARTSPlayerController* _Controller)
-{
-	if (_Controller) PlayerController = _Controller;
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerController in AShip->Init() is null"));
+	}
+	
 }
 
 bool AShip::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
@@ -139,83 +148,19 @@ void AShip::SetHealthShieldBar()
 	HealthShieldBarHUD->HealthPercent = HealthShieldComponent->getHealthPercent();
 }
 
-bool AShip::Moving(const FVector& v)
+bool AShip::Move(const FVector _TargetLocation)
 {
-	bShouldMove = true;
-	FVector Direction = v - GetActorLocation();
-	Direction.Normalize();
-	FVector ForwardVector = GetActorForwardVector();
-	ForwardVector.Normalize();
-	
-	float angle = AnglesFunctions::FindAngleBetweenVectorsOn2D(Direction, ForwardVector);
-	if (angle > 5)
-	{
-		bool clockwise = AnglesFunctions::FindRotationDirectionBetweenVectorsOn2D(Direction, ForwardVector);
-		if (clockwise)
-		{
-			SetActorRotation(FRotator(0, (GetActorRotation().Yaw - (DeltaTime * angle)), 0), ETeleportType::None);
-		}
-		else if (!clockwise)
-		{
-			SetActorRotation(FRotator(0, (GetActorRotation().Yaw + (DeltaTime * angle)), 0), ETeleportType::None);
-		}
-		
-		FVector2D NewForward(GetActorForwardVector().X, GetActorForwardVector().Y);
-		
-		NewForward = NewForward * TurnForwardSpeed * DeltaTime;
-		
-		FVector2D NewLocation(GetActorLocation().X, GetActorLocation().Y);
-		FVector location((NewLocation + NewForward).X, (NewLocation + NewForward).Y, GetActorLocation().Z);
-		SetActorLocation(location, false, nullptr, ETeleportType::None);
-	}
-	else
-	{
-		FVector2D NewForward(GetActorForwardVector().X, GetActorForwardVector().Y);
-		
-		NewForward = NewForward * ForwardSpeed * DeltaTime;
-		
-		FVector2D NewLocation(GetActorLocation().X, GetActorLocation().Y);
-		FVector location((NewLocation + NewForward).X, (NewLocation + NewForward).Y, GetActorLocation().Z);
-		SetActorLocation(location, false, nullptr, ETeleportType::None);
-	}
-	
-	if ((v - GetActorLocation()).SizeSquared() > 400) bShouldMove = false;
-
+	const bool successful = MovementComponent->RequestNavMoving(_TargetLocation);
+	if (!successful) return false;
+	NavPathCoords = MovementComponent->NavPathCoords;
+	DrawNavLine();
 	return true;
-}
-
-
-bool AShip::CustomMoving(const FVector& DestinationLocation)
-{
-	AAIController* AIController = Cast<AAIController>(GetController());
-	if (!AIController)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.1, FColor::Red, TEXT("Failed to cast AIController in Ship"));
-		return false;
-	}
-	
-	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
-	UNavigationPath* NavPath = NavSys->FindPathToLocationSynchronously(
-							GetWorld(),
-							GetActorLocation(),
-							DestinationLocation);
-	if (!NavPath) return false;
-	
-	NavPathCoords = NavPath->PathPoints;
-	
-	AIController->MoveToLocation(DestinationLocation, 50, 
-								false, true, 
-								true, true,
-								nullptr, true);
-	
-	
-	
-	return true;
-	
 }
 
 void AShip::DrawNavLine()
 {
+	if (NavPathCoords.Num() < 2) return;
+	
 	for (size_t i = 0; i < NavPathCoords.Num() - 1; i++)
 	{
 		DrawDebugLine(GetWorld(),

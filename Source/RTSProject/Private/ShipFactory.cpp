@@ -39,9 +39,8 @@ AShip* ShipFactory::NewShip(UWorld* _World, const FVector& _Location, const FRot
 	}
 	_Controller->PlayersActors.AddUnique(SpawnedShip);
 	AddTurretsToShip(_World, _Controller, SpawnedShip);
-	SpawnedShip->BindController(_Controller);
-	SpawnedShip->BindHUD();
-
+	SpawnedShip->Initialize(_Controller);
+	
 	return SpawnedShip;
 }
 
@@ -57,7 +56,7 @@ FActorSpawnParameters ShipFactory::GetDefaultSpawnParams()
 void ShipFactory::AddTurretsToShip(UWorld* _World, ARTSPlayerController* _Controller, AShip* _Ship)
 {
 	if (_Ship->bHasWorkingTurrets) return;
-	TSubclassOf<ATurret> TurretClass = _Controller->GetFactoryAssets()->TurretClass;
+	const TSubclassOf<ATurret> TurretClass = _Controller->GetFactoryAssets()->TurretClass;
 	if(TurretClass)
 	{
 		UStaticMeshComponent* StaticMesh = _Ship->StaticMesh;
@@ -72,9 +71,9 @@ void ShipFactory::AddTurretsToShip(UWorld* _World, ARTSPlayerController* _Contro
 				GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn turret"));
 				return;
 			}
+			SpawnedTurret->OwnerShip->Turrets.AddUnique(SpawnedTurret);
 			SpawnedTurret->OwnerShip = _Ship;
 			SpawnedTurret->PlayerController = _Controller;
-			SpawnedTurret->OwnerShip->Turrets.AddUnique(SpawnedTurret);
 			SetTurretSide(SpawnedTurret);
 			SpawnedTurret->SetFacingLeftRight();
 			FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget,
@@ -97,6 +96,6 @@ void ShipFactory::SetTurretSide(ATurret* _Turret)
 	const FVector FromCenterOfShipToTurret = (_Turret->OwnerShip->GetActorLocation() - _Turret->GetActorLocation()) * -1;
 	const bool bClockwise = AnglesFunctions::FindRotationDirectionBetweenVectorsOn2D(ShipForward, FromCenterOfShipToTurret);
 
-	if (bClockwise) _Turret->OnWhichSide = ATurret::ESide::Right;
-	if (!bClockwise) _Turret->OnWhichSide = ATurret::ESide::Left;
+	if (bClockwise) _Turret->OnWhichSide = ESide::Right;
+	if (!bClockwise) _Turret->OnWhichSide = ESide::Left;
 }

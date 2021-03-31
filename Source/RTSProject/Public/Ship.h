@@ -22,10 +22,13 @@ class RTSPROJECT_API AShip : public APawn, public IBaseBehavior
 	GENERATED_BODY()
 
 public:
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
+	UCapsuleComponent* CapsuleComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UHealthShield* HealthShieldComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
@@ -74,8 +77,7 @@ public:
 
 	virtual void Tick(float _mainDeltaTime) override;
 	
-	void BindHUD();
-	void BindController(ARTSPlayerController* _Controller);
+	void Initialize(ARTSPlayerController* _Controller);
 
 	void SetHealthShieldBar();
 
@@ -92,9 +94,7 @@ public:
 
 	// Moving
 	UFUNCTION(BlueprintCallable, Category = "Moving")
-	bool Moving(const FVector& v);
-	UFUNCTION(BlueprintCallable, Category = "Moving")
-	bool CustomMoving(const FVector& DestinationLocation);
+	bool Move(const FVector _TargetLocation);
 
 	void DrawNavLine();
 	

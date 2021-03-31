@@ -38,12 +38,7 @@ ABuilding* BuildingFactory::NewBuilding(UWorld* _World, const FVector& _Location
 	SpawnedBuilding->PlayerController = _Controller;
 	SpawnedBuilding->BindHUD();
 	_Controller->PlayersActors.AddUnique(SpawnedBuilding);
-	SpawnedBuilding->bShouldUpdatePosition = true;
-	// WARNING
-	// probably not working because Tick don't fire
-	// set building location under cursor until LMB is pressed
-	/*while (!_Controller->bLMBPressed) UpdateBuildingPosition(SpawnedBuilding, _Controller);*/
-	
+	SpawnedBuilding->bShouldUpdatePosition = true;	
 	return SpawnedBuilding;
 }
 
