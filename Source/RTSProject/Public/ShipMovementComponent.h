@@ -35,19 +35,39 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
 	FRotator RotationRate = FRotator(15, 15, 15);
 	
+	TArray<FVector> NavPathCoords;
+
 	AShip* OwnerShip = nullptr;
 	ARTSPlayerController* PlayerController = nullptr;
 	ARTSAIController* RTSAIController = nullptr;
+private:
+
+
+	FVector InputVector = FVector(0, 0, 0);
 	
+	FVector PointMoveTo;
+	FRotator Rotator;
+
 	EShipMovementState MovementState;
-	TArray<FVector> NavPathCoords;
+	
+	bool bShouldMove = false;
+	bool bRequestedMove = false;
+	bool bInitialMove = false;
+
 	
 public:
 	UShipMovementComponent(const FObjectInitializer& ObjectInitializer);
 	void Initialize();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	virtual void AddInputVector(FVector WorldVector, bool bForce = false) override;
+	virtual FVector ConsumeInputVector() override;
+
+	TArray<FVector> GetNavPathCoords() const { return NavPathCoords; }
+	
 	void RequestTurnTo(const FRotator _TargetRotation);
-	void RequestSimpleMove(const FVector _TargetLocation);
+	void CalculateMove();
 	bool RequestNavMoving(const FVector _TargetLocation);
+	inline void MakePathInXYPlane(float _setZToThisValue);
+	inline void GetPoint();
 };

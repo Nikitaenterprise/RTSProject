@@ -152,7 +152,7 @@ bool AShip::Move(const FVector _TargetLocation)
 {
 	const bool successful = MovementComponent->RequestNavMoving(_TargetLocation);
 	if (!successful) return false;
-	NavPathCoords = MovementComponent->NavPathCoords;
+	NavPathCoords = MovementComponent->GetNavPathCoords();
 	DrawNavLine();
 	return true;
 }

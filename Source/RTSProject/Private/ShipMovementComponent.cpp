@@ -11,6 +11,7 @@
 #include "NavigationSystem.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 
 UShipMovementComponent::UShipMovementComponent(const FObjectInitializer& ObjectInitializer)
 {
@@ -42,18 +43,96 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	if (!PawnOwner || !UpdatedComponent || ShouldSkipUpdate(DeltaTime)) return;
 
-	FVector DesiredMovementThisFrame = ConsumeInputVector().GetClampedToMaxSize(1.0f) * DeltaTime * 150.0f;
-	if (!DesiredMovementThisFrame.IsNearlyZero())
+	GetPoint();
+	
+	if (bShouldMove)
 	{
-		FHitResult Hit;
-		SafeMoveUpdatedComponent(DesiredMovementThisFrame, UpdatedComponent->GetComponentRotation(), true, Hit);
+		FVector Direction = PointMoveTo - OwnerShip->GetActorLocation();
+		Direction.Normalize();
+		AddInputVector(Direction);
+		
+		FVector ForwardVector = OwnerShip->GetActorForwardVector();
+		ForwardVector.Normalize();
 
-		// If we bumped into something, try to slide along it
-		/*if (Hit.IsValidBlockingHit())
+		FVector DesiredMovementThisFrame;
+		
+		const float angle = AnglesFunctions::FindAngleBetweenVectorsOn2D(Direction, ForwardVector);
+		if (bInitialMove)
 		{
-			SlideAlongSurface(DesiredMovementThisFrame, 1.f - Hit.Time, Hit.Normal, Hit);
-		}*/
+			bInitialMove = false;
+		}
+		else
+		{
+			
+		}
+		if (angle > 5)
+		{
+			const bool clockwise = AnglesFunctions::FindRotationDirectionBetweenVectorsOn2D(Direction, ForwardVector);
+			if (clockwise)
+			{
+				Rotator = FRotator(0,
+					OwnerShip->GetActorRotation().Yaw - DeltaTime * angle,
+					0);
+			}
+			else if (!clockwise)
+			{
+				Rotator = FRotator(0, 
+					OwnerShip->GetActorRotation().Yaw + DeltaTime * angle,
+					0);
+			}
+			/*FinalVector = FVector
+			(
+				GetActorLocation().X + OwnerShip->GetActorForwardVector().X * TurnForwardSpeed * DeltaTime,
+				GetActorLocation().Y + OwnerShip->GetActorForwardVector().Y * TurnForwardSpeed * DeltaTime,
+				0
+			);*/
+			DesiredMovementThisFrame = ConsumeInputVector() * DeltaTime * TurnForwardSpeed;
+			DesiredMovementThisFrame.Z = 0;
+		}
+		else
+		{
+			DesiredMovementThisFrame = ConsumeInputVector() * DeltaTime * ForwardSpeed;
+			DesiredMovementThisFrame.Z = 0;
+			/*FinalVector = FVector
+			(
+				GetActorLocation().X + OwnerShip->GetActorForwardVector().X * ForwardSpeed * DeltaTime,
+				GetActorLocation().Y + OwnerShip->GetActorForwardVector().Y * ForwardSpeed * DeltaTime,
+				0
+			);*/
+		}
+		
+		
+		
+		//if ((_TargetLocation - GetActorLocation()).SizeSquared() > 400) OwnerShip->bShouldMove = false;
+
+		
+		
+		 
+		if (!DesiredMovementThisFrame.IsNearlyZero())
+		{
+			FHitResult Hit;
+			SafeMoveUpdatedComponent(DesiredMovementThisFrame, Rotator, true, Hit);
+
+			// If we bumped into something, try to slide along it
+			/*if (Hit.IsValidBlockingHit())
+			{
+				SlideAlongSurface(DesiredMovementThisFrame, 1.f - Hit.Time, Hit.Normal, Hit);
+			}*/
+		}
 	}
+}
+
+void UShipMovementComponent::AddInputVector(FVector WorldVector, bool bForce)
+{
+	WorldVector.Normalize();
+	InputVector += WorldVector;
+}
+
+FVector UShipMovementComponent::ConsumeInputVector()
+{
+	FVector ReturnVector = InputVector;
+	InputVector = FVector::ZeroVector;
+	return ReturnVector;
 }
 
 void UShipMovementComponent::RequestTurnTo(const FRotator _TargetRotation)
@@ -73,50 +152,9 @@ void UShipMovementComponent::RequestTurnTo(const FRotator _TargetRotation)
 		LInfo);*/
 }
 
-void UShipMovementComponent::RequestSimpleMove(const FVector _TargetLocation)
+void UShipMovementComponent::CalculateMove()
 {
-	OwnerShip->bShouldMove = true;
-	FVector Direction = _TargetLocation - GetActorLocation();
-	Direction.Normalize();
-	FVector ForwardVector = OwnerShip->GetActorForwardVector();
-	ForwardVector.Normalize();
 	
-	FVector2D NewLocation;
-	FVector location;
-
-	const float angle = AnglesFunctions::FindAngleBetweenVectorsOn2D(Direction, ForwardVector);
-	if (angle > 5)
-	{
-		const bool clockwise = AnglesFunctions::FindRotationDirectionBetweenVectorsOn2D(Direction, ForwardVector);
-		if (clockwise)
-		{
-			OwnerShip->SetActorRotation(FRotator(0, (OwnerShip->GetActorRotation().Yaw - (OwnerShip->DeltaTime * angle)), 0), ETeleportType::None);
-		}
-		else if (!clockwise)
-		{
-			OwnerShip->SetActorRotation(FRotator(0, (OwnerShip->GetActorRotation().Yaw + (OwnerShip->DeltaTime * angle)), 0), ETeleportType::None);
-		}
-
-		FVector2D NewForward(OwnerShip->GetActorForwardVector().X, OwnerShip->GetActorForwardVector().Y);
-
-		NewForward = NewForward * TurnForwardSpeed * OwnerShip->DeltaTime;
-
-		NewLocation = FVector2D(GetActorLocation().X, GetActorLocation().Y);
-		location = FVector((NewLocation + NewForward).X, (NewLocation + NewForward).Y, GetActorLocation().Z);
-		OwnerShip->SetActorLocation(location, false, nullptr, ETeleportType::None);
-	}
-	else
-	{
-		FVector2D NewForward(OwnerShip->GetActorForwardVector().X, OwnerShip->GetActorForwardVector().Y);
-
-		NewForward = NewForward * ForwardSpeed * OwnerShip->DeltaTime;
-
-		NewLocation = FVector2D(GetActorLocation().X, GetActorLocation().Y);
-		location = FVector((NewLocation + NewForward).X, (NewLocation + NewForward).Y, GetActorLocation().Z);
-		OwnerShip->SetActorLocation(location, false, nullptr, ETeleportType::None);
-	}
-
-	//if ((_TargetLocation - GetActorLocation()).SizeSquared() > 400) OwnerShip->bShouldMove = false;
 }
 
 bool UShipMovementComponent::RequestNavMoving(const FVector _TargetLocation)
@@ -133,15 +171,42 @@ bool UShipMovementComponent::RequestNavMoving(const FVector _TargetLocation)
 	}
 	
 	NavPathCoords = NavPath->PathPoints;
+	MakePathInXYPlane(OwnerShip->GetActorLocation().Z);
+	//GEngine->AddOnScreenDebugMessage(-1, 1.1, FColor::Yellow, OwnerShip->GetActorLocation().ToString());
 
-	RTSAIController->MoveToLocation(_TargetLocation, 
-										50,
-										false, 
-										true,
-										true, 
-										true,
-										nullptr, 
-										true);
-
+	bRequestedMove = true;
+	bInitialMove = true;
 	return true;
+}
+
+void UShipMovementComponent::MakePathInXYPlane(float _setZToThisValue)
+{
+	for (auto& point: NavPathCoords)
+	{
+		/*FString str1 = point.ToString();
+		GEngine->AddOnScreenDebugMessage(-1, 1.1, FColor::Green, str1);*/
+		point.Z = _setZToThisValue;
+	}
+}
+
+void UShipMovementComponent::GetPoint()
+{
+	// If near destination
+	if(OwnerShip->GetActorLocation().Equals(PointMoveTo, 0.1) || bRequestedMove)
+	{
+		// Get next destination point
+		if(NavPathCoords.Num()>0)
+		{
+			PointMoveTo = NavPathCoords.Pop(false);
+			bShouldMove = true;
+			
+		}
+		// Else af finish position
+		else
+		{
+			bShouldMove = false;
+			bRequestedMove = false;
+		}
+	}
+	
 }

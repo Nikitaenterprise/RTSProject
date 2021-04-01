@@ -6,8 +6,8 @@
 #include "FactoryAssets.h"
 #include "AnglesFunctions.h"
 
-#include "Engine/World.h"
-#include "Engine/StaticMesh.h"
+//#include "Engine/World.h"
+//#include "Engine/StaticMesh.h"
 
 
 AShip* ShipFactory::NewShip(UWorld* _World, ARTSPlayerController* _Controller)
@@ -71,8 +71,8 @@ void ShipFactory::AddTurretsToShip(UWorld* _World, ARTSPlayerController* _Contro
 				GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn turret"));
 				return;
 			}
-			SpawnedTurret->OwnerShip->Turrets.AddUnique(SpawnedTurret);
 			SpawnedTurret->OwnerShip = _Ship;
+			SpawnedTurret->OwnerShip->Turrets.AddUnique(SpawnedTurret);
 			SpawnedTurret->PlayerController = _Controller;
 			SetTurretSide(SpawnedTurret);
 			SpawnedTurret->SetFacingLeftRight();

@@ -5,10 +5,10 @@
 #include "ShipHUD.h"
 #include "BuildingHUD.h"
 
-#include "Engine/Canvas.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "Kismet/KismetArrayLibrary.h"
-#include "Kismet/KismetSystemLibrary.h"
+//#include "Engine/Canvas.h"
+//#include "Kismet/KismetMathLibrary.h"
+//#include "Kismet/KismetArrayLibrary.h"
+//#include "Kismet/KismetSystemLibrary.h"
 
 AGameHUD::AGameHUD(const FObjectInitializer& OI) : Super(OI)
 {

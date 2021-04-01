@@ -5,7 +5,7 @@
 #include "AsteroidResource.h"
 #include "AsteroidField.h"
 
-#include "Engine/World.h"
+//#include "Engine/World.h"
 #include "Kismet/KismetMathLibrary.h"
 
 

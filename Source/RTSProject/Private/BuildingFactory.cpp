@@ -4,8 +4,8 @@
 #include "FactoryAssets.h"
 #include "RTSPlayerController.h"
 
-#include "Engine/World.h"
-#include "Engine/StaticMesh.h"
+//#include "Engine/World.h"
+//#include "Engine/StaticMesh.h"
 
 
 ABuilding* BuildingFactory::NewBuilding(UWorld* _World, ARTSPlayerController* _Controller)
