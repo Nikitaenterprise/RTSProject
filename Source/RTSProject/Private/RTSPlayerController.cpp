@@ -257,10 +257,10 @@ void ARTSPlayerController::UpdateSelection()
 {
 	DeselectUnits();
 	GameHUD->OnInputHold();
-	for (const auto& a : SelectedActors) {
+	/*for (const auto& a : SelectedActors) {
 		FString str = UKismetSystemLibrary::GetDisplayName(Cast<AShip>(a));
 		GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Red, str);
-	}
+	}*/
 	SelectUnits();
 }
 

@@ -1,5 +1,6 @@
 #include "ShipMovementComponent.h"
-#include "RTSPlayerController.h"
+
+//#include "RTSPlayerController.h"
 #include "AnglesFunctions.h"
 #include "Ship.h"
 #include "RTSAIController.h"
@@ -9,7 +10,7 @@
 #include "AIController.h"
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
-#include "Components/CapsuleComponent.h"
+//#include "Components/CapsuleComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -45,21 +46,49 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	GetPoint();
 	
-	if (bShouldMove)
+	if (1)//bShouldMove)
 	{
 		FVector Direction = PointMoveTo - OwnerShip->GetActorLocation();
-		Direction.Normalize();
+		const float DistanceToPoint = Direction.Size();
+
 		AddInputVector(Direction);
 		
 		FVector ForwardVector = OwnerShip->GetActorForwardVector();
-		ForwardVector.Normalize();
 
 		FVector DesiredMovementThisFrame;
 		
 		const float angle = AnglesFunctions::FindAngleBetweenVectorsOn2D(Direction, ForwardVector);
-		if (bInitialMove)
+		if (1)//bInitialMove)
 		{
 			bInitialMove = false;
+			FVector2D CenterOfTurningCircle = FVector2D::ZeroVector;
+			const float AngleToCenterOfTurningCircle = OwnerShip->GetActorForwardVector().GetSafeNormal().Rotation().Yaw - 90;
+			CenterOfTurningCircle.X = OwnerShip->GetActorLocation().X + MaxTurnRadius * cos(AngleToCenterOfTurningCircle);
+			CenterOfTurningCircle.Y = OwnerShip->GetActorLocation().Y + MaxTurnRadius * sin(AngleToCenterOfTurningCircle);
+			float LengthOfStraightPart = sqrt(DistanceToPoint * DistanceToPoint - MaxTurnRadius * MaxTurnRadius);
+			float theta = UKismetMathLibrary::DegAcos(MaxTurnRadius / DistanceToPoint);
+			float phi = UKismetMathLibrary::DegAtan(Direction.Y / Direction.X);
+			FVector2D LeavingCirclePoint = FVector2D(
+				CenterOfTurningCircle.X - MaxTurnRadius * cos(phi + theta),
+				CenterOfTurningCircle.Y - MaxTurnRadius * sin(phi + theta)
+			);
+
+			FString out = "";
+			out += FString("\nPointMoveTo " + PointMoveTo.ToString());
+			out += FString("\nActorLocation " + OwnerShip->GetActorLocation().ToString());
+			out += FString("\nbInitialMove " + bInitialMove ? "true" : "false");
+			out += FString("\nCenterOfTurningCircle " + CenterOfTurningCircle.ToString());
+			out += FString("\nAngleToCenterOfTurningCircle " + FString::SanitizeFloat(AngleToCenterOfTurningCircle));
+			out += FString("\nDistanceToPoint " + FString::SanitizeFloat(DistanceToPoint));
+			out += FString("\nLengthOfStraightPart " + FString::SanitizeFloat(LengthOfStraightPart));
+			out += FString("\ntheta " + FString::SanitizeFloat(theta) + " phi " + FString::SanitizeFloat(phi));
+			out += FString("\nLeavingCirclePoint " + LeavingCirclePoint.ToString());
+			GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::Green, out);
+			
+			if (DistanceToPoint < MaxTurnRadius)
+			{
+				
+			}
 		}
 		else
 		{
@@ -181,7 +210,7 @@ bool UShipMovementComponent::RequestNavMoving(const FVector _TargetLocation)
 
 void UShipMovementComponent::MakePathInXYPlane(float _setZToThisValue)
 {
-	for (auto& point: NavPathCoords)
+	for (auto& point : NavPathCoords)
 	{
 		/*FString str1 = point.ToString();
 		GEngine->AddOnScreenDebugMessage(-1, 1.1, FColor::Green, str1);*/
@@ -200,10 +229,15 @@ void UShipMovementComponent::GetPoint()
 			PointMoveTo = NavPathCoords.Pop(false);
 			bShouldMove = true;
 			
+			FString from = OwnerShip->GetActorLocation().ToString();
+			FString to = PointMoveTo.ToString();
+			GEngine->AddOnScreenDebugMessage(-1, 5.1, FColor::Yellow, FString::Printf(TEXT("Move started from %s to %s"), *from, *to));
+			
 		}
 		// Else af finish position
 		else
 		{
+			//GEngine->AddOnScreenDebugMessage(-1, 5.1, FColor::Yellow, TEXT("Finished move"));
 			bShouldMove = false;
 			bRequestedMove = false;
 		}

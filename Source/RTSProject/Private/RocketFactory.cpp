@@ -26,7 +26,7 @@ FActorSpawnParameters RocketFactory::GetDefaultSpawnParams()
 {
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	Params.Instigator = NULL;
-	Params.Owner = NULL;
+	Params.Instigator = nullptr;
+	Params.Owner = nullptr;
 	return Params;
 }

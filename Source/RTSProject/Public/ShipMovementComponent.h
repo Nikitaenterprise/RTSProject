@@ -33,6 +33,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
 	float MaxRollAngle = 20;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
+	float MaxTurnRadius = 100;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
 	FRotator RotationRate = FRotator(15, 15, 15);
 	
 	TArray<FVector> NavPathCoords;
@@ -65,6 +67,7 @@ public:
 
 	TArray<FVector> GetNavPathCoords() const { return NavPathCoords; }
 	
+	bool Walkable(FVector FirstPoint, FVector SecondPoint);
 	void RequestTurnTo(const FRotator _TargetRotation);
 	void CalculateMove();
 	bool RequestNavMoving(const FVector _TargetLocation);

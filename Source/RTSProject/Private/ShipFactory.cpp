@@ -93,7 +93,7 @@ void ShipFactory::SetTurretSide(ATurret* _Turret)
 	const FVector ShipForward = _Turret->OwnerShip->GetActorForwardVector();
 	// Probably :
 	// Turret->GetActorLocation() - Turret->OwnerShip->GetActorLocation()
-	const FVector FromCenterOfShipToTurret = (_Turret->OwnerShip->GetActorLocation() - _Turret->GetActorLocation()) * -1;
+	const FVector FromCenterOfShipToTurret = _Turret->GetActorLocation() - _Turret->OwnerShip->GetActorLocation(); //(_Turret->OwnerShip->GetActorLocation() - _Turret->GetActorLocation()) * -1;
 	const bool bClockwise = AnglesFunctions::FindRotationDirectionBetweenVectorsOn2D(ShipForward, FromCenterOfShipToTurret);
 
 	if (bClockwise) _Turret->OnWhichSide = ESide::Right;
