@@ -8,13 +8,19 @@ class ARTSPlayerController;
 class ARTSAIController;
 class AShip;
 
-enum EShipMovementState
+enum EShipAccelerationState
 {
-	Moving,
+	FullStop,
 	Accelerating,
 	Decelerating,
-	Braking,
-	Turning
+	Braking
+};
+
+enum EShipTurnState
+{
+	NoTurning,
+	TurningWhileStanding,
+	TurningWhileMoving
 };
 
 UCLASS()
@@ -23,7 +29,8 @@ class RTSPROJECT_API UShipMovementComponent : public UPawnMovementComponent
 	GENERATED_BODY()
 
 public:
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
+	float AcceptanceRadius = 1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
 	float ForwardSpeed = 500;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
@@ -43,14 +50,50 @@ public:
 	ARTSPlayerController* PlayerController = nullptr;
 	ARTSAIController* RTSAIController = nullptr;
 private:
-
-
+	
+	class LineSegment
+	{
+	public:
+		LineSegment(FVector StartPosition, float Length) :
+			StartPosition(StartPosition),
+			Length(Length) {}
+		
+		FVector StartPosition = FVector::ZeroVector;
+		float Length = 0;
+	};
+	class StraightLine : public LineSegment
+	{
+	public:
+		StraightLine(FVector StartPosition, float Length, float Angle) :
+			LineSegment(StartPosition, Length),
+			Angle(Angle) {}
+		
+		float Angle = 0;
+	};
+	class ArcLine : public LineSegment
+	{
+	public:
+		ArcLine(FVector StartPosition, float Length, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover, bool bRotateClockwise) :
+			LineSegment(StartPosition, Length),
+			CircleCenter(CircleCenter),
+			StartingAngle(StartingAngle),
+			TotalRadiansCover(TotalRadiansCover),
+			bRotateClockwise(bRotateClockwise) {}
+		
+		FVector2D CircleCenter = FVector2D::ZeroVector;
+		float StartingAngle = 0;
+		float TotalRadiansCover = 0;
+		bool bRotateClockwise = true;
+	};
+	TArray<LineSegment> LineSegments;
+	
 	FVector InputVector = FVector(0, 0, 0);
 	
 	FVector PointMoveTo;
 	FRotator Rotator;
 
-	EShipMovementState MovementState;
+	EShipAccelerationState AccelerationState = FullStop;
+	EShipTurnState TurnState = NoTurning;
 	
 	bool bShouldMove = false;
 	bool bRequestedMove = false;
@@ -70,7 +113,10 @@ public:
 	bool Walkable(FVector FirstPoint, FVector SecondPoint);
 	void RequestTurnTo(const FRotator _TargetRotation);
 	void CalculateMove();
+	void CalculateRotation();
 	bool RequestNavMoving(const FVector _TargetLocation);
+	inline void ReverceNavPath();
+	void BuildLineSegments();
 	inline void MakePathInXYPlane(float _setZToThisValue);
 	inline void GetPoint();
 };

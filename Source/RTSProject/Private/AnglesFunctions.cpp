@@ -2,14 +2,6 @@
 
 #include "Kismet/KismetMathLibrary.h"
 
-AnglesFunctions::AnglesFunctions()
-{
-}
-
-AnglesFunctions::~AnglesFunctions()
-{
-}
-
 float AnglesFunctions::FindAngleBetweenVectorsOn2D(const FVector& v1, const FVector& v2)
 {
 	FVector2D v1XY = FVector2D(v1.X, v1.Y);

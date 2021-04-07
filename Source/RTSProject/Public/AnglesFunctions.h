@@ -5,9 +5,6 @@
 class RTSPROJECT_API AnglesFunctions
 {
 public:
-	AnglesFunctions();
-	~AnglesFunctions();
-
 	static float FindAngleBetweenVectorsOn2D(const FVector& v1, const FVector& v2);
 	static bool FindRotationDirectionBetweenVectorsOn2D(const FVector& v1, const FVector& v2);
 	static float FindAngleToRotateVectorOn2D(const FVector& v1, const FVector& v2);
