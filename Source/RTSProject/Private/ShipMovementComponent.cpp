@@ -75,127 +75,211 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		float AngleToCenterOfTurningCircle = OwnerShip->GetActorForwardVector().GetSafeNormal().Rotation().Yaw + (bClockwiseRotation ? -90 : 90);
 		
 		FVector2D CircleCenter = FVector2D::ZeroVector;
-		CircleCenter.X = OwnerShip->GetActorLocation().X + MaxTurnRadius * cos(AngleToCenterOfTurningCircle);
-		CircleCenter.Y = OwnerShip->GetActorLocation().Y + MaxTurnRadius * sin(AngleToCenterOfTurningCircle);
+		CircleCenter.X = OwnerShip->GetActorLocation().X + MinTurnRadius * cos(AngleToCenterOfTurningCircle);
+		CircleCenter.Y = OwnerShip->GetActorLocation().Y + MinTurnRadius * sin(AngleToCenterOfTurningCircle);
 
 		float dx = PointMoveTo.X - CircleCenter.X;
 		float dy = PointMoveTo.Y - CircleCenter.Y;
 		FVector2D h = FVector2D(PointMoveTo) - CircleCenter;
 		float DistanceFromCircleCenterToDestination = h.Size();//sqrt(dx * dx + dy * dy);
 
-		float LengthOfStraightPart = sqrt(DistanceFromCircleCenterToDestination * DistanceFromCircleCenterToDestination - MaxTurnRadius * MaxTurnRadius);
+		float LengthOfStraightPart = sqrt(DistanceFromCircleCenterToDestination * DistanceFromCircleCenterToDestination - MinTurnRadius * MinTurnRadius);
 
-		float theta = UKismetMathLibrary::DegAcos(MaxTurnRadius / DistanceFromCircleCenterToDestination);
+		float theta = UKismetMathLibrary::DegAcos(MinTurnRadius / DistanceFromCircleCenterToDestination);
 		float phi = UKismetMathLibrary::DegAtan(h.Y / h.X);
 
 		FVector2D LeavingCirclePoint = FVector2D(
 			// if rotating left then phi + theta, else phi - theta
-			CircleCenter.X - MaxTurnRadius * cos(phi + (bClockwiseRotation ? -theta : theta)),
-			CircleCenter.Y - MaxTurnRadius * sin(phi + (bClockwiseRotation ? -theta : theta))
+			CircleCenter.X - MinTurnRadius * cos(phi + (bClockwiseRotation ? -theta : theta)),
+			CircleCenter.Y - MinTurnRadius * sin(phi + (bClockwiseRotation ? -theta : theta))
 		);
 		
 		AddInputVector(ForwardVector);
 
-		if (1)
+		bInitialMove = false;
+		// If destination is within the turning circle and ship is not moving 
+		if (AccelerationState == FullStop && DistanceFromCircleCenterToDestination < MinTurnRadius)
 		{
-			bInitialMove = false;
-			// If destination is within the turning circle 
-			if (DistanceFromCircleCenterToDestination < MaxTurnRadius)
+			// If not looking at destination rotate while standing still
+			if(ForwardAndDirToDestinationAngle > 5)
 			{
-				// If not looking at destination rotate while standing still
-				if(ForwardAndDirToDestinationAngle > 5)
-				{
-					AccelerationState = FullStop;
-					TurnState = TurningWhileStanding;
-					//Rotator.Yaw = OwnerShip->GetActorRotation().Yaw + DeltaTime * (bClockwiseRotation ? -AngleBetweenForwardAndDirToDestination : AngleBetweenForwardAndDirToDestination);
-				}
-				// If looking at destination then move straight
-				else
-				{
-					AccelerationState = Accelerating;
-					TurnState = NoTurning;
-					//DesiredMovementThisFrame = ConsumeInputVector() * DeltaTime * TurnForwardSpeed;
-				}
+				AccelerationState = FullStop;
+				TurnState = TurningWhileStanding;
+				RollState = Rolling;
 			}
-			// If destination is not within the turning circle then move with rotation
+			// If looking at destination then move straight
 			else
 			{
 				AccelerationState = Accelerating;
-				TurnState = TurningWhileMoving;
-				//Rotator.Yaw = OwnerShip->GetActorRotation().Yaw + DeltaTime * (bClockwiseRotation ? -AngleBetweenForwardAndDirToDestination : AngleBetweenForwardAndDirToDestination);
-				//DesiredMovementThisFrame = ConsumeInputVector() * DeltaTime * ForwardSpeed;
+				TurnState = NoTurning;
+				RollState = RollToZero;
 			}
-			if (DistanceToPoint >= AcceptanceRadius && DistanceToPoint < 3 * AcceptanceRadius)
+		}
+		// If destination is not within the turning circle then move with rotation
+		else
+		{
+			if (DistanceToPoint >= 10 * AcceptanceRadius)
+			{
+				AccelerationState = Accelerating;
+			}
+			if (DistanceToPoint < 10 * AcceptanceRadius)
 			{
 				AccelerationState = Decelerating;
 			}
-			if (DistanceToPoint > 0 && DistanceToPoint < AcceptanceRadius)
+			if (DistanceToPoint < 5 * AcceptanceRadius)
 			{
 				AccelerationState = Braking;
 			}
-			if (DistanceToPoint > 0 && DistanceToPoint < 0.5 * AcceptanceRadius)
+			if (DistanceToPoint < AcceptanceRadius)
 			{
 				AccelerationState = FullStop;
 			}
+			
+			if (ForwardAndDirToDestinationAngle < 1)
+			{
+				TurnState = NoTurning;
+			}
+			else
+			{
+				TurnState = TurningWhileMoving;
+			}
+		}
+		if (abs(ForwardAndDirToDestinationAngle) > 0.1)
+		{
+			RollState = Rolling;
+		}
+		else
+		{
+			RollState = RollToZero;
 		}
 		
 		switch (TurnState)
 		{
 		case NoTurning:
-			Rotator.Yaw = 0;
+			if (CurrentYawSpeed > 0)
+			{
+				CurrentYawSpeed -= AccelerationYawRate;
+			}
+			else
+			{
+				CurrentYawSpeed = 0;
+			}
 			break;
 		case TurningWhileMoving:
-			Rotator.Yaw = OwnerShip->GetActorRotation().Yaw + DeltaTime * (bClockwiseRotation ? -ForwardAndDirToDestinationAngle : ForwardAndDirToDestinationAngle);
+			if (CurrentYawSpeed < MaxYawSpeed)
+			{
+				CurrentYawSpeed += AccelerationYawRate;
+			}
+			else
+			{
+				CurrentYawSpeed = MaxYawSpeed;
+			}
 			break;
 		case TurningWhileStanding:
-			Rotator.Yaw = OwnerShip->GetActorRotation().Yaw + DeltaTime * (bClockwiseRotation ? -ForwardAndDirToDestinationAngle : ForwardAndDirToDestinationAngle);
+			if (CurrentYawSpeed < MaxYawSpeed)
+			{
+				CurrentYawSpeed += AccelerationYawRate;
+			}
+			else
+			{
+				CurrentYawSpeed = MaxYawSpeed;
+			}
 			break;
 		}
+		Rotator.Yaw = OwnerShip->GetActorRotation().Yaw + DeltaTime * (bClockwiseRotation ? -1 : 1) * ForwardAndDirToDestinationAngle * CurrentYawSpeed;
+
+		bool bCounterRoll = false;
+		switch (RollState)
+		{
+		case NoRolling:
+			CurrentRollSpeed = 0;
+			break;
+		case RollToZero:
+			if (CurrentRollSpeed > 0)
+			{
+				CurrentRollSpeed += AccelerationRollRate;
+			}
+			else
+			{
+				CurrentRollSpeed = 0;
+			}
+			bCounterRoll = true;
+			break;
+		case Rolling:
+			if (CurrentRollSpeed < MaxRollSpeed)
+			{
+				CurrentRollSpeed += AccelerationRollRate;
+			}
+			else
+			{
+				CurrentRollSpeed = MaxRollSpeed;
+			}
+			break;
+		}
+		Rotator.Roll = OwnerShip->GetActorRotation().Roll + DeltaTime * (bClockwiseRotation ? -1 : 1) * (bCounterRoll ? -1 : 1) * ForwardAndDirToDestinationAngle / 180 * CurrentRollSpeed;
+		// Set roll value in between +- MaxRollAngle
+		Rotator.Roll = Rotator.Roll > MaxRollAngle ? MaxRollAngle : (Rotator.Roll < -MaxRollAngle ? -MaxRollAngle : Rotator.Roll);
+
+		
 		switch(AccelerationState)
 		{
 		case FullStop:
-			DesiredMovementThisFrame = FVector::ZeroVector;
+			CurrentForwardSpeed = 0;
 			break;
 		case Accelerating:
-			DesiredMovementThisFrame = ConsumeInputVector() * DeltaTime * ForwardSpeed;
+			if (CurrentForwardSpeed < MaxForwardSpeed)
+			{
+				CurrentForwardSpeed += AccelerationForwardRate;
+			}
+			else
+			{
+				CurrentForwardSpeed = MaxForwardSpeed;
+			}
 			break;
 		case Decelerating:
-			DesiredMovementThisFrame = ConsumeInputVector() * DeltaTime * ForwardSpeed * 0.5;
+			if (CurrentForwardSpeed > 0)
+			{
+				CurrentForwardSpeed -= AccelerationForwardRate;
+			}
+			else
+			{
+				CurrentForwardSpeed = 0;
+			}
 			break;
 		case Braking:
-			DesiredMovementThisFrame = ConsumeInputVector() * DeltaTime * ForwardSpeed * 0.1;
+			if (CurrentForwardSpeed > 0)
+			{
+				CurrentForwardSpeed -= 5 * AccelerationForwardRate;
+			}
+			else
+			{
+				CurrentForwardSpeed = 0;
+			}
 			break;
 		}
+		DesiredMovementThisFrame = ConsumeInputVector() * DeltaTime * CurrentForwardSpeed;
 		
 		FString out = "";
-		out += FString("\nClockwiseRotation ") + (bClockwiseRotation ? FString("false") : FString("true"));
-		out += FString("\nPointMoveTo " + PointMoveTo.ToString());
-		out += FString("\nActorLocation " + OwnerShip->GetActorLocation().ToString());
-		out += FString("\nInitialMove ") + (bInitialMove ? FString("true") : FString("false"));
-		out += FString("\nCenterOfTurningCircle " + CircleCenter.ToString());
-		out += FString("\nAngleToCenterOfTurningCircle " + FString::SanitizeFloat(AngleToCenterOfTurningCircle));
-		out += FString("\nDistanceFromCircleCenterToDestination " + FString::SanitizeFloat(DistanceFromCircleCenterToDestination));
-		out += FString("\nLengthOfStraightPart " + FString::SanitizeFloat(LengthOfStraightPart));
-		out += FString("\ntheta " + FString::SanitizeFloat(theta) + " phi " + FString::SanitizeFloat(phi) + " angle " + FString::SanitizeFloat(ForwardAndDirToDestinationAngle));
-		out += FString("\nLeavingCirclePoint " + LeavingCirclePoint.ToString());
+		out += FString("\nAccelerationState: " + FString::SanitizeFloat(AccelerationState));
+		out += FString("\nTurnState: " + FString::SanitizeFloat(TurnState));
+		out += FString("\nRollState: " + FString::SanitizeFloat(RollState));
+		//out += FString("\nClockwiseRotation ") + (bClockwiseRotation ? FString("false") : FString("true"));
+		//out += FString("\nPointMoveTo " + PointMoveTo.ToString());
+		//out += FString("\nActorLocation " + OwnerShip->GetActorLocation().ToString());
+		//out += FString("\nInitialMove ") + (bInitialMove ? FString("true") : FString("false"));
+		//out += FString("\nCenterOfTurningCircle " + CircleCenter.ToString());
+		//out += FString("\nAngleToCenterOfTurningCircle " + FString::SanitizeFloat(AngleToCenterOfTurningCircle));
+		//out += FString("\nDistanceFromCircleCenterToDestination " + FString::SanitizeFloat(DistanceFromCircleCenterToDestination));
+		//out += FString("\nLengthOfStraightPart " + FString::SanitizeFloat(LengthOfStraightPart));
+		//out += FString("\ntheta " + FString::SanitizeFloat(theta) + " phi " + FString::SanitizeFloat(phi) + " angle " + FString::SanitizeFloat(ForwardAndDirToDestinationAngle));
+		//out += FString("\nLeavingCirclePoint " + LeavingCirclePoint.ToString());
 		GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::Green, out);
-		
-		
-		//if (angle > 5)
-		//{
-		//	DesiredMovementThisFrame = ConsumeInputVector() * DeltaTime * TurnForwardSpeed;
-		//}
-		//else
-		//{
-		//	DesiredMovementThisFrame = ConsumeInputVector() * DeltaTime * ForwardSpeed;
-		//}
-
-		
-		
 		 
 	}
-	//if(DistanceToPoint >= AcceptanceRadius)
-	if (!DesiredMovementThisFrame.IsNearlyZero())
+	
+	if(DistanceToPoint >= AcceptanceRadius)
+	//if (!DesiredMovementThisFrame.IsNearlyZero())
+	//if (AccelerationState != FullStop && TurnState != NoTurning && RollState != NoRolling)
 	{
 		FHitResult Hit;
 		SafeMoveUpdatedComponent(DesiredMovementThisFrame, Rotator, true, Hit);
@@ -349,22 +433,22 @@ void UShipMovementComponent::BuildLineSegments()
 			float AngleToCenterOfTurningCircle = ForwardVector.GetSafeNormal().Rotation().Yaw + (bClockwiseRotation ? -90 : 90);
 
 			FVector2D CircleCenter = FVector2D::ZeroVector;
-			CircleCenter.X = OwnerShip->GetActorLocation().X + MaxTurnRadius * cos(AngleToCenterOfTurningCircle);
-			CircleCenter.Y = OwnerShip->GetActorLocation().Y + MaxTurnRadius * sin(AngleToCenterOfTurningCircle);
+			CircleCenter.X = OwnerShip->GetActorLocation().X + MinTurnRadius * cos(AngleToCenterOfTurningCircle);
+			CircleCenter.Y = OwnerShip->GetActorLocation().Y + MinTurnRadius * sin(AngleToCenterOfTurningCircle);
 
 			float dx = PointMoveTo.X - CircleCenter.X;
 			float dy = PointMoveTo.Y - CircleCenter.Y;
 			float DistanceFromCircleCenterToDestination = sqrt(dx * dx + dy * dy);
 
-			float LengthOfStraightPart = sqrt(DistanceFromCircleCenterToDestination * DistanceFromCircleCenterToDestination - MaxTurnRadius * MaxTurnRadius);
+			float LengthOfStraightPart = sqrt(DistanceFromCircleCenterToDestination * DistanceFromCircleCenterToDestination - MinTurnRadius * MinTurnRadius);
 
-			float theta = UKismetMathLibrary::DegAcos(MaxTurnRadius / DistanceFromCircleCenterToDestination);
+			float theta = UKismetMathLibrary::DegAcos(MinTurnRadius / DistanceFromCircleCenterToDestination);
 			float phi = UKismetMathLibrary::DegAtan(StartToEnd.Y / StartToEnd.X);
 
 			FVector2D LeavingCirclePoint = FVector2D(
 				// if rotating left then phi + theta, else phi - theta
-				CircleCenter.X - MaxTurnRadius * cos(phi + (bClockwiseRotation ? -theta : theta)),
-				CircleCenter.Y - MaxTurnRadius * sin(phi + (bClockwiseRotation ? -theta : theta))
+				CircleCenter.X - MinTurnRadius * cos(phi + (bClockwiseRotation ? -theta : theta)),
+				CircleCenter.Y - MinTurnRadius * sin(phi + (bClockwiseRotation ? -theta : theta))
 			);
 			LineSegments.Add(ArcLine(Start, LengthOfLine, CircleCenter, ForwardAndDirToDestinationAngle, UKismetMathLibrary::DegreesToRadians(phi + theta), bClockwiseRotation));
 		}

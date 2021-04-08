@@ -78,10 +78,17 @@ void AShip::Initialize(ARTSPlayerController* _Controller)
 	if (_Controller)
 	{
 		PlayerController = _Controller;
-		
-		MovementComponent->PlayerController = _Controller;
-		MovementComponent->OwnerShip = this;
-		MovementComponent->Initialize();
+
+		if(MovementComponent)
+		{
+			MovementComponent->PlayerController = _Controller;
+			MovementComponent->OwnerShip = this;
+			MovementComponent->Initialize();	
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Init() is null"));
+		}
 		
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
 	}

@@ -25,7 +25,7 @@ void UBasicButtonsHUD::SpawnShip()
 	v.X = UKismetMathLibrary::RandomIntegerInRange(-1000, 1000);
 	v.Y = UKismetMathLibrary::RandomIntegerInRange(-1000, 1000);
 	v.Z = 150;
-	ShipFactory::NewShip(GetWorld(), v, PlayerController);
+	ShipFactory::NewShip(GetWorld(), FVector(-1000, 0, 150), PlayerController);
 }
 
 void UBasicButtonsHUD::SpawnAsteroidField()

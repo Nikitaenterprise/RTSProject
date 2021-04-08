@@ -16,11 +16,18 @@ enum EShipAccelerationState
 	Braking
 };
 
-enum EShipTurnState
+enum EShipYawState
 {
 	NoTurning,
 	TurningWhileStanding,
 	TurningWhileMoving
+};
+
+enum EShipRollState
+{
+	NoRolling,
+	Rolling,
+	RollToZero
 };
 
 UCLASS()
@@ -32,15 +39,29 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
 	float AcceptanceRadius = 1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
-	float ForwardSpeed = 500;
+	float AccelerationForwardRate = 1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
-	float TurnAngleSpeed = 5;
+	float AccelerationYawRate = 0.5;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
+	float AccelerationRollRate = 2;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
+	float CurrentForwardSpeed = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
+	float CurrentYawSpeed = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
+	float CurrentRollSpeed = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
+	float MaxForwardSpeed = 500;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
+	float MaxYawSpeed = 5;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
+	float MaxRollSpeed = 5;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Moving")
-	float TurnForwardSpeed = ForwardSpeed * 0.3;
+	float TurnForwardSpeed = MaxForwardSpeed * 0.3;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
 	float MaxRollAngle = 20;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
-	float MaxTurnRadius = 100;
+	float MinTurnRadius = 100;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
 	FRotator RotationRate = FRotator(15, 15, 15);
 	
@@ -93,7 +114,8 @@ private:
 	FRotator Rotator;
 
 	EShipAccelerationState AccelerationState = FullStop;
-	EShipTurnState TurnState = NoTurning;
+	EShipYawState TurnState = NoTurning;
+	EShipRollState RollState = NoRolling;
 	
 	bool bShouldMove = false;
 	bool bRequestedMove = false;
