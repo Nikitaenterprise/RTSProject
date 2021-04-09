@@ -132,8 +132,6 @@ private:
 		bool bClockwiseRotation = true;
 	};
 	TArray<LineSegment*> LineSegments;
-
-	float DeltaTime = 0;
 	
 	FVector InputVector = FVector(0, 0, 0);
 	
@@ -166,7 +164,7 @@ public:
 	bool RequestNavMoving(const FVector _TargetLocation);
 	inline void ReverceNavPath();
 	void BuildLineSegments();
-	void FollowPath();
+	void FollowPath(LineSegment& Segment);
 	inline void MakePathInXYPlane(float _setZToThisValue);
 	inline void GetPoint();
 };
