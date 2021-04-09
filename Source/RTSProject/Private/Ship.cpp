@@ -157,6 +157,11 @@ void AShip::SetHealthShieldBar()
 
 bool AShip::Move(const FVector _TargetLocation)
 {
+	if (!MovementComponent)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Move() is null"));
+		return false;
+	}
 	const bool successful = MovementComponent->RequestNavMoving(_TargetLocation);
 	if (!successful) return false;
 	NavPathCoords = MovementComponent->GetNavPathCoords();

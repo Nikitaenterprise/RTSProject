@@ -8,34 +8,58 @@ class ARTSPlayerController;
 class ARTSAIController;
 class AShip;
 
-enum EShipAccelerationState
-{
-	FullStop,
-	Accelerating,
-	Decelerating,
-	Braking
-};
-
-enum EShipYawState
-{
-	NoTurning,
-	TurningWhileStanding,
-	TurningWhileMoving
-};
-
-enum EShipRollState
-{
-	NoRolling,
-	Rolling,
-	RollToZero
-};
-
 UCLASS()
 class RTSPROJECT_API UShipMovementComponent : public UPawnMovementComponent
 {
 	GENERATED_BODY()
+	
+public:
+	
+	enum EShipAccelerationState
+	{
+		FullStop,
+		Accelerating,
+		Decelerating,
+		Braking
+	};
+	static constexpr char* EShipAccelerationStateStr[] =
+	{
+		"FullStop",
+		"Accelerating",
+		"Decelerating",
+		"Braking"
+	};
+
+	enum EShipYawState
+	{
+		NoTurning,
+		TurningWhileStanding,
+		TurningWhileMoving
+	};
+	static constexpr char* EShipYawStateStr[] =
+	{
+		"NoTurning",
+		"TurningWhileStanding",
+		"TurningWhileMoving"
+	};
+
+	enum EShipRollState
+	{
+		NoRolling,
+		Rolling,
+		RollToZero
+	};
+	static constexpr char* EShipRollStateStr[] =
+	{
+		"NoRolling",
+		"Rolling",
+		"RollToZero"
+	};
 
 public:
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
+	int Mass = 100;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
 	float AcceptanceRadius = 1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
@@ -70,6 +94,7 @@ public:
 	AShip* OwnerShip = nullptr;
 	ARTSPlayerController* PlayerController = nullptr;
 	ARTSAIController* RTSAIController = nullptr;
+	
 private:
 	
 	class LineSegment

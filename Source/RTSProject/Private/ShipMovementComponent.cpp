@@ -118,23 +118,6 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		// If destination is not within the turning circle then move with rotation
 		else
 		{
-			if (DistanceToPoint >= 10 * AcceptanceRadius)
-			{
-				AccelerationState = Accelerating;
-			}
-			if (DistanceToPoint < 10 * AcceptanceRadius)
-			{
-				AccelerationState = Decelerating;
-			}
-			if (DistanceToPoint < 5 * AcceptanceRadius)
-			{
-				AccelerationState = Braking;
-			}
-			if (DistanceToPoint < AcceptanceRadius)
-			{
-				AccelerationState = FullStop;
-			}
-			
 			if (ForwardAndDirToDestinationAngle < 1)
 			{
 				TurnState = NoTurning;
@@ -144,7 +127,23 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 				TurnState = TurningWhileMoving;
 			}
 		}
-		if (abs(ForwardAndDirToDestinationAngle) > 0.1)
+		if (DistanceToPoint >= 10 * AcceptanceRadius)
+		{
+			AccelerationState = Accelerating;
+		}
+		if (DistanceToPoint < 10 * AcceptanceRadius)
+		{
+			AccelerationState = Decelerating;
+		}
+		if (DistanceToPoint < 5 * AcceptanceRadius)
+		{
+			AccelerationState = Braking;
+		}
+		if (DistanceToPoint < AcceptanceRadius)
+		{
+			AccelerationState = FullStop;
+		}
+		if (abs(ForwardAndDirToDestinationAngle) > 15)
 		{
 			RollState = Rolling;
 		}
@@ -192,18 +191,16 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		switch (RollState)
 		{
 		case NoRolling:
-			CurrentRollSpeed = 0;
-			break;
-		case RollToZero:
 			if (CurrentRollSpeed > 0)
 			{
-				CurrentRollSpeed += AccelerationRollRate;
+				CurrentRollSpeed -= AccelerationRollRate;
 			}
 			else
 			{
 				CurrentRollSpeed = 0;
 			}
-			bCounterRoll = true;
+			break;
+		case RollToZero:
 			break;
 		case Rolling:
 			if (CurrentRollSpeed < MaxRollSpeed)
@@ -216,7 +213,12 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 			}
 			break;
 		}
-		Rotator.Roll = OwnerShip->GetActorRotation().Roll + DeltaTime * (bClockwiseRotation ? -1 : 1) * (bCounterRoll ? -1 : 1) * ForwardAndDirToDestinationAngle / 180 * CurrentRollSpeed;
+		/*float deviation = (bClockwiseRotation ? -1 : 1) * CurrentYawSpeed/MaxYawSpeed * MaxRollSpeed;
+		float toreturn = OwnerShip->GetActorRotation().Roll * -1 * deviation;
+		Rotator.Roll = OwnerShip->GetActorRotation().Roll + (deviation + toreturn) * DeltaTime;*/
+		float deg = UKismetMathLibrary::DegAtan( CurrentForwardSpeed / MinTurnRadius * CurrentYawSpeed * (bClockwiseRotation ? -1 : 1));
+		deg = deg > MaxRollAngle ? MaxRollAngle : deg < -MaxRollAngle ? -MaxRollAngle : deg;
+		Rotator.Roll = OwnerShip->GetActorRotation().Roll + deg * DeltaTime * CurrentRollSpeed - CurrentRollSpeed * OwnerShip->GetActorRotation().Roll * DeltaTime;
 		// Set roll value in between +- MaxRollAngle
 		Rotator.Roll = Rotator.Roll > MaxRollAngle ? MaxRollAngle : (Rotator.Roll < -MaxRollAngle ? -MaxRollAngle : Rotator.Roll);
 
@@ -260,9 +262,11 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		DesiredMovementThisFrame = ConsumeInputVector() * DeltaTime * CurrentForwardSpeed;
 		
 		FString out = "";
-		out += FString("\nAccelerationState: " + FString::SanitizeFloat(AccelerationState));
-		out += FString("\nTurnState: " + FString::SanitizeFloat(TurnState));
-		out += FString("\nRollState: " + FString::SanitizeFloat(RollState));
+		out += FString("\nAccelerationState: ") + FString(EShipAccelerationStateStr[AccelerationState]) + FString(" ") + FString::SanitizeFloat(CurrentForwardSpeed);
+		out += FString("\nTurnState: ") + FString(EShipYawStateStr[TurnState]) + FString(" ") + FString::SanitizeFloat(CurrentYawSpeed);
+		out += FString("\nRollState: ") + FString(EShipRollStateStr[RollState]) + FString(" ") + FString::SanitizeFloat(OwnerShip->GetActorRotation().Roll);
+		out += FString("\nDegAtan: ") + FString::SanitizeFloat(UKismetMathLibrary::DegAtan(CurrentForwardSpeed * CurrentYawSpeed * (bClockwiseRotation ? -1 : 1)));
+		out += FString("\nForwardAndDirToDestinationAngle= ") + FString::SanitizeFloat(ForwardAndDirToDestinationAngle);
 		//out += FString("\nClockwiseRotation ") + (bClockwiseRotation ? FString("false") : FString("true"));
 		//out += FString("\nPointMoveTo " + PointMoveTo.ToString());
 		//out += FString("\nActorLocation " + OwnerShip->GetActorLocation().ToString());
@@ -276,9 +280,15 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::Green, out);
 		 
 	}
+
+	/*if (bUseRVOAvoidance)
+	{
+		CalculateAvoidanceVelocity(DeltaTime);
+		UpdateAvoidance(DeltaTime);
+	}*/
 	
-	if(DistanceToPoint >= AcceptanceRadius)
-	//if (!DesiredMovementThisFrame.IsNearlyZero())
+	//if(DistanceToPoint >= AcceptanceRadius)
+	if (!DesiredMovementThisFrame.IsNearlyZero())
 	//if (AccelerationState != FullStop && TurnState != NoTurning && RollState != NoRolling)
 	{
 		FHitResult Hit;
