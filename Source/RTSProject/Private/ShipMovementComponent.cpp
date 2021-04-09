@@ -44,7 +44,8 @@ void UShipMovementComponent::Initialize()
 void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
+	this->DeltaTime = DeltaTime;
+	
 	if (!PawnOwner || !UpdatedComponent || ShouldSkipUpdate(DeltaTime)) return;
 
 	
@@ -70,7 +71,6 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		const bool bClockwiseRotation = AnglesFunctions::FindRotationDirectionBetweenVectorsOn2D(
 			DirectionToDestination.GetSafeNormal(), 
 			ForwardVector.GetSafeNormal());
-		bool bRotateLeft = !bClockwiseRotation;
 
 		float AngleToCenterOfTurningCircle = OwnerShip->GetActorForwardVector().GetSafeNormal().Rotation().Yaw + (bClockwiseRotation ? -90 : 90);
 		
@@ -213,9 +213,6 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 			}
 			break;
 		}
-		/*float deviation = (bClockwiseRotation ? -1 : 1) * CurrentYawSpeed/MaxYawSpeed * MaxRollSpeed;
-		float toreturn = OwnerShip->GetActorRotation().Roll * -1 * deviation;
-		Rotator.Roll = OwnerShip->GetActorRotation().Roll + (deviation + toreturn) * DeltaTime;*/
 		float deg = UKismetMathLibrary::DegAtan( CurrentForwardSpeed / MinTurnRadius * CurrentYawSpeed * (bClockwiseRotation ? -1 : 1));
 		deg = deg > MaxRollAngle ? MaxRollAngle : deg < -MaxRollAngle ? -MaxRollAngle : deg;
 		Rotator.Roll = OwnerShip->GetActorRotation().Roll + deg * DeltaTime * CurrentRollSpeed - CurrentRollSpeed * OwnerShip->GetActorRotation().Roll * DeltaTime;
@@ -421,7 +418,6 @@ void UShipMovementComponent::BuildLineSegments()
 		FVector End = NavPathCoords[i + 1];
 
 		FVector StartToEnd = End - Start;
-		float LengthOfLine = StartToEnd.Size();
 		FVector ForwardVector = OwnerShip->GetActorForwardVector();
 
 		const float ForwardAndDirToDestinationAngle = UKismetMathLibrary::RadiansToDegrees(
@@ -431,8 +427,7 @@ void UShipMovementComponent::BuildLineSegments()
 
 		if (ForwardAndDirToDestinationAngle < 1)
 		{
-			LineSegments.Add(StraightLine(Start, LengthOfLine, ForwardAndDirToDestinationAngle));
-			continue;
+			LineSegments.Add(new StraightLine(Start, StartToEnd.Size(), ForwardAndDirToDestinationAngle));
 		}
 		else
 		{
@@ -440,27 +435,82 @@ void UShipMovementComponent::BuildLineSegments()
 				StartToEnd.GetSafeNormal(),
 				ForwardVector.GetSafeNormal());
 
+			// First we calculate the location of point P, which is the center of our turning circle,
+			// and is always radius r away from the starting point.
+			// If we are turning right from our initial direction, that means P is at an angle
+			// of (initial_direction - 90) from the origin, so
 			float AngleToCenterOfTurningCircle = ForwardVector.GetSafeNormal().Rotation().Yaw + (bClockwiseRotation ? -90 : 90);
-
 			FVector2D CircleCenter = FVector2D::ZeroVector;
 			CircleCenter.X = OwnerShip->GetActorLocation().X + MinTurnRadius * cos(AngleToCenterOfTurningCircle);
 			CircleCenter.Y = OwnerShip->GetActorLocation().Y + MinTurnRadius * sin(AngleToCenterOfTurningCircle);
 
-			float dx = PointMoveTo.X - CircleCenter.X;
-			float dy = PointMoveTo.Y - CircleCenter.Y;
-			float DistanceFromCircleCenterToDestination = sqrt(dx * dx + dy * dy);
+			// Now that we know the location of the center point P,
+			// we can calculate the distance from P to the destination
+			FVector2D h = FVector2D(PointMoveTo) - CircleCenter;
+			float DistanceFromCircleCenterToDestination = h.Size();
 
+			// Now we can calculate the length of segment d, since we already know the lengths
+			// of the other two sides of the right triangle, namely h and r.
+			// We can also determine angle theta from the right-triangle relationship:
 			float LengthOfStraightPart = sqrt(DistanceFromCircleCenterToDestination * DistanceFromCircleCenterToDestination - MinTurnRadius * MinTurnRadius);
-
 			float theta = UKismetMathLibrary::DegAcos(MinTurnRadius / DistanceFromCircleCenterToDestination);
-			float phi = UKismetMathLibrary::DegAtan(StartToEnd.Y / StartToEnd.X);
 
+			// Finally, to figure out the point Q at which to leave the circle and start
+			// on the straight line, we need to know the total angle phi + theta,
+			// and  is easily determined as the angle from P to the destination:
+			float phi = UKismetMathLibrary::DegAtan(h.Y / h.X);
 			FVector2D LeavingCirclePoint = FVector2D(
 				// if rotating left then phi + theta, else phi - theta
 				CircleCenter.X - MinTurnRadius * cos(phi + (bClockwiseRotation ? -theta : theta)),
 				CircleCenter.Y - MinTurnRadius * sin(phi + (bClockwiseRotation ? -theta : theta))
 			);
-			LineSegments.Add(ArcLine(Start, LengthOfLine, CircleCenter, ForwardAndDirToDestinationAngle, UKismetMathLibrary::DegreesToRadians(phi + theta), bClockwiseRotation));
+			
+			LineSegments.Add(new ArcLine(Start, 360-(90+ phi + (bClockwiseRotation ? -theta : theta))*MinTurnRadius, CircleCenter, ForwardAndDirToDestinationAngle, UKismetMathLibrary::DegreesToRadians(phi + theta), bClockwiseRotation));
+		}
+	}
+}
+
+void UShipMovementComponent::FollowPath()
+{
+	float FrameDistance = CurrentForwardSpeed * DeltaTime;
+	FVector Position;
+	float Direction;
+	float theta;
+	for (const auto& Segment : LineSegments)
+	{
+		// If unit is somewhere on this line segment
+		if (FrameDistance < Segment->Length)
+		{
+			ArcLine* ArcSegment = Cast<ArcLine>(Segment);
+			StraightLine* StraightSegment = Cast<StraightLine>(Segment);
+			// If Segment is an arc
+			if(ArcSegment)
+			{
+				// Determine current angle on arc(theta) by adding or
+				// subtracting(distance / r) to the starting angle
+				// depending on whether turning to the left or right
+				theta = OwnerShip->GetActorRotation().Yaw +
+					(ArcSegment->bClockwiseRotation ? FrameDistance / MinTurnRadius : -FrameDistance / MinTurnRadius);
+				
+				Position.X = ArcSegment->CircleCenter.X + MinTurnRadius * cos(theta);
+				Position.Y = ArcSegment->CircleCenter.Y + MinTurnRadius * sin(theta);
+
+				// Determine current direction(direction) by adding or
+				// subtracting 90 to theta, depending on left / right
+				Direction = theta + ArcSegment->bClockwiseRotation ? 90 : -90;
+			}else
+			// If Segment is a straight line
+			if(StraightSegment)
+			{
+				Position.X = StraightSegment->StartPosition.X + FrameDistance + MinTurnRadius * cos(StraightSegment->Angle);
+				Position.Y = StraightSegment->StartPosition.Y + FrameDistance + MinTurnRadius * sin(StraightSegment->Angle);
+				Direction = theta;
+				break;
+			}
+		}
+		else
+		{
+			FrameDistance -= Segment->Length;
 		}
 	}
 }

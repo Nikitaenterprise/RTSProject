@@ -119,19 +119,21 @@ private:
 	class ArcLine : public LineSegment
 	{
 	public:
-		ArcLine(FVector StartPosition, float Length, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover, bool bRotateClockwise) :
+		ArcLine(FVector StartPosition, float Length, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover, bool bClockwiseRotation) :
 			LineSegment(StartPosition, Length),
 			CircleCenter(CircleCenter),
 			StartingAngle(StartingAngle),
 			TotalRadiansCover(TotalRadiansCover),
-			bRotateClockwise(bRotateClockwise) {}
+			bClockwiseRotation(bClockwiseRotation) {}
 		
 		FVector2D CircleCenter = FVector2D::ZeroVector;
 		float StartingAngle = 0;
 		float TotalRadiansCover = 0;
-		bool bRotateClockwise = true;
+		bool bClockwiseRotation = true;
 	};
-	TArray<LineSegment> LineSegments;
+	TArray<LineSegment*> LineSegments;
+
+	float DeltaTime = 0;
 	
 	FVector InputVector = FVector(0, 0, 0);
 	
@@ -146,8 +148,8 @@ private:
 	bool bRequestedMove = false;
 	bool bInitialMove = false;
 
-	
 public:
+	
 	UShipMovementComponent(const FObjectInitializer& ObjectInitializer);
 	void Initialize();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -164,6 +166,7 @@ public:
 	bool RequestNavMoving(const FVector _TargetLocation);
 	inline void ReverceNavPath();
 	void BuildLineSegments();
+	void FollowPath();
 	inline void MakePathInXYPlane(float _setZToThisValue);
 	inline void GetPoint();
 };
