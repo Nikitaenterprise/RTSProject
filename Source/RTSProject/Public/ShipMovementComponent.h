@@ -96,42 +96,56 @@ public:
 	ARTSAIController* RTSAIController = nullptr;
 	
 private:
-	
+	enum class ELineSegment
+	{
+		StraightLine,
+		ArcLine
+	};
 	class LineSegment
 	{
 	public:
-		LineSegment(FVector StartPosition, float Length) :
+		LineSegment(FVector StartPosition, FVector EndPosition, float Length) :
 			StartPosition(StartPosition),
+			EndPosition(EndPosition),
 			Length(Length) {}
 		
+		ELineSegment LineType;
 		FVector StartPosition = FVector::ZeroVector;
+		FVector EndPosition = FVector::ZeroVector;
 		float Length = 0;
 	};
 	class StraightLine : public LineSegment
 	{
 	public:
-		StraightLine(FVector StartPosition, float Length, float Angle) :
-			LineSegment(StartPosition, Length),
-			Angle(Angle) {}
+		StraightLine(FVector StartPosition, FVector EndPosition, float Length, float Angle) :
+			LineSegment(StartPosition, EndPosition, Length),
+			Angle(Angle)
+		{
+			LineType = ELineSegment::StraightLine;
+		}
 		
 		float Angle = 0;
 	};
 	class ArcLine : public LineSegment
 	{
 	public:
-		ArcLine(FVector StartPosition, float Length, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover, bool bClockwiseRotation) :
-			LineSegment(StartPosition, Length),
+		ArcLine(FVector StartPosition, FVector EndPosition, float Length, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover, bool bClockwiseRotation) :
+			LineSegment(StartPosition, EndPosition, Length),
 			CircleCenter(CircleCenter),
 			StartingAngle(StartingAngle),
 			TotalRadiansCover(TotalRadiansCover),
-			bClockwiseRotation(bClockwiseRotation) {}
-		
+			bClockwiseRotation(bClockwiseRotation)
+		{
+			LineType = ELineSegment::ArcLine;
+		}
+
 		FVector2D CircleCenter = FVector2D::ZeroVector;
 		float StartingAngle = 0;
 		float TotalRadiansCover = 0;
 		bool bClockwiseRotation = true;
 	};
 	TArray<LineSegment*> LineSegments;
+	LineSegment* CurrentLine = nullptr;
 	
 	FVector InputVector = FVector(0, 0, 0);
 	
@@ -157,14 +171,15 @@ public:
 
 	TArray<FVector> GetNavPathCoords() const { return NavPathCoords; }
 	
-	bool Walkable(FVector FirstPoint, FVector SecondPoint);
-	void RequestTurnTo(const FRotator _TargetRotation);
-	void CalculateMove();
-	void CalculateRotation();
 	bool RequestNavMoving(const FVector _TargetLocation);
+
+private:
+
 	inline void ReverceNavPath();
 	void BuildLineSegments();
-	void FollowPath(LineSegment& Segment);
 	inline void MakePathInXYPlane(float _setZToThisValue);
 	inline void GetPoint();
+	inline void CalculateForwardSpeed();
+	inline void CalculateYawSpeed();
+	inline void CalculateRoll();
 };
