@@ -96,10 +96,15 @@ public:
 	ARTSAIController* RTSAIController = nullptr;
 	
 private:
-	enum class ELineSegment
+	enum ELineSegment
 	{
-		StraightLine,
-		ArcLine
+		STRAIGHT_LINE,
+		ARC_LINE
+	};
+	static constexpr char* ELineSegmentStr[] =
+	{
+		"StraightLine",
+		"ArcLine"
 	};
 	class LineSegment
 	{
@@ -121,7 +126,7 @@ private:
 			LineSegment(StartPosition, EndPosition, Length),
 			Angle(Angle)
 		{
-			LineType = ELineSegment::StraightLine;
+			LineType = STRAIGHT_LINE;
 		}
 		
 		float Angle = 0;
@@ -136,7 +141,7 @@ private:
 			TotalRadiansCover(TotalRadiansCover),
 			bClockwiseRotation(bClockwiseRotation)
 		{
-			LineType = ELineSegment::ArcLine;
+			LineType = ELineSegment::ARC_LINE;
 		}
 
 		FVector2D CircleCenter = FVector2D::ZeroVector;
