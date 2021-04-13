@@ -91,15 +91,21 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 			// Determine current angle on arc(theta) by adding or
 			// subtracting(distance / r) to the starting angle
 			// depending on whether turning to the left or right
-			const float AngleOnArc = ArcSegment->StartingAngle + FrameDistance / MinTurnRadius * (ArcSegment->bCounterClockwiseRotation ? 1 : -1);
+
+			/*const float AngleOnArc = ArcSegment->StartingAngle + FrameDistance / MinTurnRadius * (ArcSegment->bCounterClockwiseRotation ? 1 : -1);
 			Position.X = OwnerShip->GetActorLocation().X + ArcSegment->CircleCenter.X + MinTurnRadius * UKismetMathLibrary::DegCos(AngleOnArc);
 			Position.Y = OwnerShip->GetActorLocation().Y - ArcSegment->CircleCenter.Y - MinTurnRadius * UKismetMathLibrary::DegSin(AngleOnArc);
+			Position.Z = 0;*/
+			const float CurrentAngle = UKismetMathLibrary::DegAtan2(-OwnerShip->GetActorLocation().Y, OwnerShip->GetActorLocation().X);
+			const float AngleOnArc = CurrentAngle + FrameDistance / MinTurnRadius * (ArcSegment->bCounterClockwiseRotation ? 1 : -1);
+			Position.X = MinTurnRadius * (UKismetMathLibrary::DegCos(AngleOnArc) - UKismetMathLibrary::DegCos(CurrentAngle));
+			Position.Y = MinTurnRadius * (UKismetMathLibrary::DegSin(AngleOnArc) + UKismetMathLibrary::DegSin(CurrentAngle));
 			Position.Z = 0;
-			
 			// Determine current direction(direction) by adding or
 			// subtracting 90 to theta, depending on left / right
-			Rotator.Yaw = AngleOnArc + (ArcSegment->bCounterClockwiseRotation ? 90 : -90) * DeltaTime * CurrentYawSpeed;
-
+			//Rotator.Yaw = AngleOnArc + (ArcSegment->bCounterClockwiseRotation ? 90 : -90) * DeltaTime * CurrentYawSpeed;
+			Rotator.Yaw = AngleOnArc;
+			
 			FString out = "";
 			out += FString("\n FrameDistance= ") + FString::SanitizeFloat(FrameDistance);
 			out += FString("\n AngleOnArc= ") + FString::SanitizeFloat(AngleOnArc);
@@ -334,7 +340,7 @@ void UShipMovementComponent::BuildLineSegments()
 			// Finally, to figure out the point Q at which to leave the circle and start
 			// on the straight line, we need to know the total angle phi + theta,
 			// and  is easily determined as the angle from P to the destination:
-			const float Phi = UKismetMathLibrary::DegAtan2(-h.Y, h.X);//UKismetMathLibrary::DegAtan(-h.Y / h.X);
+			const float Phi = UKismetMathLibrary::DegAtan2(-h.Y, h.X);
 			
 			const FVector LeavingCirclePoint = FVector(
 				CircleCenter.X + MinTurnRadius * UKismetMathLibrary::DegCos(Phi + Theta),
