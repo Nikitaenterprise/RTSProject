@@ -134,28 +134,31 @@ private:
 	class ArcLine : public LineSegment
 	{
 	public:
-		ArcLine(FVector StartPosition, FVector EndPosition, float Length, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover, bool bClockwiseRotation) :
+		ArcLine(FVector StartPosition, FVector EndPosition, float Length, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover, bool bCounterClockwiseRotation) :
 			LineSegment(StartPosition, EndPosition, Length),
 			CircleCenter(CircleCenter),
 			StartingAngle(StartingAngle),
 			TotalRadiansCover(TotalRadiansCover),
-			bClockwiseRotation(bClockwiseRotation)
+			bCounterClockwiseRotation(bCounterClockwiseRotation)
 		{
-			LineType = ELineSegment::ARC_LINE;
+			LineType = ARC_LINE;
 		}
 
 		FVector2D CircleCenter = FVector2D::ZeroVector;
 		float StartingAngle = 0;
 		float TotalRadiansCover = 0;
-		bool bClockwiseRotation = true;
+		bool bCounterClockwiseRotation = true;
 	};
+
+	
 	TArray<LineSegment*> LineSegments;
 	LineSegment* CurrentLine = nullptr;
-	
+
+	// Normalized direction vector to shift this frame
 	FVector InputVector = FVector(0, 0, 0);
+	FRotator Rotator;
 	
 	FVector PointMoveTo;
-	FRotator Rotator;
 
 	EShipAccelerationState AccelerationState = FullStop;
 	EShipYawState TurnState = NoTurning;

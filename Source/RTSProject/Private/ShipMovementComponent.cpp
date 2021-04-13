@@ -47,7 +47,7 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
 	if (!PawnOwner || !UpdatedComponent || ShouldSkipUpdate(DeltaTime)) return;
-
+	DeltaTime /= 10;
 	
 	FVector DesiredMovementThisFrame = FVector::ZeroVector;
 	FVector DirectionToDestination = FVector::ZeroVector;
@@ -91,33 +91,28 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 			// Determine current angle on arc(theta) by adding or
 			// subtracting(distance / r) to the starting angle
 			// depending on whether turning to the left or right
-			const float AngleOnArc = OwnerShip->GetActorRotation().Yaw +
-				(ArcSegment->bClockwiseRotation ? -FrameDistance / MinTurnRadius : FrameDistance / MinTurnRadius);
-
-			Position.X = ArcSegment->CircleCenter.X + MinTurnRadius * UKismetMathLibrary::DegCos(AngleOnArc);
-			Position.Y = ArcSegment->CircleCenter.Y - MinTurnRadius * UKismetMathLibrary::DegSin(AngleOnArc);
+			const float AngleOnArc = ArcSegment->StartingAngle + FrameDistance / MinTurnRadius * (ArcSegment->bCounterClockwiseRotation ? 1 : -1);
+			Position.X = OwnerShip->GetActorLocation().X + ArcSegment->CircleCenter.X + MinTurnRadius * UKismetMathLibrary::DegCos(AngleOnArc);
+			Position.Y = OwnerShip->GetActorLocation().Y - ArcSegment->CircleCenter.Y - MinTurnRadius * UKismetMathLibrary::DegSin(AngleOnArc);
 			Position.Z = 0;
 			
-			//DrawDebugPoint(GetWorld(), FVector(Position.X, Position.Y, 50), 5, FColor::Red, false, 5);
 			// Determine current direction(direction) by adding or
 			// subtracting 90 to theta, depending on left / right
-			Rotator.Yaw = OwnerShip->GetActorRotation().Yaw  +  (AngleOnArc + (ArcSegment->bClockwiseRotation ? -90 : 90)) * DeltaTime * CurrentYawSpeed;
+			Rotator.Yaw = AngleOnArc + (ArcSegment->bCounterClockwiseRotation ? 90 : -90) * DeltaTime * CurrentYawSpeed;
 
 			FString out = "";
-			
 			out += FString("\n FrameDistance= ") + FString::SanitizeFloat(FrameDistance);
 			out += FString("\n AngleOnArc= ") + FString::SanitizeFloat(AngleOnArc);
 			out += FString("\n Position= ") + Position.ToString();
 			out += FString("\n Rotator.Yaw= ") + FString::SanitizeFloat(Rotator.Yaw);
-			
 			GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::Green, out);
 		}
 		// If Segment is a straight line
 		else if (CurrentLine->LineType == STRAIGHT_LINE)
 		{
 			StraightSegment = static_cast<StraightLine*>(CurrentLine);
-			Position.X = StraightSegment->StartPosition.X + FrameDistance - MinTurnRadius * UKismetMathLibrary::DegCos(StraightSegment->Angle);
-			Position.Y = StraightSegment->StartPosition.Y + FrameDistance + MinTurnRadius * UKismetMathLibrary::DegSin(StraightSegment->Angle);
+			Position.X = StraightSegment->StartPosition.X + MinTurnRadius * UKismetMathLibrary::DegCos(StraightSegment->Angle);
+			Position.Y = StraightSegment->StartPosition.Y - MinTurnRadius * UKismetMathLibrary::DegSin(StraightSegment->Angle);
 			Rotator.Yaw = OwnerShip->GetActorRotation().Yaw;// StraightSegment->Angle;
 		}
 
@@ -186,7 +181,7 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		//out += FString("\nLengthOfStraightPart " + FString::SanitizeFloat(LengthOfStraightPart));
 		//out += FString("\ntheta " + FString::SanitizeFloat(theta) + " phi " + FString::SanitizeFloat(phi) + " angle " + FString::SanitizeFloat(ForwardAndDirToDestinationAngle));
 		//out += FString("\nLeavingCirclePoint " + LeavingCirclePoint.ToString());
-		GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::Green, out);
+		//GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::Green, out);
 		 
 	}
 
@@ -332,32 +327,30 @@ void UShipMovementComponent::BuildLineSegments()
 			// of the other two sides of the right triangle, namely h and radius.
 			// We can also determine angle theta from the right-triangle relationship:
 			const float LengthOfStraightPart = sqrt(DistanceFromCircleCenterToDestination * DistanceFromCircleCenterToDestination - MinTurnRadius * MinTurnRadius);
-			const float theta = UKismetMathLibrary::DegAcos(MinTurnRadius / DistanceFromCircleCenterToDestination);
-
+			float Theta = UKismetMathLibrary::DegAcos(MinTurnRadius / DistanceFromCircleCenterToDestination); 
+			// if rotating left then -theta, else +theta
+			Theta = bCounterClockwiseRotation ? -Theta : Theta;
+			
 			// Finally, to figure out the point Q at which to leave the circle and start
 			// on the straight line, we need to know the total angle phi + theta,
 			// and  is easily determined as the angle from P to the destination:
-			const float phi = UKismetMathLibrary::DegAtan(h.Y / h.X);
-			FVector LeavingCirclePoint = FVector(
-				// if rotating left then phi + theta, else phi - theta
-				CircleCenter.X + MinTurnRadius * UKismetMathLibrary::DegCos(phi + (bCounterClockwiseRotation ? -theta : theta)),
-				CircleCenter.Y - MinTurnRadius * UKismetMathLibrary::DegSin(phi + (bCounterClockwiseRotation ? -theta : theta)),
+			const float Phi = UKismetMathLibrary::DegAtan2(-h.Y, h.X);//UKismetMathLibrary::DegAtan(-h.Y / h.X);
+			
+			const FVector LeavingCirclePoint = FVector(
+				CircleCenter.X + MinTurnRadius * UKismetMathLibrary::DegCos(Phi + Theta),
+				CircleCenter.Y - MinTurnRadius * UKismetMathLibrary::DegSin(Phi + Theta),
 				OwnerShip->GetActorLocation().Z
 			);
 			
-			const float AngleOnCircle = 270 - phi - (bCounterClockwiseRotation ? -theta : theta);
+			const float AngleOnCircle = 270 - Phi - Theta;
 			
-			DrawDebugCircle(GetWorld(), FVector(CircleCenter.X, CircleCenter.Y, 140), MinTurnRadius, 100, FColor::Purple, false, 50, 0, 5, FVector(0,1,0), FVector(1,0,0));
-
-			DrawDebugPoint(GetWorld(), FVector(Start.X, Start.Y, 150), 5, FColor::Emerald, false, 50);
-			DrawDebugPoint(GetWorld(), FVector(CircleCenter.X, CircleCenter.Y, 150), 5, FColor::Purple, false, 50);
-			DrawDebugPoint(GetWorld(), FVector(LeavingCirclePoint.X, LeavingCirclePoint.Y, 150), 5, FColor::Green, false, 50);
-			DrawDebugString(GetWorld(), FVector(LeavingCirclePoint.X, LeavingCirclePoint.Y, 0), TEXT("LeavingCirclePoint"), 0, FColor::White, 50, false, 1);
-			DrawDebugPoint(GetWorld(), FVector(End.X, End.Y, 150), 5, FColor::Blue, false, 50);
-			DrawDebugString(GetWorld(), FVector(End.X, End.Y, 0), TEXT("End"), 0, FColor::White, 50, false, 1);
+			DrawDebugCircle(GetWorld(), FVector(CircleCenter.X, CircleCenter.Y, 150), MinTurnRadius, 36, FColor::Purple, false, 50, 0, 5, FVector(0,1,0), FVector(1,0,0));
+			DrawDebugLine(GetWorld(), FVector(LeavingCirclePoint.X, LeavingCirclePoint.Y, 150), FVector(End.X, End.Y, 150), FColor::Purple, false, 50, 0, 5);
+			DrawDebugPoint(GetWorld(), FVector(Start.X, Start.Y, 150), 5, FColor::Red, false, 50);
 			
-			LineSegments.Add(new ArcLine(Start, LeavingCirclePoint, AngleOnCircle * MinTurnRadius, CircleCenter, ForwardAndDirToDestinationAngle, UKismetMathLibrary::DegreesToRadians(phi + (bCounterClockwiseRotation ? -theta : theta)), bCounterClockwiseRotation));
+			LineSegments.Add(new ArcLine(Start, LeavingCirclePoint, AngleOnCircle * MinTurnRadius, CircleCenter, OwnerShip->GetActorRotation().Yaw, UKismetMathLibrary::DegreesToRadians(Phi + Theta), bCounterClockwiseRotation));
 			LineSegments.Add(new StraightLine(LeavingCirclePoint, End, LengthOfStraightPart, AngleOnCircle));
+			i++;
 			
 		}
 	}
