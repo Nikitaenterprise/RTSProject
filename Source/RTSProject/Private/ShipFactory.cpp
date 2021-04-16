@@ -29,7 +29,7 @@ AShip* ShipFactory::NewShip(UWorld* _World, const FVector& _Location, const FRot
 	
 	AShip* SpawnedShip = _World->SpawnActor<AShip>(
 						ShipClass.Get(), 
-						_Location, 
+						FVector(_Location.X, _Location.Y, 150), 
 						_Rotation, 
 						GetDefaultSpawnParams());
 	if (!SpawnedShip) 
@@ -40,6 +40,7 @@ AShip* ShipFactory::NewShip(UWorld* _World, const FVector& _Location, const FRot
 	_Controller->PlayersActors.AddUnique(SpawnedShip);
 	AddTurretsToShip(_World, _Controller, SpawnedShip);
 	SpawnedShip->Initialize(_Controller);
+	SpawnedShip->bJustCreated = true;
 	
 	return SpawnedShip;
 }
