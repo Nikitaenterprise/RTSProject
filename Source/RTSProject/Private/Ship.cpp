@@ -212,7 +212,7 @@ void AShip::DrawNavLine()
 
 void AShip::UpdatePositionWhenCreated()
 {
-	FHitResult Hit;
+	/*FHitResult Hit;
 	const bool bHit = PlayerController->GetHitResultUnderCursorByChannel(
 		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Visibility),
 		false,
@@ -223,19 +223,21 @@ void AShip::UpdatePositionWhenCreated()
 	
 	if (bHit) Location = Hit.Location + Location;
 
-	SetActorLocation(Location, false, nullptr, ETeleportType::None);
+	SetActorLocation(Location, false, nullptr, ETeleportType::None);*/
 }
 
 void AShip::RotateWhenCreatedPositive()
 {
 	if (!bJustCreated) return;
 	SetActorRotation(FRotator(0, GetActorRotation().Yaw - 10, 0));
+	GEngine->AddOnScreenDebugMessage(-1, 0.1, FColor::White, GetActorForwardVector().Rotation().ToString());
 }
 
 void AShip::RotateWhenCreatedNegative()
 {
 	if (!bJustCreated) return;
 	SetActorRotation(FRotator(0, GetActorRotation().Yaw + 10, 0));
+	GEngine->AddOnScreenDebugMessage(-1, 0.1, FColor::White, GetActorForwardVector().Rotation().ToString());
 }
 
 void AShip::MouseYPositiveStart()
