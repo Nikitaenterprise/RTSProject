@@ -134,12 +134,12 @@ private:
 	class ArcLine : public LineSegment
 	{
 	public:
-		ArcLine(FVector StartPosition, FVector EndPosition, float Length, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover, bool bCounterClockwiseRotation) :
+		ArcLine(FVector StartPosition, FVector EndPosition, float Length, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover, bool bClockwiseRotation) :
 			LineSegment(StartPosition, EndPosition, Length),
 			CircleCenter(CircleCenter),
 			StartingAngle(StartingAngle),
 			TotalRadiansCover(TotalRadiansCover),
-			bCounterClockwiseRotation(bCounterClockwiseRotation)
+			bClockwiseRotation(bClockwiseRotation)
 		{
 			LineType = ARC_LINE;
 		}
@@ -147,7 +147,7 @@ private:
 		FVector2D CircleCenter = FVector2D::ZeroVector;
 		float StartingAngle = 0;
 		float TotalRadiansCover = 0;
-		bool bCounterClockwiseRotation = true;
+		bool bClockwiseRotation = true;
 	};
 
 	
