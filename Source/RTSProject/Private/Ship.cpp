@@ -186,8 +186,8 @@ bool AShip::Move(const FVector _TargetLocation)
 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Move() is null"));
 		return false;
 	}
-	const bool successful = MovementComponent->RequestNavMoving(_TargetLocation);
-	if (!successful) return false;
+	const bool bSuccessful = MovementComponent->RequestNavMoving(_TargetLocation);
+	if (!bSuccessful) return false;
 	NavPathCoords = MovementComponent->GetNavPathCoords();
 	//DrawNavLine();
 	return true;

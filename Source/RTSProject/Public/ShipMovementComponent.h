@@ -185,7 +185,7 @@ private:
 
 	inline void ReverceNavPath();
 	void BuildLineSegments();
-	inline void MakePathInXYPlane(float _setZToThisValue);
+	inline void MakePathInXYPlane(float _SetZToThisValue);
 	inline void GetPoint();
 	inline void CalculateForwardSpeed();
 	inline void CalculateYawSpeed();
