@@ -17,43 +17,45 @@ public:
 	
 	enum EShipAccelerationState
 	{
-		FullStop,
-		Accelerating,
-		Decelerating,
-		Braking
+		FULL_STOP,
+		ACCELERATING,
+		DECELERATING,
+		CONSTANT_VELOCITY,
+		BRAKING
 	};
 	static constexpr char* EShipAccelerationStateStr[] =
 	{
-		"FullStop",
-		"Accelerating",
-		"Decelerating",
-		"Braking"
+		"FULL_STOP",
+		"ACCELERATING",
+		"DECELERATING",
+		"CONSTANT_VELOCITY",
+		"BRAKING"
 	};
 
 	enum EShipYawState
 	{
-		NoTurning,
-		TurningWhileStanding,
-		TurningWhileMoving
+		NO_TURNING,
+		TURNING_WHILE_STANDING,
+		TURNING_WHILE_MOVING
 	};
 	static constexpr char* EShipYawStateStr[] =
 	{
-		"NoTurning",
-		"TurningWhileStanding",
-		"TurningWhileMoving"
+		"NO_TURNING",
+		"TURNING_WHILE_STANDING",
+		"TURNING_WHILE_MOVING"
 	};
 
 	enum EShipRollState
 	{
-		NoRolling,
-		Rolling,
-		RollToZero
+		NO_ROLLING,
+		ROLLING,
+		ROLL_TO_ZERO
 	};
 	static constexpr char* EShipRollStateStr[] =
 	{
-		"NoRolling",
-		"Rolling",
-		"RollToZero"
+		"NO_ROLLING",
+		"ROLLING",
+		"ROLL_TO_ZERO"
 	};
 
 public:
@@ -109,21 +111,23 @@ private:
 	class LineSegment
 	{
 	public:
-		LineSegment(FVector StartPosition, FVector EndPosition, float Length) :
+		LineSegment(FVector StartPosition, FVector EndPosition, float Length, bool bClockwiseRotation) :
 			StartPosition(StartPosition),
 			EndPosition(EndPosition),
-			Length(Length) {}
+			Length(Length),
+			bClockwiseRotation(bClockwiseRotation){}
 		
 		ELineSegment LineType;
 		FVector StartPosition = FVector::ZeroVector;
 		FVector EndPosition = FVector::ZeroVector;
 		float Length = 0;
+		bool bClockwiseRotation = true;
 	};
 	class StraightLine : public LineSegment
 	{
 	public:
-		StraightLine(FVector StartPosition, FVector EndPosition, float Length, float Angle) :
-			LineSegment(StartPosition, EndPosition, Length),
+		StraightLine(FVector StartPosition, FVector EndPosition, float Length, bool bClockwiseRotation, float Angle) :
+			LineSegment(StartPosition, EndPosition, Length, bClockwiseRotation),
 			Angle(Angle)
 		{
 			LineType = STRAIGHT_LINE;
@@ -134,12 +138,11 @@ private:
 	class ArcLine : public LineSegment
 	{
 	public:
-		ArcLine(FVector StartPosition, FVector EndPosition, float Length, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover, bool bClockwiseRotation) :
-			LineSegment(StartPosition, EndPosition, Length),
+		ArcLine(FVector StartPosition, FVector EndPosition, float Length, bool bClockwiseRotation, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover) :
+			LineSegment(StartPosition, EndPosition, Length, bClockwiseRotation),
 			CircleCenter(CircleCenter),
 			StartingAngle(StartingAngle),
-			TotalRadiansCover(TotalRadiansCover),
-			bClockwiseRotation(bClockwiseRotation)
+			TotalRadiansCover(TotalRadiansCover)
 		{
 			LineType = ARC_LINE;
 		}
@@ -147,7 +150,6 @@ private:
 		FVector2D CircleCenter = FVector2D::ZeroVector;
 		float StartingAngle = 0;
 		float TotalRadiansCover = 0;
-		bool bClockwiseRotation = true;
 	};
 
 	
@@ -160,9 +162,9 @@ private:
 	
 	FVector PointMoveTo;
 
-	EShipAccelerationState AccelerationState = FullStop;
-	EShipYawState TurnState = NoTurning;
-	EShipRollState RollState = NoRolling;
+	EShipAccelerationState AccelerationState = FULL_STOP;
+	EShipYawState TurnState = NO_TURNING;
+	EShipRollState RollState = NO_ROLLING;
 	
 	bool bShouldMove = false;
 	bool bRequestedMove = false;
