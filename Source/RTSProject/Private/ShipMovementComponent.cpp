@@ -107,25 +107,25 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		case STRAIGHT_LINE:
 		{
 			StraightLine* StraightSegment = static_cast<StraightLine*>(CurrentLine);
-			const float AngleToDestination = UKismetMathLibrary::RadiansToDegrees(
+			const float YawToDestination = UKismetMathLibrary::RadiansToDegrees(
 				AnglesFunctions::FindAngleBetweenVectorsOn2D(
 					OwnerShip->GetActorForwardVector(),
 					(StraightSegment->EndPosition - OwnerShip->GetActorLocation()).GetSafeNormal()));
 			const bool bClockwiseRotation = AnglesFunctions::FindRotationDirectionBetweenVectorsOn2D(
 				OwnerShip->GetActorForwardVector(),
 				(StraightSegment->EndPosition - OwnerShip->GetActorLocation()).GetSafeNormal());
-			float DeltaYaw = AngleToDestination * (bClockwiseRotation ? 1 : -1);
+			float DeltaYaw = YawToDestination * (bClockwiseRotation ? 1 : -1);
 			const float AbsoluteDeltaYaw = abs(DeltaYaw);
 			DistanceToPoint = (StraightSegment->EndPosition - OwnerShip->GetActorLocation()).Size();
 				
 			FString out = "";
-			out += FString("\n AngleToDestination= ") + FString::SanitizeFloat(AngleToDestination);
+			out += FString("\n AngleToDestination= ") + FString::SanitizeFloat(YawToDestination);
 			out += FString("\n ActorRotation= ") + FString::SanitizeFloat(OwnerShip->GetActorRotation().Yaw);
 			out += FString("\n DeltaYaw= ") + FString::SanitizeFloat(DeltaYaw);
 			out += FString("\n bClockwiseRotation= ") + (bClockwiseRotation ? TEXT("true") : TEXT("false"));
 			GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::Green, out);
 				
-			if (AbsoluteDeltaYaw > 0.5 * AngleToDestination)
+			if (AbsoluteDeltaYaw > 0.5 * YawToDestination)
 			{
 				// Situation when ship is standing and end point is inside circle
 				if (AccelerationState == FULL_STOP)
@@ -134,7 +134,7 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 				}
 
 			}
-			else if (AbsoluteDeltaYaw < 0.5 * AngleToDestination)
+			else if (AbsoluteDeltaYaw < 0.5 * YawToDestination)
 			{
 				if (AccelerationState == FULL_STOP)
 				{
@@ -149,17 +149,20 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 					// Ship can start moving and turning at the same time
 					AccelerationState = ACCELERATING;
 					TurnState = TURNING_WHILE_MOVING;
+					RollState = ROLLING;
 				}
 				else if (AccelerationState == ACCELERATING || AccelerationState == DECELERATING)
 				{
 					AccelerationState = ACCELERATING;
 					TurnState = TURNING_WHILE_MOVING;
+					RollState = ROLLING;
 				}
 				DeltaR = OwnerShip->GetActorForwardVector();
 			}
 			else if (AbsoluteDeltaYaw <= 1)
 			{
 				TurnState = NO_TURNING;
+				RollState = ROLLING;
 				DeltaR = OwnerShip->GetActorForwardVector();
 				DeltaYaw = 0;
 			}
@@ -167,20 +170,14 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 			DeltaR.Z = 0;
 				
 			Rotator.Yaw = OwnerShip->GetActorRotation().Yaw + DeltaYaw * CurrentYawSpeed * DeltaTime;
+				
 			// If ship has some roll angle then it should be counter-rolled
 			const float CurrentRoll = OwnerShip->GetActorRotation().Roll;	
-			if (CurrentRoll >= 0.1 || CurrentRoll <= -0.1)
+			if (abs(CurrentRoll) > 0)
 			{
 				float DeltaRoll;
-				if (CurrentRoll > 0)
-				{
-					DeltaRoll = CurrentRoll * DeltaTime * -1;
-				}
-				else
-				{
-					DeltaRoll = CurrentRoll * DeltaTime;
-				}
-				Rotator.Roll = OwnerShip->GetActorRotation().Roll + DeltaRoll;
+				DeltaRoll = CurrentRoll > 0 ? -1 : 1;
+				Rotator.Roll = OwnerShip->GetActorRotation().Roll + DeltaRoll * CurrentRollSpeed * DeltaTime;
 			}
 			else
 			{
@@ -189,24 +186,22 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 			
 				
 			// Determine acceleration state
-			if (DistanceToPoint >= 10 * AcceptanceRadius)
+			if (DistanceToPoint >= 15 * AcceptanceRadius)
 			{
 				AccelerationState = ACCELERATING;
 			}
-			if (DistanceToPoint < 10 * AcceptanceRadius)
+			if (DistanceToPoint < 15 * AcceptanceRadius)
 			{
 				AccelerationState = DECELERATING;
 			}
-			if (DistanceToPoint < 5 * AcceptanceRadius)
+			if (DistanceToPoint < 10 * AcceptanceRadius)
 			{
 				AccelerationState = BRAKING;
 			}
-			/*if (DistanceToPoint <= AcceptanceRadius)
+			if (DistanceToPoint <= AcceptanceRadius)
 			{
 				AccelerationState = FULL_STOP;
-			}*/
-
-			RollState = NO_ROLLING;
+			}
 			
 			break;
 		}
@@ -251,14 +246,7 @@ bool UShipMovementComponent::RequestNavMoving(const FVector _TargetLocation)
 {
 	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
 
-	for(auto& Actor : PlayerController->PlayersActors)
-	{
-		AShip* Ship = Cast<AShip>(Actor);
-		if (Ship && Ship != OwnerShip)
-		{
-			Ship->CapsuleComponent->SetCanEverAffectNavigation(true);
-		}
-	}
+	TurnOnCapsuleCollision(true);
 	
 	NavSys->Build();
 
@@ -292,35 +280,39 @@ bool UShipMovementComponent::RequestNavMoving(const FVector _TargetLocation)
 	}
 	
 	NavPathCoords = NavPath->PathPoints;
-	//ReverceNavPath();
 	MakePathInXYPlane(OwnerShip->GetActorLocation().Z);
 	LineSegments.Empty();
 	BuildLineSegments();
+	ReverceLineSegments();
+	bShouldMove = true;
 
+	TurnOnCapsuleCollision(false);
+
+	return true;
+}
+
+void UShipMovementComponent::TurnOnCapsuleCollision(const bool TurnOn) const
+{
 	for (auto& Actor : PlayerController->PlayersActors)
 	{
 		AShip* Ship = Cast<AShip>(Actor);
 		if (Ship && Ship != OwnerShip)
 		{
-			Ship->CapsuleComponent->SetCanEverAffectNavigation(false);
+			Ship->CapsuleComponent->SetCanEverAffectNavigation(TurnOn);
 		}
 	}
-
-	return true;
 }
 
-void UShipMovementComponent::ReverceNavPath()
+void UShipMovementComponent::ReverceLineSegments()
 {
-	if(NavPathCoords.Num() == 0) return;
-	TArray<FVector> tmp;
-	tmp.Reserve(NavPathCoords.Num());
-	for(size_t i = NavPathCoords.Num();i>0;i--)
+	TArray<LineSegment*> TemporaryLineSegments;
+	TemporaryLineSegments.Reserve(LineSegments.Num());
+	for (size_t i = LineSegments.Num(); i > 0; i--)
 	{
-		tmp.Add(NavPathCoords[i-1]);
+		TemporaryLineSegments.Add(LineSegments[i - 1]);
 	}
-	NavPathCoords = tmp;
+	LineSegments = TemporaryLineSegments;
 }
-
 
 void UShipMovementComponent::BuildLineSegments()
 {
@@ -410,52 +402,14 @@ void UShipMovementComponent::BuildLineSegments()
 			
 		}
 	}
-	// Reverce line segments
-	TArray<LineSegment*> tmp;
-	tmp.Reserve(LineSegments.Num());
-	for (size_t i = LineSegments.Num(); i > 0; i--)
-	{
-		tmp.Add(LineSegments[i - 1]);
-	}
-	LineSegments = tmp;
-	bShouldMove = true;
 }
 
 void UShipMovementComponent::MakePathInXYPlane(float _SetZToThisValue)
 {
 	for (auto& point : NavPathCoords)
 	{
-		/*FString str1 = point.ToString();
-		GEngine->AddOnScreenDebugMessage(-1, 1.1, FColor::Green, str1);*/
 		point.Z = _SetZToThisValue;
 	}
-}
-
-void UShipMovementComponent::GetPoint()
-{
-	// If near destination
-	if(OwnerShip->GetActorLocation().Equals(PointMoveTo, 0.1) || bRequestedMove)
-	{
-		// Get next destination point
-		if(NavPathCoords.Num()>0)
-		{
-			PointMoveTo = NavPathCoords.Pop(false);
-			bShouldMove = true;
-			
-			FString from = OwnerShip->GetActorLocation().ToString();
-			FString to = PointMoveTo.ToString();
-			//GEngine->AddOnScreenDebugMessage(-1, 5.1, FColor::Yellow, FString::Printf(TEXT("Move started from %s to %s"), *from, *to));
-			
-		}
-		// Else af finish position
-		else
-		{
-			//GEngine->AddOnScreenDebugMessage(-1, 5.1, FColor::Yellow, TEXT("Finished move"));
-			bShouldMove = false;
-			bRequestedMove = false;
-		}
-	}
-	
 }
 
 void UShipMovementComponent::CalculateForwardSpeed()
@@ -489,14 +443,13 @@ void UShipMovementComponent::CalculateForwardSpeed()
 			CurrentForwardSpeed = 0;
 		}
 		break;
+	case CONSTANT_VELOCITY:
+		CurrentForwardSpeed += 0;
+		break;
 	case BRAKING:
 		if (CurrentForwardSpeed > 0 && CurrentForwardSpeed > 0.1 * MaxForwardSpeed)
 		{
 			CurrentForwardSpeed -= 2 * AccelerationForwardRate;
-		}
-		else if (CurrentForwardSpeed < 0.1 * MaxForwardSpeed)
-		{
-			CurrentForwardSpeed = 0.1 * MaxForwardSpeed;
 		}
 		else if (CurrentForwardSpeed < 0)
 		{

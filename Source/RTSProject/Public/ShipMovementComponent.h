@@ -182,10 +182,11 @@ public:
 	TArray<FVector> GetNavPathCoords() const { return NavPathCoords; }
 	
 	bool RequestNavMoving(const FVector _TargetLocation);
+	void TurnOnCapsuleCollision(const bool TurnOn) const;
 
 private:
 
-	inline void ReverceNavPath();
+	inline void ReverceLineSegments();
 	void BuildLineSegments();
 	inline void MakePathInXYPlane(float _SetZToThisValue);
 	inline void GetPoint();
