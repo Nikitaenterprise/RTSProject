@@ -12,12 +12,20 @@ class UArrowComponent;
 class UHealthShield;
 class AShip;
 
+enum ESide
+{
+	Left,
+	Right
+};
+
 UCLASS()
 class RTSPROJECT_API ATurret : public AActor, public IBaseBehavior
 {
 	GENERATED_BODY()
 	
 public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
+	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
@@ -41,7 +49,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation")
 	float MaxAngleDeviation = 45;
 
-	enum ESide { Left, Right } OnWhichSide;
+	ESide OnWhichSide;
 
 	FRotator Rotation = FRotator(0, 0, 0);
 

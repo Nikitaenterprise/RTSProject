@@ -3,18 +3,15 @@
 #include "Ship.h"
 #include "Building.h"
 #include "Camera.h"
-#include "ShipHUD.h"
-#include "BuildingHUD.h"
-#include "BasicButtonsHUD.h"
 #include "FactoryAssets.h"
 #include "GameHUD.h"
 
-#include "Engine/World.h"
+
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Blueprint/UserWidget.h"
-#include "Engine/Engine.h"
+//#include "Blueprint/UserWidget.h"
+//#include "Engine/Engine.h"
 
 
 ARTSPlayerController::ARTSPlayerController(){	
@@ -70,8 +67,10 @@ void ARTSPlayerController::SetupInputComponent()
 	InputComponent->BindAction(TEXT("MovementDecrease"), IE_Pressed, this, &ARTSPlayerController::MovementDecrease);
 	InputComponent->BindAction(TEXT("MovementDecrease"), IE_Released, this, &ARTSPlayerController::ResetMovementModifier);
 	// Zoom
-	InputComponent->BindAction(TEXT("ZoomIn"), IE_Pressed, this, &ARTSPlayerController::ZoomIn);
-	InputComponent->BindAction(TEXT("ZoomOut"), IE_Pressed, this, &ARTSPlayerController::ZoomOut);
+	InputComponent->BindAction(TEXT("MouseYPositive"), IE_Pressed, this, &ARTSPlayerController::MouseYPositiveStart);
+	InputComponent->BindAction(TEXT("MouseYPositive"), IE_Released, this, &ARTSPlayerController::MouseYPositiveEnd);
+	InputComponent->BindAction(TEXT("MouseYNegative"), IE_Pressed, this, &ARTSPlayerController::MouseYNegativeStart);
+	InputComponent->BindAction(TEXT("MouseYNegative"), IE_Released, this, &ARTSPlayerController::MouseYNegativeEnd);
 	InputComponent->BindAction(TEXT("ZoomReset"), IE_Pressed, this, &ARTSPlayerController::ZoomReset);
 	// Edge scrolling
 	InputComponent->BindAxis(TEXT("Mouse X"), this, &ARTSPlayerController::EdgeScrollingX);
@@ -103,13 +102,13 @@ void ARTSPlayerController::Move(FVector &v)
 void ARTSPlayerController::MoveForward(float value)
 {
 	auto a = FVector(value, 0, 0);
-	if (!bDisableCameraMovement) Move(a);
+	if (!bDisablePanRotation) Move(a);
 }
 
 void ARTSPlayerController::MoveRight(float value)
 {
 	auto a = FVector(0, value, 0);
-	if (!bDisableCameraMovement) Move(a);
+	if (!bDisablePanRotation) Move(a);
 }
 
 void ARTSPlayerController::MovementIncrease()
@@ -125,6 +124,48 @@ void ARTSPlayerController::MovementDecrease()
 void ARTSPlayerController::ResetMovementModifier()
 {
 	MovementSpeedModifier = 1;
+}
+
+void ARTSPlayerController::MouseYPositiveStart()
+{
+	bMouseWheelYPositive = true;
+	if (!bDisableZooming) ZoomIn();
+	/*for (auto& a : PlayersActors)
+	{
+		AShip* Ship = Cast<AShip>(a);
+		if (Ship) Ship->bMouseWheelYPositive = true;
+	}*/
+}
+
+void ARTSPlayerController::MouseYPositiveEnd()
+{
+	bMouseWheelYPositive = false;
+	/*for (auto& a : PlayersActors)
+	{
+		AShip* Ship = Cast<AShip>(a);
+		if (Ship) Ship->bMouseWheelYPositive = false;
+	}*/
+}
+
+void ARTSPlayerController::MouseYNegativeStart()
+{
+	bMouseWheelYNegative = true;
+	if (!bDisableZooming) ZoomOut();
+	/*for (auto& a : PlayersActors)
+	{
+		AShip* Ship = Cast<AShip>(a);
+		if (Ship) Ship->bMouseWheelYNegative = true;
+	}*/
+}
+
+void ARTSPlayerController::MouseYNegativeEnd()
+{
+	bMouseWheelYNegative = false;
+	/*for (auto& a : PlayersActors)
+	{
+		AShip* Ship = Cast<AShip>(a);
+		if (Ship) Ship->bMouseWheelYNegative = false;
+	}*/
 }
 
 void ARTSPlayerController::ZoomIn()
@@ -179,12 +220,12 @@ void ARTSPlayerController::EdgeScrolling(float dx, float dy)
 
 void ARTSPlayerController::RotatePanX(float value)
 {
-	if (bDisableCameraMovement) RotatePan(value, 0);
+	if (bDisablePanRotation) RotatePan(value, 0);
 }
 
 void ARTSPlayerController::RotatePanY(float value)
 {
-	if (bDisableCameraMovement) RotatePan(0, value);
+	if (bDisablePanRotation) RotatePan(0, value);
 }
 
 void ARTSPlayerController::RotatePan(float x, float y)
@@ -203,12 +244,12 @@ void ARTSPlayerController::PanReset()
 
 void ARTSPlayerController::EnableCameraMovement()
 {
-	bDisableCameraMovement = false;
+	bDisablePanRotation = false;
 }
 
 void ARTSPlayerController::DisableCameraMovement()
 {
-	bDisableCameraMovement = true;
+	bDisablePanRotation = true;
 }
 
 void ARTSPlayerController::LMBPressed()
@@ -260,10 +301,10 @@ void ARTSPlayerController::UpdateSelection()
 {
 	DeselectUnits();
 	GameHUD->OnInputHold();
-	for (const auto& a : SelectedActors) {
+	/*for (const auto& a : SelectedActors) {
 		FString str = UKismetSystemLibrary::GetDisplayName(Cast<AShip>(a));
 		GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Red, str);
-	}
+	}*/
 	SelectUnits();
 }
 
@@ -338,7 +379,7 @@ void ARTSPlayerController::MoveSelectedActors()
 			{
 				float Z = Ship->GetActorLocation().Z;
 				float X = Hit.Location.X, Y = Hit.Location.Y;
-				Ship->CustomMoving(FVector(X, Y, Z));
+				Ship->Move(FVector(X, Y, Z));
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 #include "RocketFactory.h"
 
-#include "Engine/World.h"
+//#include "Engine/World.h"
 #include "Rocket.h"
 
 ARocket* RocketFactory::NewRocket(UWorld* World)
@@ -26,7 +26,7 @@ FActorSpawnParameters RocketFactory::GetDefaultSpawnParams()
 {
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	Params.Instigator = NULL;
-	Params.Owner = NULL;
+	Params.Instigator = nullptr;
+	Params.Owner = nullptr;
 	return Params;
 }

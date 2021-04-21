@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Ship.generated.h"
 
+class UShipMovementComponent;
 class UStaticMeshComponent;
 class UWidgetComponent;
 class UHealthShield;
@@ -16,14 +17,18 @@ class UUserWidget;
 class UHealthShieldBarHUD;
 
 UCLASS()
-class RTSPROJECT_API AShip : public ACharacter, public IBaseBehavior
+class RTSPROJECT_API AShip : public APawn, public IBaseBehavior
 {
 	GENERATED_BODY()
 
 public:
-
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
+	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
+	UCapsuleComponent* CapsuleComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UHealthShield* HealthShieldComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
@@ -32,13 +37,16 @@ public:
 	UWidgetComponent* HealthShieldBar = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UPawnSensingComponent* PawnSensing = nullptr;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
+	UShipMovementComponent* MovementComponent = nullptr;
 	
 	ARTSPlayerController* PlayerController = nullptr;
+	UInputComponent* InputComponent = nullptr;
 	
 	// Widget
 	UHealthShieldBarHUD* HealthShieldBarHUD = nullptr;
 
+	bool bJustCreated = false;
 	bool bIsSelected = false;
 	bool bIsHighlighted = false;
 	
@@ -46,6 +54,7 @@ public:
 	float PastTime = 0;
 
 	// Moving
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
 	bool bIsMoving = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
 	bool bShouldMove = false;
@@ -59,6 +68,10 @@ public:
 	float DrawNavLineOncePerThisSeconds = 1;
 	TArray<FVector> NavPathCoords;
 
+	// Mouse wheel
+	bool bMouseWheelYPositive = false;
+	bool bMouseWheelYNegative = false;
+
 	// Turrets
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Turret")
 	bool bHasWorkingTurrets = false;
@@ -67,12 +80,11 @@ public:
 
 public:
 
-	AShip();
+	AShip(const FObjectInitializer& ObjectInitializer);
 
 	virtual void Tick(float _mainDeltaTime) override;
 	
-	void BindHUD();
-	void BindController(ARTSPlayerController* _Controller);
+	void Initialize(ARTSPlayerController* _Controller);
 
 	void SetHealthShieldBar();
 
@@ -80,31 +92,28 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
 	virtual bool Destroy_Implementation(bool bNetForce = false, bool bShouldModifyLevel = false) override;
-
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Selected(bool _bIsSelected);
 	virtual void Selected_Implementation(bool _bIsSelected) override;
-
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Highlighted(bool _bIsHighlighted);
 	virtual void Highlighted_Implementation(bool _bIsHighlighted) override;
 
 	// Moving
 	UFUNCTION(BlueprintCallable, Category = "Moving")
-	bool SimpleMoving(const FVector& v);
-	UFUNCTION(BlueprintCallable, Category = "Moving")
-	bool Moving(const FVector& v);
-	UFUNCTION(BlueprintCallable, Category = "Moving")
-	bool StopMoving();
-	UFUNCTION(BlueprintCallable, Category = "Moving")
-	bool CustomMoving(const FVector& DestinationLocation);
+	bool Move(const FVector _TargetLocation);
 
 	void DrawNavLine();
+	void UpdatePositionWhenCreated();
+
+	// Mouse wheel
+	void RotateWhenCreatedPositive();
+	void RotateWhenCreatedNegative();
+	void MouseYPositiveStart();
+	void MouseYPositiveEnd();
+	void MouseYNegativeStart();
+	void MouseYNegativeEnd();
 	
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 protected:
 	
 	virtual void BeginPlay() override;

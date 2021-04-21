@@ -40,13 +40,18 @@ public:
 
 	// Pan rotation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bDisableCameraMovement = false;
+	bool bDisablePanRotation = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float PanRotationSpeed = 5;
 
 	// Mouse clicks
 	bool bLMBPressed = false;
 	bool bRMBPressed = false;
+
+	// Mouse wheel
+	bool bDisableZooming = false;
+	bool bMouseWheelYPositive = false;
+	bool bMouseWheelYNegative = false;
 
 	// Units selection and control
 	TArray<AActor*> SelectedActors;
@@ -75,6 +80,11 @@ public:
 	void MovementDecrease();
 	void ResetMovementModifier();
 
+	void MouseYPositiveStart();
+	void MouseYPositiveEnd();
+	void MouseYNegativeStart();
+	void MouseYNegativeEnd();
+	
 	// Zoom
 	void ZoomIn();
 	void ZoomOut();

@@ -6,8 +6,8 @@
 #include "FactoryAssets.h"
 #include "AnglesFunctions.h"
 
-#include "Engine/World.h"
-#include "Engine/StaticMesh.h"
+//#include "Engine/World.h"
+//#include "Engine/StaticMesh.h"
 
 
 AShip* ShipFactory::NewShip(UWorld* _World, ARTSPlayerController* _Controller)
@@ -29,7 +29,7 @@ AShip* ShipFactory::NewShip(UWorld* _World, const FVector& _Location, const FRot
 	
 	AShip* SpawnedShip = _World->SpawnActor<AShip>(
 						ShipClass.Get(), 
-						_Location, 
+						FVector(_Location.X, _Location.Y, 150), 
 						_Rotation, 
 						GetDefaultSpawnParams());
 	if (!SpawnedShip) 
@@ -39,9 +39,9 @@ AShip* ShipFactory::NewShip(UWorld* _World, const FVector& _Location, const FRot
 	}
 	_Controller->PlayersActors.AddUnique(SpawnedShip);
 	AddTurretsToShip(_World, _Controller, SpawnedShip);
-	SpawnedShip->BindController(_Controller);
-	SpawnedShip->BindHUD();
-
+	SpawnedShip->Initialize(_Controller);
+	SpawnedShip->bJustCreated = true;
+	
 	return SpawnedShip;
 }
 
@@ -57,7 +57,7 @@ FActorSpawnParameters ShipFactory::GetDefaultSpawnParams()
 void ShipFactory::AddTurretsToShip(UWorld* _World, ARTSPlayerController* _Controller, AShip* _Ship)
 {
 	if (_Ship->bHasWorkingTurrets) return;
-	TSubclassOf<ATurret> TurretClass = _Controller->GetFactoryAssets()->TurretClass;
+	const TSubclassOf<ATurret> TurretClass = _Controller->GetFactoryAssets()->TurretClass;
 	if(TurretClass)
 	{
 		UStaticMeshComponent* StaticMesh = _Ship->StaticMesh;
@@ -73,8 +73,8 @@ void ShipFactory::AddTurretsToShip(UWorld* _World, ARTSPlayerController* _Contro
 				return;
 			}
 			SpawnedTurret->OwnerShip = _Ship;
-			SpawnedTurret->PlayerController = _Controller;
 			SpawnedTurret->OwnerShip->Turrets.AddUnique(SpawnedTurret);
+			SpawnedTurret->PlayerController = _Controller;
 			SetTurretSide(SpawnedTurret);
 			SpawnedTurret->SetFacingLeftRight();
 			FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget,
@@ -94,9 +94,9 @@ void ShipFactory::SetTurretSide(ATurret* _Turret)
 	const FVector ShipForward = _Turret->OwnerShip->GetActorForwardVector();
 	// Probably :
 	// Turret->GetActorLocation() - Turret->OwnerShip->GetActorLocation()
-	const FVector FromCenterOfShipToTurret = (_Turret->OwnerShip->GetActorLocation() - _Turret->GetActorLocation()) * -1;
+	const FVector FromCenterOfShipToTurret = _Turret->GetActorLocation() - _Turret->OwnerShip->GetActorLocation(); //(_Turret->OwnerShip->GetActorLocation() - _Turret->GetActorLocation()) * -1;
 	const bool bClockwise = AnglesFunctions::FindRotationDirectionBetweenVectorsOn2D(ShipForward, FromCenterOfShipToTurret);
 
-	if (bClockwise) _Turret->OnWhichSide = ATurret::ESide::Right;
-	if (!bClockwise) _Turret->OnWhichSide = ATurret::ESide::Left;
+	if (bClockwise) _Turret->OnWhichSide = ESide::Right;
+	if (!bClockwise) _Turret->OnWhichSide = ESide::Left;
 }

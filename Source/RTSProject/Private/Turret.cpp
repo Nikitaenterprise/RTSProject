@@ -1,10 +1,5 @@
 #include "Turret.h"
 
-#include <Kismet/KismetMathLibrary.h>
-#include "Components/StaticMeshComponent.h"
-#include "Components/ArrowComponent.h"
-#include "Components/SceneComponent.h"
-#include <Engine/World.h>
 #include "RTSPlayerController.h"
 #include "Ship.h"
 #include "AnglesFunctions.h"
@@ -12,14 +7,23 @@
 #include "RocketFactory.h"
 #include "Rocket.h"
 
+#include "Kismet/KismetMathLibrary.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/ArrowComponent.h"
+#include "Components/SceneComponent.h"
+
+
 ATurret::ATurret()
 {
  	PrimaryActorTick.bCanEverTick = true;
-
+	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
+	RootComponent = SceneComponent;
+	
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMesh->SetupAttachment(GetRootComponent());
 
 	Arrow = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
+	Arrow->SetupAttachment(GetRootComponent());
 
 	HealthShieldComponent = CreateDefaultSubobject<UHealthShield>(TEXT("HealthShield"));
 

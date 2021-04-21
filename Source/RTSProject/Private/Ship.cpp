@@ -3,45 +3,53 @@
 #include "RTSPlayerController.h"
 #include "HealthShield.h"
 #include "Turret.h"
-#include "AnglesFunctions.h"
 #include "HealthShieldBarHUD.h"
+#include "GameHUD.h"
+#include "ShipMovementComponent.h"
 
-#include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
-#include "Blueprint/UserWidget.h"
+#include "Components/InputComponent.h"
+//#include "Blueprint/UserWidget.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "AIController.h"
-#include "GameHUD.h"
-#include "NavigationPath.h"
-#include "NavigationSystem.h"
+//#include "AIController.h"
+//#include "NavigationPath.h"
+//#include "NavigationSystem.h"
 #include "DrawDebugHelpers.h"
-#include "GameFramework/CharacterMovementComponent.h"
+//#include "Components/ArrowComponent.h"
+//#include "GameFramework/CharacterMovementComponent.h"
 
-AShip::AShip()
+AShip::AShip(const FObjectInitializer& OI)
+	: Super(OI.SetDefaultSubobjectClass<UShipMovementComponent>(FName("ShipMovementComponent")))
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
+	RootComponent = SceneComponent;
+	
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMesh->SetupAttachment(GetRootComponent());
+
+	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
+	CapsuleComponent->SetRelativeRotation(FRotator(0, 90, 0));
+	CapsuleComponent->SetupAttachment(GetRootComponent());
+	
+	SelectionCircle = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SelectionCircle"));
+	SelectionCircle->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SelectionCircle->SetupAttachment(GetRootComponent());
+	
+	HealthShieldBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthShieldBar"));
+	HealthShieldBar->SetDrawSize(FVector2D(150, 150));
+	HealthShieldBar->SetWidgetSpace(EWidgetSpace::Screen);
+	HealthShieldBar->SetupAttachment(GetRootComponent());
 	
 	HealthShieldComponent = CreateDefaultSubobject<UHealthShield>(TEXT("HealthShield"));
 
-	GetCapsuleComponent()->SetCapsuleHalfHeight(150);
-	GetCapsuleComponent()->SetCapsuleRadius(150);
-	
-	SelectionCircle = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SelectionCircle"));
-	SelectionCircle->SetupAttachment(GetRootComponent());
-	SelectionCircle->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	HealthShieldBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthShieldBar"));
-	HealthShieldBar->SetupAttachment(GetRootComponent());
-	HealthShieldBar->SetDrawSize(FVector2D(150, 150));
-	HealthShieldBar->SetWidgetSpace(EWidgetSpace::Screen);
-
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
+
+	MovementComponent = CreateDefaultSubobject<UShipMovementComponent>(TEXT("ShipMovementComponent"));
 }
 
 void AShip::BeginPlay()
@@ -53,29 +61,66 @@ void AShip::Tick(float _mainDeltaTime)
 {
 	Super::Tick(_mainDeltaTime);
 	
-	FString str = UKismetSystemLibrary::GetDisplayName(this);
+	/*FString str = UKismetSystemLibrary::GetDisplayName(this);
 	FString b = bIsSelected ? TEXT("true") : TEXT("false");
-	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("obj=%s, bSelected=%s"), *str, *b));
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("obj=%s, bSelected=%s"), *str, *b));*/
 
 	DeltaTime = _mainDeltaTime;
 	PastTime += _mainDeltaTime;
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
-	bIsMoving = GetCharacterMovement()->Velocity.Size() > 0;
-	
+
+	if (bJustCreated && !PlayerController->bLMBPressed)
+	{
+		PlayerController->bDisableZooming = true;
+		UpdatePositionWhenCreated();
+	}
+	else if (PlayerController->bLMBPressed)
+	{
+		PlayerController->bDisableZooming = false;
+		bJustCreated = false;
+	}
+
+	bIsMoving = MovementComponent->Velocity.Size() > 0;
 	if (bIsMoving && UKismetMathLibrary::NearlyEqual_FloatFloat(PastTime, DrawNavLineOncePerThisSeconds)) DrawNavLine();
 	
 }
 
-void AShip::BindHUD()
+void AShip::Initialize(ARTSPlayerController* _Controller)
 {
-	if (PlayerController) {
+	if (_Controller)
+	{
+		PlayerController = _Controller;
+
+		if(MovementComponent)
+		{
+			MovementComponent->PlayerController = _Controller;
+			MovementComponent->OwnerShip = this;
+			MovementComponent->Initialize();	
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Init() is null"));
+		}
+		InputComponent = PlayerController->InputComponent;
+		if (InputComponent)
+		{
+			InputComponent->BindAction(TEXT("MouseYPositive"), IE_Pressed, this, &AShip::MouseYPositiveStart);
+			InputComponent->BindAction(TEXT("MouseYPositive"), IE_Released, this, &AShip::MouseYPositiveEnd);
+			InputComponent->BindAction(TEXT("MouseYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
+			InputComponent->BindAction(TEXT("MouseYNegative"), IE_Released, this, &AShip::MouseYNegativeEnd);
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Init() is null"));
+		}
+		
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
 	}
-}
-
-void AShip::BindController(ARTSPlayerController* _Controller)
-{
-	if (_Controller) PlayerController = _Controller;
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerController in AShip->Init() is null"));
+	}
+	
 }
 
 bool AShip::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
@@ -87,11 +132,6 @@ bool AShip::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
 		for (auto& Turret : Turrets) Turret->Destroy();
 	}
 	return Super::Destroy(bNetForce, bShouldModifyLevel);
-}
-
-void AShip::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	ACharacter::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 void AShip::Selected_Implementation(bool _bIsSelected)
@@ -139,132 +179,24 @@ void AShip::SetHealthShieldBar()
 	HealthShieldBarHUD->HealthPercent = HealthShieldComponent->getHealthPercent();
 }
 
-bool AShip::SimpleMoving(const FVector& v)
+bool AShip::Move(const FVector _TargetLocation)
 {
-	FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(
-													GetActorForwardVector(),
-													v);
-	FLatentActionInfo LInfo = FLatentActionInfo();
-	LInfo.CallbackTarget = this;
-
-	UKismetSystemLibrary::MoveComponentTo(
-							GetCapsuleComponent(),
-							GetActorLocation(),
-							TargetRotation,
-							true,
-							true,
-							TurnAngleSpeed * DeltaTime,
-							true,
-							EMoveComponentAction::Move,
-							LInfo);
-	// Second time may not worling correct because dont know how 
-	// to control is the MoveComponentTo has completed or not
-	UKismetSystemLibrary::MoveComponentTo(
-							GetCapsuleComponent(),
-							FVector(v.X, v.Y, 0),
-							TargetRotation,
-							true,
-							true,
-							ForwardSpeed * DeltaTime,
-							true,
-							EMoveComponentAction::Move,
-							LInfo);
-	return true;
-}
-
-bool AShip::Moving(const FVector& v)
-{
-	bShouldMove = true;
-	FVector Direction = v - GetActorLocation();
-	Direction.Normalize();
-	FVector ForwardVector = GetActorForwardVector();
-	ForwardVector.Normalize();
-	
-	float angle = AnglesFunctions::FindAngleBetweenVectorsOn2D(Direction, ForwardVector);
-	if (angle > 5)
+	if (!MovementComponent)
 	{
-		bool clockwise = AnglesFunctions::FindRotationDirectionBetweenVectorsOn2D(Direction, ForwardVector);
-		if (clockwise)
-		{
-			SetActorRotation(FRotator(0, (GetActorRotation().Yaw - (DeltaTime * angle)), 0), ETeleportType::None);
-		}
-		else if (!clockwise)
-		{
-			SetActorRotation(FRotator(0, (GetActorRotation().Yaw + (DeltaTime * angle)), 0), ETeleportType::None);
-		}
-		
-		FVector2D NewForward(GetActorForwardVector().X, GetActorForwardVector().Y);
-		
-		NewForward = NewForward * TurnForwardSpeed * DeltaTime;
-		
-		FVector2D NewLocation(GetActorLocation().X, GetActorLocation().Y);
-		FVector location((NewLocation + NewForward).X, (NewLocation + NewForward).Y, GetActorLocation().Z);
-		SetActorLocation(location, false, nullptr, ETeleportType::None);
-	}
-	else
-	{
-		FVector2D NewForward(GetActorForwardVector().X, GetActorForwardVector().Y);
-		
-		NewForward = NewForward * ForwardSpeed * DeltaTime;
-		
-		FVector2D NewLocation(GetActorLocation().X, GetActorLocation().Y);
-		FVector location((NewLocation + NewForward).X, (NewLocation + NewForward).Y, GetActorLocation().Z);
-		SetActorLocation(location, false, nullptr, ETeleportType::None);
-	}
-	
-	if ((v - GetActorLocation()).SizeSquared() > 400) bShouldMove = false;
-
-	return true;
-}
-
-bool AShip::StopMoving()
-{
-	FLatentActionInfo LInfo = FLatentActionInfo();
-	LInfo.CallbackTarget = this;
-	UKismetSystemLibrary::MoveComponentTo(
-							GetCapsuleComponent(),
-							GetActorLocation(),
-							FRotator(0,0,0),
-							true,
-							true,
-							2,
-							false,
-							EMoveComponentAction::Move,
-							LInfo);
-	return true;
-}
-
-bool AShip::CustomMoving(const FVector& DestinationLocation)
-{
-	AAIController* AIController = Cast<AAIController>(GetController());
-	if (!AIController)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.1, FColor::Red, TEXT("Failed to cast AIController in Ship"));
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Move() is null"));
 		return false;
 	}
-	
-	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
-	UNavigationPath* NavPath = NavSys->FindPathToLocationSynchronously(
-							GetWorld(),
-							GetActorLocation(),
-							DestinationLocation);
-	if (!NavPath) return false;
-	
-	NavPathCoords = NavPath->PathPoints;
-	
-	AIController->MoveToLocation(DestinationLocation, 50, 
-								false, true, 
-								true, true,
-								nullptr, true);
-	
-	
-	
+	const bool bSuccessful = MovementComponent->RequestNavMoving(_TargetLocation);
+	if (!bSuccessful) return false;
+	NavPathCoords = MovementComponent->GetNavPathCoords();
+	//DrawNavLine();
 	return true;
-	
 }
 
 void AShip::DrawNavLine()
 {
+	if (NavPathCoords.Num() < 2) return;
+	
 	for (size_t i = 0; i < NavPathCoords.Num() - 1; i++)
 	{
 		DrawDebugLine(GetWorld(),
@@ -277,4 +209,57 @@ void AShip::DrawNavLine()
 			5);
 	}
 }
+
+void AShip::UpdatePositionWhenCreated()
+{
+	/*FHitResult Hit;
+	const bool bHit = PlayerController->GetHitResultUnderCursorByChannel(
+		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Visibility),
+		false,
+		Hit);
+
+	FVector Location = FVector(0,0, 150);
+	
+	
+	if (bHit) Location = Hit.Location + Location;
+
+	SetActorLocation(Location, false, nullptr, ETeleportType::None);*/
+}
+
+void AShip::RotateWhenCreatedPositive()
+{
+	if (!bJustCreated) return;
+	SetActorRotation(FRotator(0, GetActorRotation().Yaw - 10, 0));
+	GEngine->AddOnScreenDebugMessage(-1, 0.1, FColor::White, GetActorForwardVector().Rotation().ToString());
+}
+
+void AShip::RotateWhenCreatedNegative()
+{
+	if (!bJustCreated) return;
+	SetActorRotation(FRotator(0, GetActorRotation().Yaw + 10, 0));
+	GEngine->AddOnScreenDebugMessage(-1, 0.1, FColor::White, GetActorForwardVector().Rotation().ToString());
+}
+
+void AShip::MouseYPositiveStart()
+{
+	bMouseWheelYPositive = true;
+	RotateWhenCreatedPositive();
+}
+
+void AShip::MouseYPositiveEnd()
+{
+	bMouseWheelYPositive = false;
+}
+
+void AShip::MouseYNegativeStart()
+{
+	bMouseWheelYNegative = true;
+	RotateWhenCreatedNegative();
+}
+
+void AShip::MouseYNegativeEnd()
+{
+	bMouseWheelYNegative = false;
+}
+
 

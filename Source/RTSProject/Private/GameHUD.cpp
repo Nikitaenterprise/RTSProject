@@ -5,10 +5,10 @@
 #include "ShipHUD.h"
 #include "BuildingHUD.h"
 
-#include "Engine/Canvas.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "Kismet/KismetArrayLibrary.h"
-#include "Kismet/KismetSystemLibrary.h"
+//#include "Engine/Canvas.h"
+//#include "Kismet/KismetMathLibrary.h"
+//#include "Kismet/KismetArrayLibrary.h"
+//#include "Kismet/KismetSystemLibrary.h"
 
 AGameHUD::AGameHUD(const FObjectInitializer& OI) : Super(OI)
 {
@@ -80,8 +80,8 @@ void AGameHUD::DrawMarquee()
 	FLinearColor color(0, 1, 0, 0.2);
 	DrawRect(color, StartClick.X, StartClick.Y, res.X, res.Y);
 
-	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Cyan, StartClick.ToString());
-	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Cyan, HoldingLocation.ToString());
+	/*GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Cyan, StartClick.ToString());
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Cyan, HoldingLocation.ToString());*/
 
 	// Original selection
 	GetActorsInSelectionRectangle<AActor>(StartClick, HoldingLocation, SelectedActors, false);

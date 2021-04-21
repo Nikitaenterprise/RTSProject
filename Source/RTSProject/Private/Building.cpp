@@ -7,11 +7,11 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
 
-// Sets default values
 ABuilding::ABuilding()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
+	RootComponent = SceneComponent;
 
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMesh->SetupAttachment(GetRootComponent());
@@ -42,13 +42,13 @@ void ABuilding::Tick(float MainDeltaTime)
 	PastTime += MainDeltaTime;
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
 
-	if (bShouldUpdatePosition && !PlayerController->bLMBPressed)
+	if (bJustCreated && !PlayerController->bLMBPressed)
 	{
-		UpdateBuildingPosition();
+		UpdatePositionWhenCreated();
 	}
 	else if (PlayerController->bLMBPressed)
 	{
-		bShouldUpdatePosition = false;
+		bJustCreated = false;
 	}
 }
 
@@ -104,7 +104,7 @@ void ABuilding::Highlighted_Implementation(bool _bIsHighlighted)
 }
 
 
-void ABuilding::UpdateBuildingPosition()
+void ABuilding::UpdatePositionWhenCreated()
 {
 	FHitResult Hit;
 	const bool bHit = PlayerController->GetHitResultUnderCursorByChannel(
