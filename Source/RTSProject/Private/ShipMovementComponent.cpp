@@ -93,14 +93,13 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 			// Set roll value in between +- MaxRollAngle
 			Rotator.Roll = Rotator.Roll > MaxRollAngle ? MaxRollAngle : (Rotator.Roll < -MaxRollAngle ? -MaxRollAngle : Rotator.Roll);
 				
-			 DeltaR = OwnerShip->GetActorForwardVector() * DeltaTime * CurrentForwardSpeed;
+
 				
 			// Determine acceleration state
 			AccelerationState = ACCELERATING;
 			TurnState = TURNING_WHILE_MOVING;
 			RollState = ROLLING;
-
-
+			
 			DrawDebugCircle(GetWorld(), 
 				FVector(ArcSegment->CircleCenter.X, ArcSegment->CircleCenter.Y, 150), 
 				MinTurnRadius, 
@@ -170,7 +169,6 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 					AccelerationState = CONSTANT_VELOCITY;
 					TurnState = TURNING_WHILE_MOVING;
 				}
-				DeltaR = OwnerShip->GetActorForwardVector() * DeltaTime * CurrentForwardSpeed;
 			}else
 			// Angle between point and forward vector is <45
 			if (YawToDestination < 45 && YawToDestination > 1)
@@ -193,7 +191,6 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 				}
 				TurnState = TURNING_WHILE_MOVING;
 				RollState = ROLLING;
-				DeltaR = OwnerShip->GetActorForwardVector() * DeltaTime * CurrentForwardSpeed;
 			}else
 			if (YawToDestination <= 1)
 			{
@@ -213,7 +210,6 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 				
 				TurnState = NO_TURNING;
 				RollState = ROLL_TO_ZERO;
-				DeltaR = OwnerShip->GetActorForwardVector() * DeltaTime * CurrentForwardSpeed;
 				DeltaYaw = 0;
 			}
 				
@@ -221,14 +217,6 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 				
 			Rotator.Yaw = OwnerShip->GetActorRotation().Yaw + DeltaYaw;
 
-			
-			
-				
-			// Determine acceleration state
-			/*if (DistanceToPoint >= 15 * AcceptanceRadius)
-			{
-				AccelerationState = ACCELERATING;
-			}*/
 			if (DistanceToPoint < 15 * AcceptanceRadius)
 			{
 				AccelerationState = DECELERATING;
@@ -265,6 +253,7 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 			}
 		}
 		
+		DeltaR = OwnerShip->GetActorForwardVector() * DeltaTime * CurrentForwardSpeed;
 		DeltaR.Z = 0;
 		AddInputVector(DeltaR);
 		
