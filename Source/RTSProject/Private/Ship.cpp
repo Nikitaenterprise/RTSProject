@@ -10,6 +10,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Components/InputComponent.h"
 //#include "Blueprint/UserWidget.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -68,6 +69,17 @@ void AShip::Tick(float _mainDeltaTime)
 	PastTime += _mainDeltaTime;
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
 
+	if (bJustCreated && !PlayerController->bLMBPressed)
+	{
+		PlayerController->bDisableZooming = true;
+		UpdatePositionWhenCreated();
+	}
+	else if (PlayerController->bLMBPressed)
+	{
+		PlayerController->bDisableZooming = false;
+		bJustCreated = false;
+	}
+
 	bIsMoving = MovementComponent->Velocity.Size() > 0;
 	if (bIsMoving && UKismetMathLibrary::NearlyEqual_FloatFloat(PastTime, DrawNavLineOncePerThisSeconds)) DrawNavLine();
 	
@@ -88,6 +100,18 @@ void AShip::Initialize(ARTSPlayerController* _Controller)
 		else
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Init() is null"));
+		}
+		InputComponent = PlayerController->InputComponent;
+		if (InputComponent)
+		{
+			InputComponent->BindAction(TEXT("MouseYPositive"), IE_Pressed, this, &AShip::MouseYPositiveStart);
+			InputComponent->BindAction(TEXT("MouseYPositive"), IE_Released, this, &AShip::MouseYPositiveEnd);
+			InputComponent->BindAction(TEXT("MouseYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
+			InputComponent->BindAction(TEXT("MouseYNegative"), IE_Released, this, &AShip::MouseYNegativeEnd);
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Init() is null"));
 		}
 		
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
@@ -162,10 +186,10 @@ bool AShip::Move(const FVector _TargetLocation)
 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Move() is null"));
 		return false;
 	}
-	const bool successful = MovementComponent->RequestNavMoving(_TargetLocation);
-	if (!successful) return false;
+	const bool bSuccessful = MovementComponent->RequestNavMoving(_TargetLocation);
+	if (!bSuccessful) return false;
 	NavPathCoords = MovementComponent->GetNavPathCoords();
-	DrawNavLine();
+	//DrawNavLine();
 	return true;
 }
 
@@ -185,4 +209,57 @@ void AShip::DrawNavLine()
 			5);
 	}
 }
+
+void AShip::UpdatePositionWhenCreated()
+{
+	/*FHitResult Hit;
+	const bool bHit = PlayerController->GetHitResultUnderCursorByChannel(
+		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Visibility),
+		false,
+		Hit);
+
+	FVector Location = FVector(0,0, 150);
+	
+	
+	if (bHit) Location = Hit.Location + Location;
+
+	SetActorLocation(Location, false, nullptr, ETeleportType::None);*/
+}
+
+void AShip::RotateWhenCreatedPositive()
+{
+	if (!bJustCreated) return;
+	SetActorRotation(FRotator(0, GetActorRotation().Yaw - 10, 0));
+	GEngine->AddOnScreenDebugMessage(-1, 0.1, FColor::White, GetActorForwardVector().Rotation().ToString());
+}
+
+void AShip::RotateWhenCreatedNegative()
+{
+	if (!bJustCreated) return;
+	SetActorRotation(FRotator(0, GetActorRotation().Yaw + 10, 0));
+	GEngine->AddOnScreenDebugMessage(-1, 0.1, FColor::White, GetActorForwardVector().Rotation().ToString());
+}
+
+void AShip::MouseYPositiveStart()
+{
+	bMouseWheelYPositive = true;
+	RotateWhenCreatedPositive();
+}
+
+void AShip::MouseYPositiveEnd()
+{
+	bMouseWheelYPositive = false;
+}
+
+void AShip::MouseYNegativeStart()
+{
+	bMouseWheelYNegative = true;
+	RotateWhenCreatedNegative();
+}
+
+void AShip::MouseYNegativeEnd()
+{
+	bMouseWheelYNegative = false;
+}
+
 

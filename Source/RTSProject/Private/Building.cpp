@@ -42,13 +42,13 @@ void ABuilding::Tick(float MainDeltaTime)
 	PastTime += MainDeltaTime;
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
 
-	if (bShouldUpdatePosition && !PlayerController->bLMBPressed)
+	if (bJustCreated && !PlayerController->bLMBPressed)
 	{
-		UpdateBuildingPosition();
+		UpdatePositionWhenCreated();
 	}
 	else if (PlayerController->bLMBPressed)
 	{
-		bShouldUpdatePosition = false;
+		bJustCreated = false;
 	}
 }
 
@@ -104,7 +104,7 @@ void ABuilding::Highlighted_Implementation(bool _bIsHighlighted)
 }
 
 
-void ABuilding::UpdateBuildingPosition()
+void ABuilding::UpdatePositionWhenCreated()
 {
 	FHitResult Hit;
 	const bool bHit = PlayerController->GetHitResultUnderCursorByChannel(

@@ -25,7 +25,7 @@ void UBasicButtonsHUD::SpawnShip()
 	v.X = UKismetMathLibrary::RandomIntegerInRange(-1000, 1000);
 	v.Y = UKismetMathLibrary::RandomIntegerInRange(-1000, 1000);
 	v.Z = 150;
-	ShipFactory::NewShip(GetWorld(), FVector(-1000, 0, 150), PlayerController);
+	ShipFactory::NewShip(GetWorld(), FVector(-1000, 0, -100), PlayerController);
 }
 
 void UBasicButtonsHUD::SpawnAsteroidField()
@@ -39,12 +39,12 @@ void UBasicButtonsHUD::SpawnAsteroidField()
 
 void UBasicButtonsHUD::SpawnBuilding()
 {
-	FHitResult Hit;
+	/*FHitResult Hit;
 	if (PlayerController->GetHitResultUnderCursorByChannel(
 		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Visibility),
 		false,
 		Hit))
 	{
-		BuildingFactory::NewBuilding(GetWorld(), Hit.Location, PlayerController);
-	}
+	}*/
+	BuildingFactory::NewBuilding(GetWorld(), FVector(0,0,-100), PlayerController);
 }

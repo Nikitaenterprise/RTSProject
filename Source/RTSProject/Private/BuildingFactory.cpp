@@ -38,7 +38,7 @@ ABuilding* BuildingFactory::NewBuilding(UWorld* _World, const FVector& _Location
 	SpawnedBuilding->PlayerController = _Controller;
 	SpawnedBuilding->BindHUD();
 	_Controller->PlayersActors.AddUnique(SpawnedBuilding);
-	SpawnedBuilding->bShouldUpdatePosition = true;	
+	SpawnedBuilding->bJustCreated = true;	
 	return SpawnedBuilding;
 }
 

@@ -41,10 +41,12 @@ public:
 	UShipMovementComponent* MovementComponent = nullptr;
 	
 	ARTSPlayerController* PlayerController = nullptr;
+	UInputComponent* InputComponent = nullptr;
 	
 	// Widget
 	UHealthShieldBarHUD* HealthShieldBarHUD = nullptr;
 
+	bool bJustCreated = false;
 	bool bIsSelected = false;
 	bool bIsHighlighted = false;
 	
@@ -52,6 +54,7 @@ public:
 	float PastTime = 0;
 
 	// Moving
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
 	bool bIsMoving = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
 	bool bShouldMove = false;
@@ -64,6 +67,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
 	float DrawNavLineOncePerThisSeconds = 1;
 	TArray<FVector> NavPathCoords;
+
+	// Mouse wheel
+	bool bMouseWheelYPositive = false;
+	bool bMouseWheelYNegative = false;
 
 	// Turrets
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Turret")
@@ -97,6 +104,15 @@ public:
 	bool Move(const FVector _TargetLocation);
 
 	void DrawNavLine();
+	void UpdatePositionWhenCreated();
+
+	// Mouse wheel
+	void RotateWhenCreatedPositive();
+	void RotateWhenCreatedNegative();
+	void MouseYPositiveStart();
+	void MouseYPositiveEnd();
+	void MouseYNegativeStart();
+	void MouseYNegativeEnd();
 	
 protected:
 	

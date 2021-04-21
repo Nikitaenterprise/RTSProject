@@ -36,7 +36,7 @@ public:
 
 	bool bIsSelected = false;
 	bool bIsHighlighted = false;
-	bool bShouldUpdatePosition = false;
+	bool bJustCreated = false;
 
 public:	
 
@@ -59,7 +59,7 @@ public:
 	void Highlighted(bool _bIsHighlighted);
 	virtual void Highlighted_Implementation(bool _bIsHighlighted) override;
 
-	void UpdateBuildingPosition();
+	void UpdatePositionWhenCreated();
 
 protected:
 

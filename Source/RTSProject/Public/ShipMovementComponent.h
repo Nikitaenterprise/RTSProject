@@ -17,43 +17,45 @@ public:
 	
 	enum EShipAccelerationState
 	{
-		FullStop,
-		Accelerating,
-		Decelerating,
-		Braking
+		FULL_STOP,
+		ACCELERATING,
+		DECELERATING,
+		CONSTANT_VELOCITY,
+		BRAKING
 	};
 	static constexpr char* EShipAccelerationStateStr[] =
 	{
-		"FullStop",
-		"Accelerating",
-		"Decelerating",
-		"Braking"
+		"FULL_STOP",
+		"ACCELERATING",
+		"DECELERATING",
+		"CONSTANT_VELOCITY",
+		"BRAKING"
 	};
 
 	enum EShipYawState
 	{
-		NoTurning,
-		TurningWhileStanding,
-		TurningWhileMoving
+		NO_TURNING,
+		TURNING_WHILE_STANDING,
+		TURNING_WHILE_MOVING
 	};
 	static constexpr char* EShipYawStateStr[] =
 	{
-		"NoTurning",
-		"TurningWhileStanding",
-		"TurningWhileMoving"
+		"NO_TURNING",
+		"TURNING_WHILE_STANDING",
+		"TURNING_WHILE_MOVING"
 	};
 
 	enum EShipRollState
 	{
-		NoRolling,
-		Rolling,
-		RollToZero
+		NO_ROLLING,
+		ROLLING,
+		ROLL_TO_ZERO
 	};
 	static constexpr char* EShipRollStateStr[] =
 	{
-		"NoRolling",
-		"Rolling",
-		"RollToZero"
+		"NO_ROLLING",
+		"ROLLING",
+		"ROLL_TO_ZERO"
 	};
 
 public:
@@ -96,58 +98,80 @@ public:
 	ARTSAIController* RTSAIController = nullptr;
 	
 private:
-	
+	enum ELineSegment
+	{
+		STRAIGHT_LINE,
+		ARC_LINE
+	};
+	static constexpr char* ELineSegmentStr[] =
+	{
+		"StraightLine",
+		"ArcLine"
+	};
 	class LineSegment
 	{
 	public:
-		LineSegment(FVector StartPosition, float Length) :
+		LineSegment(FVector StartPosition, FVector EndPosition, float Length, bool bClockwiseRotation) :
 			StartPosition(StartPosition),
-			Length(Length) {}
+			EndPosition(EndPosition),
+			Length(Length),
+			bClockwiseRotation(bClockwiseRotation){}
 		
+		ELineSegment LineType;
 		FVector StartPosition = FVector::ZeroVector;
+		FVector EndPosition = FVector::ZeroVector;
 		float Length = 0;
+		bool bClockwiseRotation = true;
 	};
 	class StraightLine : public LineSegment
 	{
 	public:
-		StraightLine(FVector StartPosition, float Length, float Angle) :
-			LineSegment(StartPosition, Length),
-			Angle(Angle) {}
+		StraightLine(FVector StartPosition, FVector EndPosition, float Length, bool bClockwiseRotation, float Angle) :
+			LineSegment(StartPosition, EndPosition, Length, bClockwiseRotation),
+			Angle(Angle)
+		{
+			LineType = STRAIGHT_LINE;
+		}
 		
 		float Angle = 0;
 	};
 	class ArcLine : public LineSegment
 	{
 	public:
-		ArcLine(FVector StartPosition, float Length, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover, bool bRotateClockwise) :
-			LineSegment(StartPosition, Length),
+		ArcLine(FVector StartPosition, FVector EndPosition, float Length, bool bClockwiseRotation, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover) :
+			LineSegment(StartPosition, EndPosition, Length, bClockwiseRotation),
 			CircleCenter(CircleCenter),
 			StartingAngle(StartingAngle),
-			TotalRadiansCover(TotalRadiansCover),
-			bRotateClockwise(bRotateClockwise) {}
-		
+			TotalRadiansCover(TotalRadiansCover)
+		{
+			LineType = ARC_LINE;
+		}
+
 		FVector2D CircleCenter = FVector2D::ZeroVector;
 		float StartingAngle = 0;
 		float TotalRadiansCover = 0;
-		bool bRotateClockwise = true;
 	};
-	TArray<LineSegment> LineSegments;
+
 	
+	TArray<LineSegment*> LineSegments;
+	LineSegment* CurrentLine = nullptr;
+
+	// Normalized direction vector to shift this frame
 	FVector InputVector = FVector(0, 0, 0);
+	FRotator Rotator;
 	
 	FVector PointMoveTo;
-	FRotator Rotator;
 
-	EShipAccelerationState AccelerationState = FullStop;
-	EShipYawState TurnState = NoTurning;
-	EShipRollState RollState = NoRolling;
+	EShipAccelerationState AccelerationState = FULL_STOP;
+	EShipYawState TurnState = NO_TURNING;
+	EShipRollState RollState = NO_ROLLING;
 	
 	bool bShouldMove = false;
 	bool bRequestedMove = false;
 	bool bInitialMove = false;
 
-	
 public:
+	
 	UShipMovementComponent(const FObjectInitializer& ObjectInitializer);
 	void Initialize();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -157,13 +181,16 @@ public:
 
 	TArray<FVector> GetNavPathCoords() const { return NavPathCoords; }
 	
-	bool Walkable(FVector FirstPoint, FVector SecondPoint);
-	void RequestTurnTo(const FRotator _TargetRotation);
-	void CalculateMove();
-	void CalculateRotation();
 	bool RequestNavMoving(const FVector _TargetLocation);
-	inline void ReverceNavPath();
+	void TurnOnCapsuleCollision(const bool TurnOn) const;
+
+private:
+
+	inline void ReverceLineSegments();
 	void BuildLineSegments();
-	inline void MakePathInXYPlane(float _setZToThisValue);
+	inline void MakePathInXYPlane(float _SetZToThisValue);
 	inline void GetPoint();
+	inline void CalculateForwardSpeed();
+	inline void CalculateYawSpeed();
+	inline void CalculateRoll();
 };
