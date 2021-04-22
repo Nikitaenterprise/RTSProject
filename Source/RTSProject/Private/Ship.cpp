@@ -60,10 +60,6 @@ void AShip::BeginPlay()
 void AShip::Tick(float _mainDeltaTime)
 {
 	Super::Tick(_mainDeltaTime);
-	
-	/*FString str = UKismetSystemLibrary::GetDisplayName(this);
-	FString b = bIsSelected ? TEXT("true") : TEXT("false");
-	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("obj=%s, bSelected=%s"), *str, *b));*/
 
 	DeltaTime = _mainDeltaTime;
 	PastTime += _mainDeltaTime;

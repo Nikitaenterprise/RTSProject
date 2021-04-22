@@ -23,16 +23,18 @@ public:
 	UStaticMeshComponent* StaticMesh = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UWidgetComponent* HealthShieldBar = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
+	UParticleSystemComponent* SpawnPoint = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HUD")
 	UHealthShield* HealthShieldComponent = nullptr;
-	
+	UPROPERTY()
 	ARTSPlayerController* PlayerController = nullptr;
-
-	// Widget
+	UPROPERTY()
 	UHealthShieldBarHUD* HealthShieldBarHUD = nullptr;
 
 	float DeltaTime = 0;
 	float PastTime = 0;
+	float SpawnInterval = 10;
 
 	bool bIsSelected = false;
 	bool bIsHighlighted = false;
@@ -43,9 +45,12 @@ public:
 	ABuilding();
 
 	virtual void Tick(float MainDeltaTime) override;
+	void Initialize(ARTSPlayerController* Controller);
 	
 	void SetHealthShieldBar();
-	void BindHUD();
+	
+	UFUNCTION()
+	void SpawnUnit();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);

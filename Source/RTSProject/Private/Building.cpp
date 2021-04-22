@@ -3,9 +3,11 @@
 #include "HealthShield.h"
 #include "RTSPlayerController.h"
 #include "HealthShieldBarHUD.h"
+#include "ShipFactory.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Particles/ParticleSystemComponent.h"
 
 ABuilding::ABuilding()
 {
@@ -20,19 +22,31 @@ ABuilding::ABuilding()
 	HealthShieldBar->SetupAttachment(GetRootComponent());
 	HealthShieldBar->SetDrawSize(FVector2D(150, 150));
 	HealthShieldBar->SetWidgetSpace(EWidgetSpace::Screen);
+
+	SpawnPoint = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SpawnPoint"));
+	
 	
 	HealthShieldComponent = CreateDefaultSubobject<UHealthShield>(TEXT("HealthShield"));
 
 }
 
-// Called when the game starts or when spawned
 void ABuilding::BeginPlay()
 {
 	Super::BeginPlay();
-	PlayerController = Cast<ARTSPlayerController>(GetWorld()->GetFirstPlayerController());
+}
 
-	HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
-	//HealthShieldHUD = Cast<HealthShieldHUD>(HealthShieldBar->GetUserWidgetObject())
+void ABuilding::Initialize(ARTSPlayerController* Controller)
+{
+	if (Controller)
+	{
+		PlayerController = Controller;
+		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerController in AShip->Init() is null"));
+	}
+	SpawnPoint->SetRelativeLocation(FVector(150, 0, 0));
 }
 
 void ABuilding::Tick(float MainDeltaTime)
@@ -65,11 +79,10 @@ void ABuilding::SetHealthShieldBar()
 	HealthShieldBarHUD->HealthPercent = HealthShieldComponent->getHealthPercent();
 }
 
-void ABuilding::BindHUD()
+void ABuilding::SpawnUnit()
 {
-	if (PlayerController) {
-		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
-	}
+	FVector SpawnLocation = SpawnPoint->GetComponentLocation();
+	ShipFactory::NewShip(GetWorld(), SpawnLocation, PlayerController);
 }
 
 void ABuilding::Selected_Implementation(bool _bIsSelected)

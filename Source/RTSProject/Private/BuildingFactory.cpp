@@ -35,10 +35,9 @@ ABuilding* BuildingFactory::NewBuilding(UWorld* _World, const FVector& _Location
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn building"));
 		return nullptr;
 	}
-	SpawnedBuilding->PlayerController = _Controller;
-	SpawnedBuilding->BindHUD();
+	SpawnedBuilding->Initialize(_Controller);
+	SpawnedBuilding->bJustCreated = true;
 	_Controller->PlayersActors.AddUnique(SpawnedBuilding);
-	SpawnedBuilding->bJustCreated = true;	
 	return SpawnedBuilding;
 }
 
