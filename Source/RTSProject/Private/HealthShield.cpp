@@ -68,12 +68,12 @@ void UHealthShield::Heal(int amount)
 	else HealHealth(amount);
 }
 
-float UHealthShield::getHealthPercent()
+float UHealthShield::GetHealthPercent()
 {
 	return (float)Health/(float)MaxHealth;
 }
 
-float UHealthShield::getShieldPercent()
+float UHealthShield::GetShieldPercent()
 {
 	return (float)Shield/(float)MaxShield;
 }

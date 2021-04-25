@@ -84,7 +84,7 @@ public:
 
 	virtual void Tick(float _mainDeltaTime) override;
 	
-	void Initialize(ARTSPlayerController* _Controller);
+	void Initialize(ARTSPlayerController* RTSController);
 
 	void SetHealthShieldBar();
 

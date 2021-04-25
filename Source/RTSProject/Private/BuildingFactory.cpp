@@ -4,10 +4,6 @@
 #include "FactoryAssets.h"
 #include "RTSPlayerController.h"
 
-//#include "Engine/World.h"
-//#include "Engine/StaticMesh.h"
-
-
 ABuilding* BuildingFactory::NewBuilding(UWorld* _World, ARTSPlayerController* _Controller)
 {
 	return NewBuilding(_World, FVector(0, 0, 0), FRotator(0, 0, 0), _Controller);

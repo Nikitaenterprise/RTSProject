@@ -81,15 +81,15 @@ void AShip::Tick(float _mainDeltaTime)
 	
 }
 
-void AShip::Initialize(ARTSPlayerController* _Controller)
+void AShip::Initialize(ARTSPlayerController* RTSController)
 {
-	if (_Controller)
+	if (RTSController)
 	{
-		PlayerController = _Controller;
+		PlayerController = RTSController;
 
 		if(MovementComponent)
 		{
-			MovementComponent->PlayerController = _Controller;
+			MovementComponent->PlayerController = RTSController;
 			MovementComponent->OwnerShip = this;
 			MovementComponent->Initialize();	
 		}
@@ -111,6 +111,8 @@ void AShip::Initialize(ARTSPlayerController* _Controller)
 		}
 		
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
+		HealthShieldBar->SetVisibility(false);
+		SelectionCircle->SetVisibility(false);
 	}
 	else
 	{
@@ -155,14 +157,12 @@ void AShip::Highlighted_Implementation(bool _bIsHighlighted)
 		bIsHighlighted = _bIsHighlighted;
 		if (bIsHighlighted)
 		{
-			//HealthShieldBarHUD->ShowUI();
+			SetHealthShieldBar();
 			HealthShieldBar->SetVisibility(true);
 			SelectionCircle->SetVisibility(true);
-			SetHealthShieldBar();
 		}
 		else
 		{
-			//HealthShieldBarHUD->HideUI();
 			HealthShieldBar->SetVisibility(false);
 			SelectionCircle->SetVisibility(false);
 		}
@@ -171,8 +171,8 @@ void AShip::Highlighted_Implementation(bool _bIsHighlighted)
 
 void AShip::SetHealthShieldBar()
 {
-	HealthShieldBarHUD->ShieldPercent = HealthShieldComponent->getShieldPercent();
-	HealthShieldBarHUD->HealthPercent = HealthShieldComponent->getHealthPercent();
+	HealthShieldBarHUD->ShieldPercent = HealthShieldComponent->GetShieldPercent();
+	HealthShieldBarHUD->HealthPercent = HealthShieldComponent->GetHealthPercent();
 }
 
 bool AShip::Move(const FVector _TargetLocation)

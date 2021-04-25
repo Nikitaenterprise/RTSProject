@@ -47,9 +47,9 @@ public:
 	void Heal(int amount);
 
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
-	float getHealthPercent();
+	float GetHealthPercent();
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
-	float getShieldPercent();
+	float GetShieldPercent();
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
 	bool IsDead();
 

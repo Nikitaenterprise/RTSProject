@@ -22,28 +22,13 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	ACamera* CameraRef = nullptr;
 
-	// Movement
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float DefaultMovementSpeed = 15;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float MovementSpeedModifier = 1;
 
-	// Zoom
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float CameraZoomSpeed = 150;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float CameraMaxZoom = 4000;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float CameraMinZoom = 200;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float CameraDefaultZoom = 4000;
-
-	// Pan rotation
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bDisablePanRotation = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float PanRotationSpeed = 5;
 
+	// Key press
+	bool bShiftPressed = false;
+	bool bAltPressed = false;
+	
 	// Mouse clicks
 	bool bLMBPressed = false;
 	bool bRMBPressed = false;
@@ -54,6 +39,7 @@ public:
 	bool bMouseWheelYNegative = false;
 
 	// Units selection and control
+	TArray<AActor*> ShouldBeSelected;
 	TArray<AActor*> SelectedActors;
 	TArray<AActor*> PlayersActors;
 	AActor* HighlightedActor = nullptr;
@@ -72,7 +58,6 @@ public:
 	virtual void Tick(float mainDeltaTime) override;
 
 	virtual void SetupInputComponent() override; //(class UInputComponent* PlayerInputComponent)
-	void Move(FVector& v);
 	void MoveForward(float value);
 	void MoveRight(float value);
 
@@ -84,25 +69,21 @@ public:
 	void MouseYPositiveEnd();
 	void MouseYNegativeStart();
 	void MouseYNegativeEnd();
-	
-	// Zoom
-	void ZoomIn();
-	void ZoomOut();
-	void ZoomReset();
 
 	// Edge scrolling
 	void EdgeScrollingX(float value);
 	void EdgeScrollingY(float value);
-	void EdgeScrolling(float dx, float dy);
 
 	// Pan rotation
 	void RotatePanX(float value);
 	void RotatePanY(float value);
-	void RotatePan(float x, float y);
 	void PanReset();
 	void EnableCameraMovement();
 	void DisableCameraMovement();
 
+	// Zoom
+	void ZoomReset();
+	
 	// Mouse clicks
 	void LMBPressed();
 	void LMBReleased();
@@ -110,14 +91,6 @@ public:
 	void RMBReleased();
 
 	// Units selection and control
-	UFUNCTION(BlueprintCallable, Category = "Selection")
-	bool SelectedShips();
-	UFUNCTION(BlueprintCallable, Category = "Selection")
-	bool SelectedBuildings();
-	void SelectUnits();
-	void DeselectUnits();
-	void HighlightUnit();
-	void DehighlightUnit();
 	void UpdateSelection();
 	void HighlightActorsUnderCursor();
 	void MoveSelectedActors();

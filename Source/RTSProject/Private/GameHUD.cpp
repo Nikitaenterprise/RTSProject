@@ -46,10 +46,8 @@ TArray<AActor*>& AGameHUD::GetSelectedActors()
 
 void AGameHUD::OnInputStart() 
 {
-	float mouseX = 0, mouseY = 0;
-	PlayerController->GetMousePosition(mouseX, mouseY);
-	StartClick.X = mouseX;
-	StartClick.Y = mouseY;
+
+	PlayerController->GetMousePosition(StartClick.X, StartClick.Y);
 	HoldingLocation = StartClick;
 	SelectedActors.Empty();
 	bIsDrawing = true;
@@ -57,10 +55,7 @@ void AGameHUD::OnInputStart()
 
 void AGameHUD::OnInputHold() 
 {
-	float mouseX = 0, mouseY = 0;
-	PlayerController->GetMousePosition(mouseX, mouseY);
-	HoldingLocation.X = mouseX;
-	HoldingLocation.Y = mouseY;
+	PlayerController->GetMousePosition(HoldingLocation.X, HoldingLocation.Y);
 }
 
 void AGameHUD::OnInputRelease() 
@@ -76,14 +71,13 @@ void AGameHUD::DrawMarquee()
 	DrawLine(HoldingLocation.X, HoldingLocation.Y, StartClick.X, HoldingLocation.Y, FColor::Green, 1);
 	DrawLine(StartClick.X, HoldingLocation.Y, StartClick.X, StartClick.Y, FColor::Green, 1);
 	
-	FVector2D res = HoldingLocation - StartClick;
-	FLinearColor color(0, 1, 0, 0.2);
-	DrawRect(color, StartClick.X, StartClick.Y, res.X, res.Y);
+	const FVector2D RectSize = HoldingLocation - StartClick;
+	const FLinearColor Color(0, 1, 0, 0.2);
+	DrawRect(Color, StartClick.X, StartClick.Y, RectSize.X, RectSize.Y);
 
 	/*GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Cyan, StartClick.ToString());
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Cyan, HoldingLocation.ToString());*/
 
-	// Original selection
 	GetActorsInSelectionRectangle<AActor>(StartClick, HoldingLocation, SelectedActors, false);
 }
 
@@ -91,11 +85,7 @@ void AGameHUD::DrawSelectionRectAndSelectActors()
 {
 	if (bIsDrawing) {
 		DrawMarquee();
-		PlayerController->SelectedActors = SelectedActors;
-		/*for (const auto& a : SelectedActors) {
-			FString str = UKismetSystemLibrary::GetDisplayName(a);
-			GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Cyan, str);
-		}*/
+		PlayerController->ShouldBeSelected = SelectedActors;
 		SelectedActors.Empty();
 	}
 }

@@ -35,12 +35,13 @@ void ABuilding::BeginPlay()
 	Super::BeginPlay();
 }
 
-void ABuilding::Initialize(ARTSPlayerController* Controller)
+void ABuilding::Initialize(ARTSPlayerController* RTSController)
 {
-	if (Controller)
+	if (RTSController)
 	{
-		PlayerController = Controller;
+		PlayerController = RTSController;
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
+		HealthShieldBar->SetVisibility(false);
 	}
 	else
 	{
@@ -75,8 +76,8 @@ bool ABuilding::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
 
 void ABuilding::SetHealthShieldBar()
 {
-	HealthShieldBarHUD->ShieldPercent = HealthShieldComponent->getShieldPercent();
-	HealthShieldBarHUD->HealthPercent = HealthShieldComponent->getHealthPercent();
+	HealthShieldBarHUD->ShieldPercent = HealthShieldComponent->GetShieldPercent();
+	HealthShieldBarHUD->HealthPercent = HealthShieldComponent->GetHealthPercent();
 }
 
 void ABuilding::SpawnUnit()
