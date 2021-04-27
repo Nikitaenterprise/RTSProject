@@ -19,8 +19,10 @@ void AGameHUD::BeginPlay()
 	Super::BeginPlay();
 	if (SetupWidget<UBasicButtonsHUD>(BasicButtonsHUD, BasicButtonsHUDClass))
 		BasicButtonsHUD->AddToViewport();
-	SetupWidget<UShipHUD>(ShipHUD, ShipHUDClass);
-	SetupWidget<UBuildingHUD>(BuildingHUD, BuildingHUDClass);
+	if(SetupWidget<UShipHUD>(ShipHUD, ShipHUDClass))
+		ShipHUD->AddToViewport();
+	if(SetupWidget<UBuildingHUD>(BuildingHUD, BuildingHUDClass))
+		BuildingHUD->AddToViewport();
 }
 
 void AGameHUD::DrawHUD()
@@ -44,13 +46,36 @@ TArray<AActor*>& AGameHUD::GetSelectedActors()
 	return SelectedActors;
 }
 
+void AGameHUD::ShowBasicButtonsHUD()
+{
+	if (bIsShowingBasicButtonsHUD) return;
+	BasicButtonsHUD->SetVisibility(ESlateVisibility::Visible);
+	BuildingHUD->SetVisibility(ESlateVisibility::Hidden);
+	ShipHUD->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void AGameHUD::ShowBuildingHUD()
+{
+	if (bIsShowingBuildingHUD) return;
+	BuildingHUD->SetVisibility(ESlateVisibility::Visible);
+	BasicButtonsHUD->SetVisibility(ESlateVisibility::Hidden);
+	ShipHUD->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void AGameHUD::ShowShipHUD()
+{
+	if (bIsShowingShipHUD) return;
+	ShipHUD->SetVisibility(ESlateVisibility::Visible);
+	BasicButtonsHUD->SetVisibility(ESlateVisibility::Hidden);
+	BuildingHUD->SetVisibility(ESlateVisibility::Hidden);
+}
+
 void AGameHUD::OnInputStart() 
 {
-
 	PlayerController->GetMousePosition(StartClick.X, StartClick.Y);
 	HoldingLocation = StartClick;
 	SelectedActors.Empty();
-	bIsDrawing = true;
+	bIsDrawingSelectionRectangle = true;
 }
 
 void AGameHUD::OnInputHold() 
@@ -60,8 +85,7 @@ void AGameHUD::OnInputHold()
 
 void AGameHUD::OnInputRelease() 
 {
-	bIsDrawing = false;
-	
+	bIsDrawingSelectionRectangle = false;
 }
 
 void AGameHUD::DrawMarquee()
@@ -83,7 +107,7 @@ void AGameHUD::DrawMarquee()
 
 void AGameHUD::DrawSelectionRectAndSelectActors()
 {
-	if (bIsDrawing) {
+	if (bIsDrawingSelectionRectangle) {
 		DrawMarquee();
 		PlayerController->ShouldBeSelected = SelectedActors;
 		SelectedActors.Empty();

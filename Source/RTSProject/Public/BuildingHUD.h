@@ -4,6 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "BuildingHUD.generated.h"
 
+class ARTSPlayerController;
 
 UCLASS()
 class RTSPROJECT_API UBuildingHUD : public UUserWidget
@@ -11,8 +12,12 @@ class RTSPROJECT_API UBuildingHUD : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "HUD")
-	void ShowUI();
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "HUD")
-	void HideUI();
+
+	ARTSPlayerController* PlayerController = nullptr;
+
+public:
+
+	virtual void NativeConstruct() override;
+	UFUNCTION(BlueprintCallable)
+	void CheckButton();
 };

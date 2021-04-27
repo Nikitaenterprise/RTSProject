@@ -33,7 +33,8 @@ void ARTSPlayerController::BeginPlay()
 	Super::BeginPlay();
 
 	CameraRef = Cast<ACamera>(UGameplayStatics::GetPlayerPawn(this, 0));
-
+	CameraRef->Initialize(this);
+	
 	GameHUD = Cast<AGameHUD>(GetHUD());
 	if (GameHUD) GameHUD->BindController(this);
 	else GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("GameHUD=nullptr in ARTSPlayerController"));
@@ -47,97 +48,41 @@ void ARTSPlayerController::Tick(float mainDeltaTime)
 	if (bLMBPressed) UpdateSelection();
 	else HighlightActorsUnderCursor();
 
-	/*
-	if (SelectedShips()) ShipHUD->ShowUI();
-	else ShipHUD->HideUI();
-
-	if (SelectedBuildings()) BuildingHUD->ShowUI();
-	else BuildingHUD->HideUI();
-	*/
+	if (GameHUD)
+	{
+		if (ShipsSelected()) GameHUD->ShowShipHUD();
+		else if (BuildingsSelected()) GameHUD->ShowBuildingHUD();
+		else GameHUD->ShowBasicButtonsHUD();	
+	}
 }
 
 void ARTSPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-	// Movement
-	InputComponent->BindAxis(TEXT("MoveForward"), this, &ARTSPlayerController::MoveForward);
-	InputComponent->BindAxis(TEXT("MoveRight"), this, &ARTSPlayerController::MoveRight);
-	InputComponent->BindAction(TEXT("Shift"), IE_Pressed, this, &ARTSPlayerController::MovementIncrease);
-	InputComponent->BindAction(TEXT("Shift"), IE_Released, this, &ARTSPlayerController::ResetMovementModifier);
-	InputComponent->BindAction(TEXT("Alt"), IE_Pressed, this, &ARTSPlayerController::MovementDecrease);
-	InputComponent->BindAction(TEXT("Alt"), IE_Released, this, &ARTSPlayerController::ResetMovementModifier);
-	// Zoom
-	InputComponent->BindAction(TEXT("MouseYPositive"), IE_Pressed, this, &ARTSPlayerController::MouseYPositiveStart);
-	InputComponent->BindAction(TEXT("MouseYPositive"), IE_Released, this, &ARTSPlayerController::MouseYPositiveEnd);
-	InputComponent->BindAction(TEXT("MouseYNegative"), IE_Pressed, this, &ARTSPlayerController::MouseYNegativeStart);
-	InputComponent->BindAction(TEXT("MouseYNegative"), IE_Released, this, &ARTSPlayerController::MouseYNegativeEnd);
-	InputComponent->BindAction(TEXT("ZoomReset"), IE_Pressed, this, &ARTSPlayerController::ZoomReset);
+	
+	InputComponent->BindAction(TEXT("Shift"), IE_Pressed, this, &ARTSPlayerController::ShiftPressed);
+	InputComponent->BindAction(TEXT("Shift"), IE_Released, this, &ARTSPlayerController::ShiftReleased);
+		
 	// Edge scrolling
-	InputComponent->BindAxis(TEXT("Mouse X"), this, &ARTSPlayerController::EdgeScrollingX);
-	InputComponent->BindAxis(TEXT("Mouse Y"), this, &ARTSPlayerController::EdgeScrollingY);
-	// Pan rotation
-	InputComponent->BindAction(TEXT("PanReset"), IE_Pressed, this, &ARTSPlayerController::PanReset);
-	InputComponent->BindAction(TEXT("Pan"), IE_Pressed, this, &ARTSPlayerController::DisableCameraMovement);
-	InputComponent->BindAction(TEXT("Pan"), IE_Released, this, &ARTSPlayerController::EnableCameraMovement);
-	InputComponent->BindAxis(TEXT("Mouse X"), this, &ARTSPlayerController::RotatePanX);
-	InputComponent->BindAxis(TEXT("Mouse Y"), this, &ARTSPlayerController::RotatePanY);
+	InputComponent->BindAxis(TEXT("MouseX"), this, &ARTSPlayerController::EdgeScrollingX);
+	InputComponent->BindAxis(TEXT("MouseY"), this, &ARTSPlayerController::EdgeScrollingY);
+	
 	// Mouse clicks
 	bShowMouseCursor = true;
-	InputComponent->BindAction(TEXT("LeftClick"), IE_Pressed, this, &ARTSPlayerController::LMBPressed);
-	InputComponent->BindAction(TEXT("LeftClick"), IE_Released, this, &ARTSPlayerController::LMBReleased);
-	InputComponent->BindAction(TEXT("RightClick"), IE_Pressed, this, &ARTSPlayerController::RMBPressed);
-	InputComponent->BindAction(TEXT("RightClick"), IE_Pressed, this, &ARTSPlayerController::RMBReleased);
+	InputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &ARTSPlayerController::LMBPressed);
+	InputComponent->BindAction(TEXT("LMB"), IE_Released, this, &ARTSPlayerController::LMBReleased);
+	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ARTSPlayerController::RMBPressed);
+	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ARTSPlayerController::RMBReleased);
 }
 
-void ARTSPlayerController::MoveForward(float value)
-{
-	if (!bDisablePanRotation) CameraRef->Move(FVector(value, 0, 0));
-}
-
-void ARTSPlayerController::MoveRight(float value)
-{
-	if (!bDisablePanRotation) CameraRef->Move(FVector(0, value, 0));
-}
-
-void ARTSPlayerController::MovementIncrease()
+void ARTSPlayerController::ShiftPressed()
 {
 	bShiftPressed = true;
-	CameraRef->MovementSpeedModifier = 2;
 }
 
-void ARTSPlayerController::MovementDecrease()
-{
-	bAltPressed = true;
-	CameraRef->MovementSpeedModifier = 0.3;
-}
-
-void ARTSPlayerController::ResetMovementModifier()
+void ARTSPlayerController::ShiftReleased()
 {
 	bShiftPressed = false;
-	bAltPressed = false;
-	CameraRef->MovementSpeedModifier = 1;
-}
-
-void ARTSPlayerController::MouseYPositiveStart()
-{
-	bMouseWheelYPositive = true;
-	if (!bDisableZooming) CameraRef->ZoomIn();
-}
-
-void ARTSPlayerController::MouseYPositiveEnd()
-{
-	bMouseWheelYPositive = false;
-}
-
-void ARTSPlayerController::MouseYNegativeStart()
-{
-	bMouseWheelYNegative = true;
-	if (!bDisableZooming) CameraRef->ZoomOut();
-}
-
-void ARTSPlayerController::MouseYNegativeEnd()
-{
-	bMouseWheelYNegative = false;
 }
 
 void ARTSPlayerController::EdgeScrollingX(float value)
@@ -164,36 +109,6 @@ void ARTSPlayerController::EdgeScrollingY(float value)
 	if (RatioY >= 0.975)		CameraRef->EdgeScrolling(0, -15);
 	else if (RatioY <= 0.025)	CameraRef->EdgeScrolling(0, 15);
 	else						CameraRef->EdgeScrolling(0, 0);
-}
-
-void ARTSPlayerController::RotatePanX(float value)
-{
-	if (bDisablePanRotation) CameraRef->RotatePan(value, 0);
-}
-
-void ARTSPlayerController::RotatePanY(float value)
-{
-	if (bDisablePanRotation) CameraRef->RotatePan(0, value);
-}
-
-void ARTSPlayerController::PanReset()
-{
-	CameraRef->PanReset();
-}
-
-void ARTSPlayerController::EnableCameraMovement()
-{
-	bDisablePanRotation = false;
-}
-
-void ARTSPlayerController::DisableCameraMovement()
-{
-	bDisablePanRotation = true;
-}
-
-void ARTSPlayerController::ZoomReset()
-{
-	CameraRef->ZoomReset();
 }
 
 void ARTSPlayerController::LMBPressed()
@@ -251,6 +166,28 @@ void ARTSPlayerController::UpdateSelection()
 		IBaseBehavior* Interface = Cast<IBaseBehavior>(a);
 		if (Interface) Interface->Execute_Selected(a, true);
 	}
+}
+
+bool ARTSPlayerController::ShipsSelected()
+{
+	if (SelectedActors.Num() == 0) return false;
+	for (auto& e : SelectedActors)
+	{
+		AShip* Ship = Cast<AShip>(e);
+		if (IsValid(Ship)) return true;
+	}
+	return false;
+}
+
+bool ARTSPlayerController::BuildingsSelected()
+{
+	if (SelectedActors.Num() == 0) return false;
+	for (auto& e : SelectedActors)
+	{
+		ABuilding* Building = Cast<ABuilding>(e);
+		if (IsValid(Building)) return true;
+	}
+	return false;
 }
 
 void ARTSPlayerController::HighlightActorsUnderCursor()

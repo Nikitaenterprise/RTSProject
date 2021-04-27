@@ -43,7 +43,11 @@ private:
 	FVector2D HoldingLocation;
 	TArray<AActor*> SelectedActors;
 	
-	bool bIsDrawing = false;
+	bool bIsDrawingSelectionRectangle = false;
+
+	bool bIsShowingBasicButtonsHUD = false;
+	bool bIsShowingShipHUD = false;
+	bool bIsShowingBuildingHUD = false;
 
 public:
 
@@ -53,13 +57,19 @@ public:
 	virtual void Tick(float mainDeltaTime) override;
 	void BindController(ARTSPlayerController* Controller);
 
-	TArray<AActor*>& GetSelectedActors();
 
+	// Selection rectangle
 	void OnInputStart();
 	void OnInputHold();
 	void OnInputRelease();
 	void DrawMarquee();
 	void DrawSelectionRectAndSelectActors();
+	TArray<AActor*>& GetSelectedActors();
+
+	// Layout HUD
+	void ShowBasicButtonsHUD();
+	void ShowBuildingHUD();
+	void ShowShipHUD();
 
 	template<class T>
 	bool SetupWidget(T*& HUDReference, TSubclassOf<T>& WidgetTemplate);

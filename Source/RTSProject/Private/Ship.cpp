@@ -4,8 +4,9 @@
 #include "HealthShield.h"
 #include "Turret.h"
 #include "HealthShieldBarHUD.h"
-#include "GameHUD.h"
+//#include "GameHUD.h"
 #include "ShipMovementComponent.h"
+#include "Camera.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -67,12 +68,12 @@ void AShip::Tick(float _mainDeltaTime)
 
 	if (bJustCreated && !PlayerController->bLMBPressed)
 	{
-		PlayerController->bDisableZooming = true;
+		PlayerController->CameraRef->bDisableZooming = true;
 		UpdatePositionWhenCreated();
 	}
 	else if (PlayerController->bLMBPressed)
 	{
-		PlayerController->bDisableZooming = false;
+		PlayerController->CameraRef->bDisableZooming = false;
 		bJustCreated = false;
 	}
 
@@ -100,10 +101,10 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		InputComponent = PlayerController->InputComponent;
 		if (InputComponent)
 		{
-			InputComponent->BindAction(TEXT("MouseYPositive"), IE_Pressed, this, &AShip::MouseYPositiveStart);
-			InputComponent->BindAction(TEXT("MouseYPositive"), IE_Released, this, &AShip::MouseYPositiveEnd);
-			InputComponent->BindAction(TEXT("MouseYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
-			InputComponent->BindAction(TEXT("MouseYNegative"), IE_Released, this, &AShip::MouseYNegativeEnd);
+			InputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Pressed, this, &AShip::MouseYPositiveStart);
+			InputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Released, this, &AShip::MouseYPositiveEnd);
+			InputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
+			InputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Released, this, &AShip::MouseYNegativeEnd);
 		}
 		else
 		{

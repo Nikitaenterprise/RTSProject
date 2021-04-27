@@ -1,5 +1,6 @@
 #include "Camera.h"
 
+#include "RTSPlayerController.h"
 #include "Components/StaticMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -33,6 +34,39 @@ ACamera::ACamera()
 	FloatingMovement->Acceleration = 8000.0;
 }
 
+void ACamera::Initialize(ARTSPlayerController* RTSController)
+{
+	if(RTSController)
+	{
+		PlayerController = RTSController;
+		InputComponent = PlayerController->InputComponent;
+		if (InputComponent)
+		{
+			// Movement
+			InputComponent->BindAxis(TEXT("MoveForward"), this, &ACamera::MoveForward);
+			InputComponent->BindAxis(TEXT("MoveRight"), this, &ACamera::MoveRight);
+			InputComponent->BindAction(TEXT("Shift"), IE_Pressed, this, &ACamera::MovementIncrease);
+			InputComponent->BindAction(TEXT("Shift"), IE_Released, this, &ACamera::ResetMovementModifier);
+			InputComponent->BindAction(TEXT("Alt"), IE_Pressed, this, &ACamera::MovementDecrease);
+			InputComponent->BindAction(TEXT("Alt"), IE_Released, this, &ACamera::ResetMovementModifier);
+			// Zoom
+			InputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Pressed, this, &ACamera::MouseWheelYPositiveStart);
+			InputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &ACamera::MouseWheelYNegativeStart);
+			InputComponent->BindAction(TEXT("ZoomReset"), IE_Pressed, this, &ACamera::ZoomReset);
+			// Pan rotation
+			InputComponent->BindAction(TEXT("MMB"), IE_Pressed, this, &ACamera::DisableCameraMovement);
+			InputComponent->BindAction(TEXT("MMB"), IE_Released, this, &ACamera::EnableCameraMovement);
+			InputComponent->BindAction(TEXT("PanReset"), IE_Pressed, this, &ACamera::PanReset);
+			InputComponent->BindAxis(TEXT("MouseX"), this, &ACamera::RotatePanX);
+			InputComponent->BindAxis(TEXT("MouseY"), this, &ACamera::RotatePanY);
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Init() is null"));
+		}
+	}
+}
+
 void ACamera::BeginPlay()
 {
 	Super::BeginPlay();
@@ -41,6 +75,16 @@ void ACamera::BeginPlay()
 void ACamera::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void ACamera::MoveForward(float value)
+{
+	if (!bDisablePanRotation) Move(FVector(value, 0, 0));
+}
+
+void ACamera::MoveRight(float value)
+{
+	if (!bDisablePanRotation) Move(FVector(0, value, 0));
 }
 
 void ACamera::Move(const FVector& InputVector)
@@ -53,9 +97,34 @@ void ACamera::Move(const FVector& InputVector)
 	SetActorLocation(FVector(NewTransform.GetLocation().X, NewTransform.GetLocation().Y, 100), true);
 }
 
+void ACamera::MovementIncrease()
+{
+	MovementSpeedModifier = 2;
+}
+
+void ACamera::MovementDecrease()
+{
+	MovementSpeedModifier = 0.3;
+}
+
+void ACamera::ResetMovementModifier()
+{
+	MovementSpeedModifier = 1;
+}
+
 void ACamera::EdgeScrolling(float dx, float dy)
 {
 	AddActorLocalOffset(FVector(dy, dx, 0), true);
+}
+
+void ACamera::MouseWheelYPositiveStart()
+{
+	if (!bDisableZooming) ZoomIn();
+}
+
+void ACamera::MouseWheelYNegativeStart()
+{
+	if (!bDisableZooming) ZoomOut();
 }
 
 void ACamera::ZoomIn() const
@@ -68,7 +137,7 @@ void ACamera::ZoomOut() const
 	SpringArm->TargetArmLength = FMath::Clamp<float>(SpringArm->TargetArmLength + CameraZoomSpeed, CameraMinZoom, CameraMaxZoom);
 }
 
-void ACamera::ZoomReset() const
+void ACamera::ZoomReset()
 {
 	SpringArm->TargetArmLength = CameraDefaultZoom;
 }
@@ -82,8 +151,27 @@ void ACamera::RotatePan(float x, float y)
 	SetActorRotation(FRotator(Pitch, Yaw, Rotation.Roll));
 }
 
+void ACamera::RotatePanX(float value)
+{
+	if (bDisablePanRotation) RotatePan(value, 0);
+}
+
+void ACamera::RotatePanY(float value)
+{
+	if (bDisablePanRotation) RotatePan(0, value);
+}
+
 void ACamera::PanReset()
 {
 	SetActorRotation(FRotator(0, 0, 0));
 }
 
+void ACamera::EnableCameraMovement()
+{
+	bDisablePanRotation = false;
+}
+
+void ACamera::DisableCameraMovement()
+{
+	bDisablePanRotation = true;
+}
