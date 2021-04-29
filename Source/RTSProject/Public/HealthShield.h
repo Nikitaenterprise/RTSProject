@@ -22,11 +22,14 @@ public:
 	int StartingHealth = 100;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health Shield")
 	int StartingShield = 100;
-	UPROPERTY(BlueprintReadOnly, Transient, Category = "Health Shield")
+	
+private:
+	
 	int Health = 0;
-	UPROPERTY(BlueprintReadOnly, Transient, Category = "Health Shield")
 	int Shield = 0;
-
+	float HealthPercent = 0;
+	float ShieldPercent = 0;
+	
 public:	
 	UHealthShield();
 
@@ -50,9 +53,17 @@ public:
 	float GetHealthPercent();
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
 	float GetShieldPercent();
+
+	const float* GetHealthPercentPtr() const;
+	const float* GetShieldPercentPtr() const;
+
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
 	bool IsDead();
 
+private:
+
+	inline void RecalculatePercents();
+	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

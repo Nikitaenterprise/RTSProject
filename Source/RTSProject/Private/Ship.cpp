@@ -4,7 +4,6 @@
 #include "HealthShield.h"
 #include "Turret.h"
 #include "HealthShieldBarHUD.h"
-//#include "GameHUD.h"
 #include "ShipMovementComponent.h"
 #include "Camera.h"
 
@@ -12,16 +11,11 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Components/InputComponent.h"
-//#include "Blueprint/UserWidget.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
-//#include "AIController.h"
-//#include "NavigationPath.h"
-//#include "NavigationSystem.h"
 #include "DrawDebugHelpers.h"
-//#include "Components/ArrowComponent.h"
-//#include "GameFramework/CharacterMovementComponent.h"
+
 
 AShip::AShip(const FObjectInitializer& OI)
 	: Super(OI.SetDefaultSubobjectClass<UShipMovementComponent>(FName("ShipMovementComponent")))
@@ -61,7 +55,7 @@ void AShip::BeginPlay()
 void AShip::Tick(float _mainDeltaTime)
 {
 	Super::Tick(_mainDeltaTime);
-
+	
 	DeltaTime = _mainDeltaTime;
 	PastTime += _mainDeltaTime;
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
@@ -112,6 +106,7 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		}
 		
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
+		HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
 		HealthShieldBar->SetVisibility(false);
 		SelectionCircle->SetVisibility(false);
 	}
@@ -139,14 +134,11 @@ void AShip::Selected_Implementation(bool _bIsSelected)
 	if (bIsSelected)
 	{
 		HealthShieldBar->SetVisibility(true);
-		//HealthShieldBarHUD->SetVisibility(ESlateVisibility::Visible);
-		SetHealthShieldBar();
 		SelectionCircle->SetVisibility(true);
 	}
 	else
 	{
 		HealthShieldBar->SetVisibility(false);
-		//HealthShieldBarHUD->SetVisibility(ESlateVisibility::Hidden);
 		SelectionCircle->SetVisibility(false);
 	}
 }
@@ -158,7 +150,6 @@ void AShip::Highlighted_Implementation(bool _bIsHighlighted)
 		bIsHighlighted = _bIsHighlighted;
 		if (bIsHighlighted)
 		{
-			SetHealthShieldBar();
 			HealthShieldBar->SetVisibility(true);
 			SelectionCircle->SetVisibility(true);
 		}
@@ -168,12 +159,6 @@ void AShip::Highlighted_Implementation(bool _bIsHighlighted)
 			SelectionCircle->SetVisibility(false);
 		}
 	}
-}
-
-void AShip::SetHealthShieldBar()
-{
-	HealthShieldBarHUD->ShieldPercent = HealthShieldComponent->GetShieldPercent();
-	HealthShieldBarHUD->HealthPercent = HealthShieldComponent->GetHealthPercent();
 }
 
 bool AShip::Move(const FVector _TargetLocation)

@@ -21,9 +21,6 @@ class RTSPROJECT_API IBaseBehavior
 public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
-	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Selected(bool bIsSelected);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")

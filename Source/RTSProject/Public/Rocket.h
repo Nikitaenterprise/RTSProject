@@ -37,7 +37,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
-	virtual bool Destroy_Implementation(bool bNetForce = false, bool bShouldModifyLevel = false) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void DealDamage(AActor* actor);

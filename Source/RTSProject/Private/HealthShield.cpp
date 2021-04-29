@@ -23,7 +23,7 @@ void UHealthShield::BeginPlay()
 	Health = StartingHealth;
 	Shield = StartingShield;
 	Owner = GetOwner();
-	
+	RecalculatePercents();
 }
 
 
@@ -32,34 +32,39 @@ void UHealthShield::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+	
 }
 
 
 void UHealthShield::DamageToHealth(int damage)
 {
 	Health = FMath::Clamp<int>(Health - damage, 0, MaxHealth);
+	RecalculatePercents();
 }
 
 void UHealthShield::DamageToShield(int damage)
 {
 	Shield = FMath::Clamp<int>(Shield - damage, 0, MaxShield);
+	RecalculatePercents();
 }
 
 void UHealthShield::TakeDamage(int damage)
 {
 	if (Shield > 0) DamageToShield(damage);
 	else DamageToHealth(damage);
+	RecalculatePercents();
 }
 
 void UHealthShield::HealHealth(int amount)
 {
 	Health = FMath::Clamp<int>(Health + amount, 0, MaxHealth);
+	RecalculatePercents();
 }
 
 void UHealthShield::HealShield(int amount)
 {
 	Shield = FMath::Clamp<int>(Shield + amount, 0, MaxShield);
+	RecalculatePercents();
 }
 
 void UHealthShield::Heal(int amount)
@@ -70,16 +75,32 @@ void UHealthShield::Heal(int amount)
 
 float UHealthShield::GetHealthPercent()
 {
-	return (float)Health/(float)MaxHealth;
+	return HealthPercent;
 }
 
 float UHealthShield::GetShieldPercent()
 {
-	return (float)Shield/(float)MaxShield;
+	return ShieldPercent;
+}
+
+const float* UHealthShield::GetHealthPercentPtr() const
+{
+	return &HealthPercent;
+}
+
+const float* UHealthShield::GetShieldPercentPtr() const
+{
+	return &ShieldPercent;
 }
 
 bool UHealthShield::IsDead()
 {
 	return (Health <= 0);
+}
+
+void UHealthShield::RecalculatePercents()
+{
+	HealthPercent = static_cast<float>(Health) / static_cast<float>(MaxHealth);
+	ShieldPercent = static_cast<float>(Shield) / static_cast<float>(MaxShield);
 }
 

@@ -2,22 +2,21 @@
 
 #include "CoreMinimal.h"
 
-class UWorld;
 class AShip;
 class ARTSPlayerController;
 class ATurret;
 struct FActorSpawnParameters;
 
+
 class RTSPROJECT_API ShipFactory
 {
 public:
-	static AShip* NewShip(UWorld* _World, ARTSPlayerController* _Controller);
-	static AShip* NewShip(UWorld* _World, const FVector& _Location, ARTSPlayerController* _Controller);
-	static AShip* NewShip(UWorld* _World, const FVector& _Location, const FRotator& _Rotation, ARTSPlayerController* _Controller);
-
+	
+	static AShip* NewShip(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
+	static void AddTurretsToShip(AShip* Ship);
+	
 private:
+	
 	static FActorSpawnParameters GetDefaultSpawnParams();
-	static void AddTurretsToShip(UWorld* _World, ARTSPlayerController* _Controller, AShip* _Ship);
-
-	static void SetTurretSide(ATurret* _Turret);
+	static void SetTurretSide(ATurret* Turret);
 };

@@ -12,7 +12,7 @@ class RTSPROJECT_API UShipHUD : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-
+	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
 
 public:

@@ -52,6 +52,7 @@ public:
 	
 	float DeltaTime = 0;
 	float PastTime = 0;
+	float TimeToBuild = 5;
 
 	// Moving
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
@@ -86,12 +87,10 @@ public:
 	
 	void Initialize(ARTSPlayerController* RTSController);
 
-	void SetHealthShieldBar();
-
 	// Interfaces
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
-	virtual bool Destroy_Implementation(bool bNetForce = false, bool bShouldModifyLevel = false) override;
+	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Selected(bool _bIsSelected);
 	virtual void Selected_Implementation(bool _bIsSelected) override;

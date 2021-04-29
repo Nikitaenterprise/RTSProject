@@ -67,9 +67,9 @@ public:
 	TArray<AActor*>& GetSelectedActors();
 
 	// Layout HUD
-	void ShowBasicButtonsHUD();
-	void ShowBuildingHUD();
-	void ShowShipHUD();
+	void ShowBasicButtonsHUD() const;
+	void ShowBuildingHUD() const;
+	void ShowShipHUD() const;
 
 	template<class T>
 	bool SetupWidget(T*& HUDReference, TSubclassOf<T>& WidgetTemplate);

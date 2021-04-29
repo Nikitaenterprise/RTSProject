@@ -19,7 +19,7 @@ class RTSPROJECT_API ARTSPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Camera")
 	ACamera* CameraRef = nullptr;
 
 	// Key press
@@ -33,15 +33,20 @@ public:
 	bool bDisableZooming = false;
 
 
-	// Units selection and control
+	// Units selection
+	UPROPERTY(BlueprintReadOnly, Category = "Selection")
 	TArray<AActor*> ShouldBeSelected;
+	UPROPERTY(BlueprintReadOnly, Category = "Selection")
 	TArray<AActor*> SelectedActors;
+	UPROPERTY(BlueprintReadOnly, Category = "Selection")
 	TArray<AActor*> PlayersActors;
+	UPROPERTY(BlueprintReadOnly, Category = "Selection")
 	AActor* HighlightedActor = nullptr;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Factory")
+	UPROPERTY(BlueprintReadOnly, Category = "Factory")
 	UFactoryAssets* FactoryAssets = nullptr;
-
+	
+	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	AGameHUD* GameHUD = nullptr;
 
 public:
@@ -67,14 +72,19 @@ public:
 	void RMBPressed();
 	void RMBReleased();
 
-	// Units selection and control
+	void DamagePressed();
+
+	// Units selection
 	void UpdateSelection();
 	void HighlightActorsUnderCursor();
-	void MoveSelectedActors();
 	bool ShipsSelected();
 	bool BuildingsSelected();
 
-	// FactoryAssets
+	void MoveSelectedShips();
+	void SetSpawnPointForSelectedBuildings();
+	
+	// FactoryAssets	
+	UFUNCTION(BlueprintCallable, Category = "Factory")
 	UFactoryAssets* GetFactoryAssets();
 
 protected:

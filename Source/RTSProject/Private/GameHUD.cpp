@@ -5,10 +5,6 @@
 #include "ShipHUD.h"
 #include "BuildingHUD.h"
 
-//#include "Engine/Canvas.h"
-//#include "Kismet/KismetMathLibrary.h"
-//#include "Kismet/KismetArrayLibrary.h"
-//#include "Kismet/KismetSystemLibrary.h"
 
 AGameHUD::AGameHUD(const FObjectInitializer& OI) : Super(OI)
 {
@@ -46,7 +42,7 @@ TArray<AActor*>& AGameHUD::GetSelectedActors()
 	return SelectedActors;
 }
 
-void AGameHUD::ShowBasicButtonsHUD()
+void AGameHUD::ShowBasicButtonsHUD() const
 {
 	if (bIsShowingBasicButtonsHUD) return;
 	BasicButtonsHUD->SetVisibility(ESlateVisibility::Visible);
@@ -54,7 +50,7 @@ void AGameHUD::ShowBasicButtonsHUD()
 	ShipHUD->SetVisibility(ESlateVisibility::Hidden);
 }
 
-void AGameHUD::ShowBuildingHUD()
+void AGameHUD::ShowBuildingHUD() const
 {
 	if (bIsShowingBuildingHUD) return;
 	BuildingHUD->SetVisibility(ESlateVisibility::Visible);
@@ -62,7 +58,7 @@ void AGameHUD::ShowBuildingHUD()
 	ShipHUD->SetVisibility(ESlateVisibility::Hidden);
 }
 
-void AGameHUD::ShowShipHUD()
+void AGameHUD::ShowShipHUD() const
 {
 	if (bIsShowingShipHUD) return;
 	ShipHUD->SetVisibility(ESlateVisibility::Visible);
@@ -98,9 +94,6 @@ void AGameHUD::DrawMarquee()
 	const FVector2D RectSize = HoldingLocation - StartClick;
 	const FLinearColor Color(0, 1, 0, 0.2);
 	DrawRect(Color, StartClick.X, StartClick.Y, RectSize.X, RectSize.Y);
-
-	/*GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Cyan, StartClick.ToString());
-	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Cyan, HoldingLocation.ToString());*/
 
 	GetActorsInSelectionRectangle<AActor>(StartClick, HoldingLocation, SelectedActors, false);
 }

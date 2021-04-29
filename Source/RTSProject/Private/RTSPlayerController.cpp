@@ -9,9 +9,6 @@
 
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
-//#include "Blueprint/UserWidget.h"
-//#include "Engine/Engine.h"
 
 
 ARTSPlayerController::ARTSPlayerController(){	
@@ -73,6 +70,8 @@ void ARTSPlayerController::SetupInputComponent()
 	InputComponent->BindAction(TEXT("LMB"), IE_Released, this, &ARTSPlayerController::LMBReleased);
 	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ARTSPlayerController::RMBPressed);
 	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ARTSPlayerController::RMBReleased);
+
+	InputComponent->BindAction(TEXT("Damage"), IE_Pressed, this, &ARTSPlayerController::DamagePressed);
 }
 
 void ARTSPlayerController::ShiftPressed()
@@ -129,7 +128,26 @@ void ARTSPlayerController::LMBReleased()
 	{
 		for (const auto& a : ShouldBeSelected)
 		{
-			if (PlayersActors.Contains(a)) SelectedActors.AddUnique(a);
+			if (PlayersActors.Contains(a))
+			{
+				// If SelectedActors has at least one building then add
+				// building but not ship
+				if (BuildingsSelected())
+				{
+					ABuilding* Building = Cast<ABuilding>(a);
+					if(Building) SelectedActors.AddUnique(a);
+				}
+				// If SelectedActors has at least one ship then add
+				// ship but not building
+				else if (ShipsSelected())
+				{
+					AShip* Ship = Cast<AShip>(a);
+					if (Ship) SelectedActors.AddUnique(a);
+				}
+				// If SelectedActors has no actors then add first
+				else SelectedActors.AddUnique(a);
+
+			}
 		}
 	}
 }
@@ -142,7 +160,13 @@ void ARTSPlayerController::RMBPressed()
 void ARTSPlayerController::RMBReleased()
 {
 	bRMBPressed = false;
-	MoveSelectedActors();
+	MoveSelectedShips();
+	SetSpawnPointForSelectedBuildings();
+}
+
+void ARTSPlayerController::DamagePressed()
+{
+
 }
 
 void ARTSPlayerController::UpdateSelection()
@@ -207,8 +231,9 @@ void ARTSPlayerController::HighlightActorsUnderCursor()
 	}
 }
 
-void ARTSPlayerController::MoveSelectedActors()
+void ARTSPlayerController::MoveSelectedShips()
 {
+	if (SelectedActors.Num() == 0) return;
 	for (auto& a : SelectedActors)
 	{
 		AShip* Ship = Cast<AShip>(a);
@@ -226,3 +251,22 @@ void ARTSPlayerController::MoveSelectedActors()
 	}
 }
 
+void ARTSPlayerController::SetSpawnPointForSelectedBuildings()
+{
+	if (SelectedActors.Num() == 0) return;
+	for (auto& a : SelectedActors)
+	{
+		ABuilding* Building = Cast<ABuilding>(a);
+		if(Building)
+		{
+			FHitResult Hit;
+			const bool bHit = GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
+			if (bHit)
+			{
+				float Z = Building->GetActorLocation().Z;
+				float X = Hit.Location.X, Y = Hit.Location.Y;
+				Building->SetSpawnPointLocation(FVector(X, Y, Z));
+			}
+		}
+	}
+}
