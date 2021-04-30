@@ -77,8 +77,8 @@ public:
 	// Units selection
 	void UpdateSelection();
 	void HighlightActorsUnderCursor();
-	bool ShipsSelected();
-	bool BuildingsSelected();
+	template <class ActorType>
+	bool IsArrayContainThisTypeActors(const TArray<AActor*>& Array);
 
 	void MoveSelectedShips();
 	void SetSpawnPointForSelectedBuildings();
@@ -91,3 +91,15 @@ protected:
 
 	virtual void BeginPlay() override;
 };
+
+template <class ActorType>
+bool ARTSPlayerController::IsArrayContainThisTypeActors(const TArray<AActor*>& Array)
+{
+	if (Array.Num() == 0) return false;
+	for (const auto& e : Array)
+	{
+		ActorType* Actor = Cast<ActorType>(e);
+		if (IsValid(Actor)) return true;
+	}
+	return false;
+}

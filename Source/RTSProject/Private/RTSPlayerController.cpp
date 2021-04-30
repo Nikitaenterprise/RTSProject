@@ -6,6 +6,7 @@
 #include "FactoryAssets.h"
 #include "GameHUD.h"
 
+#include "DamageDealer.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -47,8 +48,8 @@ void ARTSPlayerController::Tick(float mainDeltaTime)
 
 	if (GameHUD)
 	{
-		if (ShipsSelected()) GameHUD->ShowShipHUD();
-		else if (BuildingsSelected()) GameHUD->ShowBuildingHUD();
+		if (IsArrayContainThisTypeActors<AShip>(SelectedActors)) GameHUD->ShowShipHUD();
+		else if (IsArrayContainThisTypeActors<ABuilding>(SelectedActors)) GameHUD->ShowBuildingHUD();
 		else GameHUD->ShowBasicButtonsHUD();	
 	}
 }
@@ -71,7 +72,7 @@ void ARTSPlayerController::SetupInputComponent()
 	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ARTSPlayerController::RMBPressed);
 	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ARTSPlayerController::RMBReleased);
 
-	InputComponent->BindAction(TEXT("Damage"), IE_Pressed, this, &ARTSPlayerController::DamagePressed);
+	InputComponent->BindAction(TEXT("Damage"), IE_Released, this, &ARTSPlayerController::DamagePressed);
 }
 
 void ARTSPlayerController::ShiftPressed()
@@ -116,6 +117,7 @@ void ARTSPlayerController::LMBPressed()
 	// If shift pressed then new selected units will add to already selected
 	// thus SelectedActors shouldn't be emptied 
 	if (!bShiftPressed)	SelectedActors.Empty();
+	ShouldBeSelected.Empty();
 	GameHUD->OnInputStart();
 }
 
@@ -124,31 +126,55 @@ void ARTSPlayerController::LMBReleased()
 	bLMBPressed = false;
 	GameHUD->OnInputRelease();
 	// Adding new actors (ShouldBeSelected) to selection pool (SelectedActors)
-	if (ShouldBeSelected.Num() != 0)
+	if (ShouldBeSelected.Num() == 0) return;
+	bool bOnlyBuildings = false, bOnlyShips = false;
+	// Pre check fo actors in SelectedActors if shift is pressed
+	// e.d. buildings or ships are already in SelectedActors
+	if (SelectedActors.Num() != 0)
 	{
-		for (const auto& a : ShouldBeSelected)
+		if (IsArrayContainThisTypeActors<AShip>(SelectedActors)) bOnlyShips = true;
+		else if (IsArrayContainThisTypeActors<ABuilding>(SelectedActors)) bOnlyBuildings = true;
+	}
+	for (const auto& a : ShouldBeSelected)
+	{
+		if (PlayersActors.Contains(a))
 		{
-			if (PlayersActors.Contains(a))
+			// If SelectedActors has no actors then add first
+			if (SelectedActors.Num() == 0)
 			{
-				// If SelectedActors has at least one building then add
-				// building but not ship
-				if (BuildingsSelected())
-				{
-					ABuilding* Building = Cast<ABuilding>(a);
-					if(Building) SelectedActors.AddUnique(a);
-				}
-				// If SelectedActors has at least one ship then add
-				// ship but not building
-				else if (ShipsSelected())
-				{
-					AShip* Ship = Cast<AShip>(a);
-					if (Ship) SelectedActors.AddUnique(a);
-				}
-				// If SelectedActors has no actors then add first
-				else SelectedActors.AddUnique(a);
-
+				SelectedActors.AddUnique(a);
+				continue;
+			}
+			// If SelectedActors has at least one building then add
+			// building but not ship
+			if (!bOnlyShips && Cast<ABuilding>(a))
+			{
+				SelectedActors.AddUnique(a);
+				bOnlyBuildings = true;
+			}
+			
+			// If SelectedActors has at least one ship then add
+			// ship but not building
+			else if (!bOnlyBuildings && Cast<AShip>(a))
+			{
+				SelectedActors.AddUnique(a);
+				bOnlyShips = true;
 			}
 		}
+	}
+	// Set ShouldBeSelected Execute_Highlighted to false
+	// because actors was highlighted while rectangle was drawn
+	for (auto& a : ShouldBeSelected)
+	{
+		IBaseBehavior* Interface = Cast<IBaseBehavior>(a);
+		if (Interface) Interface->Execute_Highlighted(a, false);
+	}
+	
+	// Set actors Execute_Selected to true
+	for (auto& a : SelectedActors)
+	{
+		IBaseBehavior* Interface = Cast<IBaseBehavior>(a);
+		if (Interface) Interface->Execute_Selected(a, true);
 	}
 }
 
@@ -166,7 +192,8 @@ void ARTSPlayerController::RMBReleased()
 
 void ARTSPlayerController::DamagePressed()
 {
-
+	AShip* Ship = Cast<AShip>(HighlightedActor);
+	if (Ship) DamageDealer::DealDamage(30, Ship);
 }
 
 void ARTSPlayerController::UpdateSelection()
@@ -188,34 +215,18 @@ void ARTSPlayerController::UpdateSelection()
 	for (auto& a : ShouldBeSelected)
 	{
 		IBaseBehavior* Interface = Cast<IBaseBehavior>(a);
-		if (Interface) Interface->Execute_Selected(a, true);
+		if (Interface) Interface->Execute_Highlighted(a, true);
 	}
-}
-
-bool ARTSPlayerController::ShipsSelected()
-{
-	if (SelectedActors.Num() == 0) return false;
-	for (auto& e : SelectedActors)
-	{
-		AShip* Ship = Cast<AShip>(e);
-		if (IsValid(Ship)) return true;
-	}
-	return false;
-}
-
-bool ARTSPlayerController::BuildingsSelected()
-{
-	if (SelectedActors.Num() == 0) return false;
-	for (auto& e : SelectedActors)
-	{
-		ABuilding* Building = Cast<ABuilding>(e);
-		if (IsValid(Building)) return true;
-	}
-	return false;
 }
 
 void ARTSPlayerController::HighlightActorsUnderCursor()
 {
+	// If HighlightedActor is in SelectedActors then
+	// it shouldn't be highlighted
+	for (auto& a : SelectedActors)
+	{
+		if (SelectedActors.Contains(HighlightedActor)) return;
+	}
 	// Dehighlight unit
 	IBaseBehavior* Interface = Cast<IBaseBehavior>(HighlightedActor);
 	if (Interface) Interface->Execute_Highlighted(HighlightedActor, false);
