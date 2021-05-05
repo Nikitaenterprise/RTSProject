@@ -39,20 +39,28 @@ public:
 	UPawnSensingComponent* PawnSensing = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UShipMovementComponent* MovementComponent = nullptr;
-	
+	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
-	UInputComponent* InputComponent = nullptr;
+	UPROPERTY(BlueprintReadOnly, Category = "Input")
+	UInputComponent* DebugInputComponent = nullptr;
 	
 	// Widget
+	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	UHealthShieldBarHUD* HealthShieldBarHUD = nullptr;
 
+	UPROPERTY(BlueprintReadOnly)
 	bool bJustCreated = false;
+	UPROPERTY(BlueprintReadOnly)
 	bool bIsSelected = false;
+	UPROPERTY(BlueprintReadOnly)
 	bool bIsHighlighted = false;
-	
+
+	UPROPERTY(BlueprintReadOnly)
 	float DeltaTime = 0;
+	UPROPERTY(BlueprintReadOnly)
 	float PastTime = 0;
-	float TimeToBuild = 5;
+	UPROPERTY(BlueprintReadWrite)
+	float TimeToBuild = 5.0;
 
 	// Moving
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
@@ -67,6 +75,7 @@ public:
 	float TurnForwardSpeed = ForwardSpeed * 0.3;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
 	float DrawNavLineOncePerThisSeconds = 1;
+	UPROPERTY(BlueprintReadOnly, Category = "Moving")
 	TArray<FVector> NavPathCoords;
 
 	// Mouse wheel

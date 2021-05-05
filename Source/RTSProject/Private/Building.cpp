@@ -68,7 +68,8 @@ void ABuilding::Tick(float MainDeltaTime)
 	{
 		bJustCreated = false;
 	}
-	BuildUnit();
+	if (ConstructionState == EConstructionState::RequestedConstruction) StartBuildingUnit();
+	
 }
 
 bool ABuilding::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
@@ -133,18 +134,53 @@ void ABuilding::UpdatePositionWhenCreated()
 	SetActorLocation(Location, false, nullptr, ETeleportType::None);
 }
 
-void ABuilding::BuildUnit()
+int ABuilding::GetBuildingQueueSizeByClass(TSubclassOf<AActor> ActorClass) const
 {
-	if (BuildingQueue.Num() == 0) return;
-	const TSubclassOf<AActor> Subclass = BuildingQueue.Pop();
-	UClass* ClassType = Subclass.Get();
-	const FVector SpawnLocation = SpawnPoint->GetComponentLocation();
-	
-	AShip* SpawnedShip = ShipFactory::NewShip(GetWorld(), ClassType, PlayerController, SpawnLocation);
-	ShipFactory::AddTurretsToShip(SpawnedShip);
+	if (BuildingQueue.Num() == 0) return 0;
+	int NumberOfActorsToBuild = 0;
+	for(auto& a : BuildingQueue)
+	{
+		if (a == ActorClass) NumberOfActorsToBuild++;
+	}
+	return NumberOfActorsToBuild;
 }
 
-void ABuilding::AddActorToBuildingQueue(TSubclassOf<AActor> Actor)
+void ABuilding::RequestBuildingUnit(TSubclassOf<AActor> ActorClass)
 {
-	BuildingQueue.Add(Actor);
+	BuildingQueue.Add(ActorClass);
+	ConstructionState = EConstructionState::RequestedConstruction;
 }
+
+void ABuilding::StartBuildingUnit()
+{
+	if (BuildingQueue.Num() == 0) return;
+	ConstructionState = EConstructionState::Constructing;
+	float BaseTimeToBuild = 5;
+	// Binding BuildUnit() function that will spawn ship in SpawnLocation
+	// when timer hits BaseTimeToBuild
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindUFunction(this, FName("BuildUnit"));
+	// Start timer
+	GetWorld()->GetTimerManager().SetTimer(Timer, TimerDelegate, BaseTimeToBuild, false);
+}
+
+void ABuilding::BuildUnit()
+{
+	const TSubclassOf<AActor> Subclass = BuildingQueue.Pop();
+	UClass* ClassType = Subclass.Get();
+	// Add height to spawn location
+	const FVector SpawnLocation = SpawnPoint->GetComponentLocation() + FVector(0, 0, 100);
+	// First the ship is created in a place outside the borders
+	AShip* SpawnedShip = ShipFactory::NewShip(GetWorld(), ClassType, PlayerController, SpawnLocation);
+	ShipFactory::AddTurretsToShip(SpawnedShip);
+	
+	FinishBuildingUnit();
+}
+
+void ABuilding::FinishBuildingUnit()
+{
+	// Check if there are more units to build
+	if (BuildingQueue.Num() != 0) ConstructionState = EConstructionState::RequestedConstruction;
+	else ConstructionState = EConstructionState::NotConstructing;
+}
+

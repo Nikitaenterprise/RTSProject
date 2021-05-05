@@ -18,19 +18,19 @@ class RTSPROJECT_API UFactoryAssets : public UDataAsset
 
 public:
 	
-	UPROPERTY(BlueprintReadOnly, Category = "Ship")
-	TSubclassOf<AShip> ShipClass;
-	UPROPERTY(BlueprintReadOnly, Category = "Turret")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship")
+	TArray<TSubclassOf<AShip>> ShipClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Turret")
 	TSubclassOf<ATurret> TurretClass;
-	UPROPERTY(BlueprintReadOnly, Category = "Building")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Building")
 	TSubclassOf<ABuilding> BuildingClass;
-	UPROPERTY(BlueprintReadOnly, Category = "Resource")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource")
 	TSubclassOf<AAsteroidField> AsteroidFieldClass;
-	UPROPERTY(BlueprintReadOnly, Category = "Resource")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource")
 	TSubclassOf<AAsteroidResource> AsteroidResourceClass;
 	
 public:
 
 	UFUNCTION(BlueprintCallable)
-	TSubclassOf<AShip> GetShipClass() { return ShipClass; };
+	TArray<TSubclassOf<AShip>> GetShipClass() { return ShipClass; };
 };

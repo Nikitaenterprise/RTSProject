@@ -12,20 +12,26 @@ void UBuildingHUD::NativeConstruct()
 
 }
 
-ABuilding* UBuildingHUD::GetSelectedBuilding()
+TArray<ABuilding*> UBuildingHUD::GetSelectedBuildings()
 {
+	TArray<ABuilding*> SelectedBuildings;
 	for(auto& b : PlayerController->SelectedActors)
 	{
 		ABuilding* Building = Cast<ABuilding>(b);
-		if (Building) return Building;
+		if (Building) SelectedBuildings.AddUnique(Building);
 	}
-	return nullptr;
+	return SelectedBuildings;
 }
 
-void UBuildingHUD::AddToBuildingQueue(const TSubclassOf<AActor>& ActorTypeToSpawn)
+void UBuildingHUD::AddToBuildingQueue(ABuilding* BuildingToAddTo, const TSubclassOf<AActor>& ActorTypeToSpawn)
 {
 	if (!ActorTypeToSpawn) return;
-	ABuilding* BuildingToAddTo = GetSelectedBuilding();
 	if (!BuildingToAddTo) return;
-	BuildingToAddTo->AddActorToBuildingQueue(ActorTypeToSpawn);
+	BuildingToAddTo->RequestBuildingUnit(ActorTypeToSpawn);
+}
+
+int UBuildingHUD::GetNumberOfQueueUnitsInBuilding(const ABuilding* BuildingToGetFrom, TSubclassOf<AActor> ActorClass)
+{
+	if (!BuildingToGetFrom) return 0;
+	return BuildingToGetFrom->GetBuildingQueueSizeByClass(ActorClass);
 }

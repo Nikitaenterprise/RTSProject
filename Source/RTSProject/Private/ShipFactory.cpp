@@ -25,7 +25,6 @@ AShip* ShipFactory::NewShip(UWorld* World, UClass* ClassType, ARTSPlayerControll
 	Controller->PlayersActors.AddUnique(SpawnedShip);
 	SpawnedShip->Initialize(Controller);
 	SpawnedShip->bJustCreated = true;
-	//AddTurretsToShip(World, Controller, SpawnedShip);
 	
 	return SpawnedShip;
 }

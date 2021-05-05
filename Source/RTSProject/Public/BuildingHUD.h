@@ -20,7 +20,9 @@ public:
 
 	virtual void NativeConstruct() override;
 	UFUNCTION(BlueprintCallable)
-	ABuilding* GetSelectedBuilding();
+	TArray<ABuilding*> GetSelectedBuildings();
 	UFUNCTION(BlueprintCallable)
-	void AddToBuildingQueue(const TSubclassOf<AActor>& ActorTypeToSpawn);
+	void AddToBuildingQueue(ABuilding* BuildingToAddTo, const TSubclassOf<AActor>& ActorTypeToSpawn);
+	UFUNCTION(BlueprintCallable)
+	int GetNumberOfQueueUnitsInBuilding(const ABuilding* BuildingToGetFrom, TSubclassOf<AActor> ActorClass);
 };
