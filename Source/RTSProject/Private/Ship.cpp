@@ -4,23 +4,18 @@
 #include "HealthShield.h"
 #include "Turret.h"
 #include "HealthShieldBarHUD.h"
-#include "GameHUD.h"
 #include "ShipMovementComponent.h"
+#include "Camera.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Components/InputComponent.h"
-//#include "Blueprint/UserWidget.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
-//#include "AIController.h"
-//#include "NavigationPath.h"
-//#include "NavigationSystem.h"
 #include "DrawDebugHelpers.h"
-//#include "Components/ArrowComponent.h"
-//#include "GameFramework/CharacterMovementComponent.h"
+
 
 AShip::AShip(const FObjectInitializer& OI)
 	: Super(OI.SetDefaultSubobjectClass<UShipMovementComponent>(FName("ShipMovementComponent")))
@@ -61,22 +56,18 @@ void AShip::Tick(float _mainDeltaTime)
 {
 	Super::Tick(_mainDeltaTime);
 	
-	/*FString str = UKismetSystemLibrary::GetDisplayName(this);
-	FString b = bIsSelected ? TEXT("true") : TEXT("false");
-	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("obj=%s, bSelected=%s"), *str, *b));*/
-
 	DeltaTime = _mainDeltaTime;
 	PastTime += _mainDeltaTime;
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
 
 	if (bJustCreated && !PlayerController->bLMBPressed)
 	{
-		PlayerController->bDisableZooming = true;
+		PlayerController->CameraRef->bDisableZooming = true;
 		UpdatePositionWhenCreated();
 	}
 	else if (PlayerController->bLMBPressed)
 	{
-		PlayerController->bDisableZooming = false;
+		PlayerController->CameraRef->bDisableZooming = false;
 		bJustCreated = false;
 	}
 
@@ -85,15 +76,15 @@ void AShip::Tick(float _mainDeltaTime)
 	
 }
 
-void AShip::Initialize(ARTSPlayerController* _Controller)
+void AShip::Initialize(ARTSPlayerController* RTSController)
 {
-	if (_Controller)
+	if (RTSController)
 	{
-		PlayerController = _Controller;
+		PlayerController = RTSController;
 
 		if(MovementComponent)
 		{
-			MovementComponent->PlayerController = _Controller;
+			MovementComponent->PlayerController = RTSController;
 			MovementComponent->OwnerShip = this;
 			MovementComponent->Initialize();	
 		}
@@ -101,13 +92,13 @@ void AShip::Initialize(ARTSPlayerController* _Controller)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Init() is null"));
 		}
-		InputComponent = PlayerController->InputComponent;
-		if (InputComponent)
+		DebugInputComponent = PlayerController->InputComponent;
+		if (DebugInputComponent)
 		{
-			InputComponent->BindAction(TEXT("MouseYPositive"), IE_Pressed, this, &AShip::MouseYPositiveStart);
-			InputComponent->BindAction(TEXT("MouseYPositive"), IE_Released, this, &AShip::MouseYPositiveEnd);
-			InputComponent->BindAction(TEXT("MouseYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
-			InputComponent->BindAction(TEXT("MouseYNegative"), IE_Released, this, &AShip::MouseYNegativeEnd);
+			DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Pressed, this, &AShip::MouseYPositiveStart);
+			DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Released, this, &AShip::MouseYPositiveEnd);
+			DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
+			DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Released, this, &AShip::MouseYNegativeEnd);
 		}
 		else
 		{
@@ -115,6 +106,9 @@ void AShip::Initialize(ARTSPlayerController* _Controller)
 		}
 		
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
+		HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
+		HealthShieldBar->SetVisibility(false);
+		SelectionCircle->SetVisibility(false);
 	}
 	else
 	{
@@ -140,14 +134,11 @@ void AShip::Selected_Implementation(bool _bIsSelected)
 	if (bIsSelected)
 	{
 		HealthShieldBar->SetVisibility(true);
-		//HealthShieldBarHUD->SetVisibility(ESlateVisibility::Visible);
-		SetHealthShieldBar();
 		SelectionCircle->SetVisibility(true);
 	}
 	else
 	{
 		HealthShieldBar->SetVisibility(false);
-		//HealthShieldBarHUD->SetVisibility(ESlateVisibility::Hidden);
 		SelectionCircle->SetVisibility(false);
 	}
 }
@@ -159,24 +150,15 @@ void AShip::Highlighted_Implementation(bool _bIsHighlighted)
 		bIsHighlighted = _bIsHighlighted;
 		if (bIsHighlighted)
 		{
-			//HealthShieldBarHUD->ShowUI();
 			HealthShieldBar->SetVisibility(true);
 			SelectionCircle->SetVisibility(true);
-			SetHealthShieldBar();
 		}
 		else
 		{
-			//HealthShieldBarHUD->HideUI();
 			HealthShieldBar->SetVisibility(false);
 			SelectionCircle->SetVisibility(false);
 		}
 	}
-}
-
-void AShip::SetHealthShieldBar()
-{
-	HealthShieldBarHUD->ShieldPercent = HealthShieldComponent->getShieldPercent();
-	HealthShieldBarHUD->HealthPercent = HealthShieldComponent->getHealthPercent();
 }
 
 bool AShip::Move(const FVector _TargetLocation)

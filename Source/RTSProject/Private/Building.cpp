@@ -3,9 +3,12 @@
 #include "HealthShield.h"
 #include "RTSPlayerController.h"
 #include "HealthShieldBarHUD.h"
+#include "ShipFactory.h"
+#include "Ship.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Particles/ParticleSystemComponent.h"
 
 ABuilding::ABuilding()
 {
@@ -20,19 +23,34 @@ ABuilding::ABuilding()
 	HealthShieldBar->SetupAttachment(GetRootComponent());
 	HealthShieldBar->SetDrawSize(FVector2D(150, 150));
 	HealthShieldBar->SetWidgetSpace(EWidgetSpace::Screen);
+
+	SpawnPoint = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SpawnPoint"));
+	
 	
 	HealthShieldComponent = CreateDefaultSubobject<UHealthShield>(TEXT("HealthShield"));
 
 }
 
-// Called when the game starts or when spawned
 void ABuilding::BeginPlay()
 {
 	Super::BeginPlay();
-	PlayerController = Cast<ARTSPlayerController>(GetWorld()->GetFirstPlayerController());
+}
 
-	HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
-	//HealthShieldHUD = Cast<HealthShieldHUD>(HealthShieldBar->GetUserWidgetObject())
+void ABuilding::Initialize(ARTSPlayerController* RTSController)
+{
+	if (RTSController)
+	{
+		PlayerController = RTSController;
+		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
+		HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
+		HealthShieldBar->SetVisibility(false);
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerController in AShip->Init() is null"));
+	}
+	SpawnPoint->SetRelativeLocation(FVector(150, 0, 0));
+	SpawnPoint->SetVisibility(false);
 }
 
 void ABuilding::Tick(float MainDeltaTime)
@@ -50,6 +68,8 @@ void ABuilding::Tick(float MainDeltaTime)
 	{
 		bJustCreated = false;
 	}
+	if (ConstructionState == EConstructionState::RequestedConstruction) StartBuildingUnit();
+	
 }
 
 bool ABuilding::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
@@ -59,30 +79,24 @@ bool ABuilding::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
 	return Super::Destroy(bNetForce, bShouldModifyLevel);
 }
 
-void ABuilding::SetHealthShieldBar()
+void ABuilding::SetSpawnPointLocation(const FVector& Location) const
 {
-	HealthShieldBarHUD->ShieldPercent = HealthShieldComponent->getShieldPercent();
-	HealthShieldBarHUD->HealthPercent = HealthShieldComponent->getHealthPercent();
+	SpawnPoint->SetWorldLocation(Location);
 }
 
-void ABuilding::BindHUD()
-{
-	if (PlayerController) {
-		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
-	}
-}
 
 void ABuilding::Selected_Implementation(bool _bIsSelected)
 {
 	bIsSelected = _bIsSelected;
 	if (bIsSelected)
 	{
-		SetHealthShieldBar();
 		HealthShieldBar->SetVisibility(true);
+		SpawnPoint->SetVisibility(true);
 	}
 	else
 	{
 		HealthShieldBar->SetVisibility(false);
+		SpawnPoint->SetVisibility(false);
 	}
 }
 
@@ -93,7 +107,6 @@ void ABuilding::Highlighted_Implementation(bool _bIsHighlighted)
 		bIsHighlighted = _bIsHighlighted;
 		if (bIsHighlighted)
 		{
-			SetHealthShieldBar();
 			HealthShieldBar->SetVisibility(true);
 		}
 		else
@@ -120,3 +133,54 @@ void ABuilding::UpdatePositionWhenCreated()
 	
 	SetActorLocation(Location, false, nullptr, ETeleportType::None);
 }
+
+int ABuilding::GetBuildingQueueSizeByClass(TSubclassOf<AActor> ActorClass) const
+{
+	if (BuildingQueue.Num() == 0) return 0;
+	int NumberOfActorsToBuild = 0;
+	for(auto& a : BuildingQueue)
+	{
+		if (a == ActorClass) NumberOfActorsToBuild++;
+	}
+	return NumberOfActorsToBuild;
+}
+
+void ABuilding::RequestBuildingUnit(TSubclassOf<AActor> ActorClass)
+{
+	BuildingQueue.Add(ActorClass);
+	ConstructionState = EConstructionState::RequestedConstruction;
+}
+
+void ABuilding::StartBuildingUnit()
+{
+	if (BuildingQueue.Num() == 0) return;
+	ConstructionState = EConstructionState::Constructing;
+	float BaseTimeToBuild = 5;
+	// Binding BuildUnit() function that will spawn ship in SpawnLocation
+	// when timer hits BaseTimeToBuild
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindUFunction(this, FName("BuildUnit"));
+	// Start timer
+	GetWorld()->GetTimerManager().SetTimer(Timer, TimerDelegate, BaseTimeToBuild, false);
+}
+
+void ABuilding::BuildUnit()
+{
+	const TSubclassOf<AActor> Subclass = BuildingQueue.Pop();
+	UClass* ClassType = Subclass.Get();
+	// Add height to spawn location
+	const FVector SpawnLocation = SpawnPoint->GetComponentLocation() + FVector(0, 0, 100);
+	// First the ship is created in a place outside the borders
+	AShip* SpawnedShip = ShipFactory::NewShip(GetWorld(), ClassType, PlayerController, SpawnLocation);
+	ShipFactory::AddTurretsToShip(SpawnedShip);
+	
+	FinishBuildingUnit();
+}
+
+void ABuilding::FinishBuildingUnit()
+{
+	// Check if there are more units to build
+	if (BuildingQueue.Num() != 0) ConstructionState = EConstructionState::RequestedConstruction;
+	else ConstructionState = EConstructionState::NotConstructing;
+}
+

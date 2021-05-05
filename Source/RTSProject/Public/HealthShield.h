@@ -13,20 +13,23 @@ class RTSPROJECT_API UHealthShield : public UActorComponent
 
 public:
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "Health Shield")
-	AActor* owner = NULL;
+	AActor* Owner = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Health Shield")
-	int maxHealth = 100;
+	int MaxHealth = 100;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health Shield")
-	int maxShield = 100;
+	int MaxShield = 100;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health Shield")
-	int startingHealth = 100;
+	int StartingHealth = 100;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health Shield")
-	int startingShield = 100;
-	UPROPERTY(BlueprintReadOnly, Transient, Category = "Health Shield")
-	int health = 0;
-	UPROPERTY(BlueprintReadOnly, Transient, Category = "Health Shield")
-	int shield = 0;
-
+	int StartingShield = 100;
+	
+private:
+	
+	int Health = 0;
+	int Shield = 0;
+	float HealthPercent = 0;
+	float ShieldPercent = 0;
+	
 public:	
 	UHealthShield();
 
@@ -47,12 +50,20 @@ public:
 	void Heal(int amount);
 
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
-	float getHealthPercent();
+	float GetHealthPercent();
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
-	float getShieldPercent();
+	float GetShieldPercent();
+
+	const float* GetHealthPercentPtr() const;
+	const float* GetShieldPercentPtr() const;
+
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
 	bool IsDead();
 
+private:
+
+	inline void RecalculatePercents();
+	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

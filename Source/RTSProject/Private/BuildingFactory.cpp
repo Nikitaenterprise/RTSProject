@@ -4,10 +4,6 @@
 #include "FactoryAssets.h"
 #include "RTSPlayerController.h"
 
-//#include "Engine/World.h"
-//#include "Engine/StaticMesh.h"
-
-
 ABuilding* BuildingFactory::NewBuilding(UWorld* _World, ARTSPlayerController* _Controller)
 {
 	return NewBuilding(_World, FVector(0, 0, 0), FRotator(0, 0, 0), _Controller);
@@ -35,10 +31,9 @@ ABuilding* BuildingFactory::NewBuilding(UWorld* _World, const FVector& _Location
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn building"));
 		return nullptr;
 	}
-	SpawnedBuilding->PlayerController = _Controller;
-	SpawnedBuilding->BindHUD();
+	SpawnedBuilding->Initialize(_Controller);
+	SpawnedBuilding->bJustCreated = true;
 	_Controller->PlayersActors.AddUnique(SpawnedBuilding);
-	SpawnedBuilding->bJustCreated = true;	
 	return SpawnedBuilding;
 }
 

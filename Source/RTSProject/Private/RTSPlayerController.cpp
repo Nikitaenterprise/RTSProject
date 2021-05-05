@@ -6,12 +6,10 @@
 #include "FactoryAssets.h"
 #include "GameHUD.h"
 
+#include "DamageDealer.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
-//#include "Blueprint/UserWidget.h"
-//#include "Engine/Engine.h"
 
 
 ARTSPlayerController::ARTSPlayerController(){	
@@ -33,10 +31,11 @@ void ARTSPlayerController::BeginPlay()
 	Super::BeginPlay();
 
 	CameraRef = Cast<ACamera>(UGameplayStatics::GetPlayerPawn(this, 0));
-
+	CameraRef->Initialize(this);
+	
 	GameHUD = Cast<AGameHUD>(GetHUD());
 	if (GameHUD) GameHUD->BindController(this);
-	else GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("GameHUD=null in ARTSPlayerController"));
+	else GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("GameHUD=nullptr in ARTSPlayerController"));
 
 }
 
@@ -47,144 +46,43 @@ void ARTSPlayerController::Tick(float mainDeltaTime)
 	if (bLMBPressed) UpdateSelection();
 	else HighlightActorsUnderCursor();
 
-	/*
-	if (SelectedShips()) ShipHUD->ShowUI();
-	else ShipHUD->HideUI();
-
-	if (SelectedBuildings()) BuildingHUD->ShowUI();
-	else BuildingHUD->HideUI();
-	*/
+	if (GameHUD)
+	{
+		if (IsArrayContainThisTypeActors<AShip>(SelectedActors)) GameHUD->ShowShipHUD();
+		else if (IsArrayContainThisTypeActors<ABuilding>(SelectedActors)) GameHUD->ShowBuildingHUD();
+		else GameHUD->ShowBasicButtonsHUD();	
+	}
 }
 
 void ARTSPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-	// Movement
-	InputComponent->BindAxis(TEXT("MoveForward"), this, &ARTSPlayerController::MoveForward);
-	InputComponent->BindAxis(TEXT("MoveRight"), this, &ARTSPlayerController::MoveRight);
-	InputComponent->BindAction(TEXT("MovementIncrease"), IE_Pressed, this, &ARTSPlayerController::MovementIncrease);
-	InputComponent->BindAction(TEXT("MovementIncrease"), IE_Released, this, &ARTSPlayerController::ResetMovementModifier);
-	InputComponent->BindAction(TEXT("MovementDecrease"), IE_Pressed, this, &ARTSPlayerController::MovementDecrease);
-	InputComponent->BindAction(TEXT("MovementDecrease"), IE_Released, this, &ARTSPlayerController::ResetMovementModifier);
-	// Zoom
-	InputComponent->BindAction(TEXT("MouseYPositive"), IE_Pressed, this, &ARTSPlayerController::MouseYPositiveStart);
-	InputComponent->BindAction(TEXT("MouseYPositive"), IE_Released, this, &ARTSPlayerController::MouseYPositiveEnd);
-	InputComponent->BindAction(TEXT("MouseYNegative"), IE_Pressed, this, &ARTSPlayerController::MouseYNegativeStart);
-	InputComponent->BindAction(TEXT("MouseYNegative"), IE_Released, this, &ARTSPlayerController::MouseYNegativeEnd);
-	InputComponent->BindAction(TEXT("ZoomReset"), IE_Pressed, this, &ARTSPlayerController::ZoomReset);
+	
+	InputComponent->BindAction(TEXT("Shift"), IE_Pressed, this, &ARTSPlayerController::ShiftPressed);
+	InputComponent->BindAction(TEXT("Shift"), IE_Released, this, &ARTSPlayerController::ShiftReleased);
+		
 	// Edge scrolling
-	InputComponent->BindAxis(TEXT("Mouse X"), this, &ARTSPlayerController::EdgeScrollingX);
-	InputComponent->BindAxis(TEXT("Mouse Y"), this, &ARTSPlayerController::EdgeScrollingY);
-	// Pan rotation
-	InputComponent->BindAction(TEXT("PanReset"), IE_Pressed, this, &ARTSPlayerController::PanReset);
-	InputComponent->BindAction(TEXT("Pan"), IE_Pressed, this, &ARTSPlayerController::DisableCameraMovement);
-	InputComponent->BindAction(TEXT("Pan"), IE_Released, this, &ARTSPlayerController::EnableCameraMovement);
-	InputComponent->BindAxis(TEXT("Mouse X"), this, &ARTSPlayerController::RotatePanX);
-	InputComponent->BindAxis(TEXT("Mouse Y"), this, &ARTSPlayerController::RotatePanY);
+	InputComponent->BindAxis(TEXT("MouseX"), this, &ARTSPlayerController::EdgeScrollingX);
+	InputComponent->BindAxis(TEXT("MouseY"), this, &ARTSPlayerController::EdgeScrollingY);
+	
 	// Mouse clicks
 	bShowMouseCursor = true;
-	InputComponent->BindAction(TEXT("LeftClick"), IE_Pressed, this, &ARTSPlayerController::LMBPressed);
-	InputComponent->BindAction(TEXT("LeftClick"), IE_Released, this, &ARTSPlayerController::LMBReleased);
-	InputComponent->BindAction(TEXT("RightClick"), IE_Pressed, this, &ARTSPlayerController::RMBPressed);
-	InputComponent->BindAction(TEXT("RightClick"), IE_Pressed, this, &ARTSPlayerController::RMBReleased);
+	InputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &ARTSPlayerController::LMBPressed);
+	InputComponent->BindAction(TEXT("LMB"), IE_Released, this, &ARTSPlayerController::LMBReleased);
+	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ARTSPlayerController::RMBPressed);
+	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ARTSPlayerController::RMBReleased);
+
+	InputComponent->BindAction(TEXT("Damage"), IE_Released, this, &ARTSPlayerController::DamagePressed);
 }
 
-void ARTSPlayerController::Move(FVector &v)
+void ARTSPlayerController::ShiftPressed()
 {
-	v *= DefaultMovementSpeed * MovementSpeedModifier;
-	FTransform t = CameraRef->GetActorTransform();
-	FVector v1 = UKismetMathLibrary::TransformDirection(t, v);
-	v1 += t.GetLocation();
-	FTransform t1 = FTransform(t.GetRotation(), v1, t.GetScale3D());
-	CameraRef->SetActorLocation(FVector(t1.GetLocation().X, t1.GetLocation().Y, 100), true);
+	bShiftPressed = true;
 }
 
-void ARTSPlayerController::MoveForward(float value)
+void ARTSPlayerController::ShiftReleased()
 {
-	auto a = FVector(value, 0, 0);
-	if (!bDisablePanRotation) Move(a);
-}
-
-void ARTSPlayerController::MoveRight(float value)
-{
-	auto a = FVector(0, value, 0);
-	if (!bDisablePanRotation) Move(a);
-}
-
-void ARTSPlayerController::MovementIncrease()
-{
-	MovementSpeedModifier = 2;
-}
-
-void ARTSPlayerController::MovementDecrease()
-{
-	MovementSpeedModifier = 0.3;
-}
-
-void ARTSPlayerController::ResetMovementModifier()
-{
-	MovementSpeedModifier = 1;
-}
-
-void ARTSPlayerController::MouseYPositiveStart()
-{
-	bMouseWheelYPositive = true;
-	if (!bDisableZooming) ZoomIn();
-	/*for (auto& a : PlayersActors)
-	{
-		AShip* Ship = Cast<AShip>(a);
-		if (Ship) Ship->bMouseWheelYPositive = true;
-	}*/
-}
-
-void ARTSPlayerController::MouseYPositiveEnd()
-{
-	bMouseWheelYPositive = false;
-	/*for (auto& a : PlayersActors)
-	{
-		AShip* Ship = Cast<AShip>(a);
-		if (Ship) Ship->bMouseWheelYPositive = false;
-	}*/
-}
-
-void ARTSPlayerController::MouseYNegativeStart()
-{
-	bMouseWheelYNegative = true;
-	if (!bDisableZooming) ZoomOut();
-	/*for (auto& a : PlayersActors)
-	{
-		AShip* Ship = Cast<AShip>(a);
-		if (Ship) Ship->bMouseWheelYNegative = true;
-	}*/
-}
-
-void ARTSPlayerController::MouseYNegativeEnd()
-{
-	bMouseWheelYNegative = false;
-	/*for (auto& a : PlayersActors)
-	{
-		AShip* Ship = Cast<AShip>(a);
-		if (Ship) Ship->bMouseWheelYNegative = false;
-	}*/
-}
-
-void ARTSPlayerController::ZoomIn()
-{
-	float previousLenght = CameraRef->SpringArm->TargetArmLength;
-	float newLenght = FMath::Clamp<float>(previousLenght - CameraZoomSpeed, CameraMinZoom, CameraMaxZoom);
-	CameraRef->SpringArm->TargetArmLength = newLenght;
-}
-
-void ARTSPlayerController::ZoomOut()
-{
-	float previousLenght = CameraRef->SpringArm->TargetArmLength;
-	float newLenght = FMath::Clamp<float>(previousLenght + CameraZoomSpeed, CameraMinZoom, CameraMaxZoom);
-	CameraRef->SpringArm->TargetArmLength = newLenght;
-}
-
-void ARTSPlayerController::ZoomReset()
-{
-	CameraRef->SpringArm->TargetArmLength = CameraDefaultZoom;
+	bShiftPressed = false;
 }
 
 void ARTSPlayerController::EdgeScrollingX(float value)
@@ -194,10 +92,10 @@ void ARTSPlayerController::EdgeScrollingX(float value)
 	GetMousePosition(MouseX, MouseY);
 	GetViewportSize(SizeX, SizeY);
 
-	float RatioX = MouseX / SizeX;
-	if (RatioX >= 0.975)		EdgeScrolling(15, 0);
-	else if (RatioX <= 0.025)	EdgeScrolling(-15, 0);
-	else						EdgeScrolling(0, 0);
+	const float RatioX = MouseX / static_cast<float>(SizeX);
+	if (RatioX >= 0.975)		CameraRef->EdgeScrolling(15, 0);
+	else if (RatioX <= 0.025)	CameraRef->EdgeScrolling(-15, 0);
+	else						CameraRef->EdgeScrolling(0, 0);
 }
 
 void ARTSPlayerController::EdgeScrollingY(float value)
@@ -207,56 +105,19 @@ void ARTSPlayerController::EdgeScrollingY(float value)
 	GetMousePosition(MouseX, MouseY);
 	GetViewportSize(SizeX, SizeY);
 
-	float RatioY = MouseY / SizeY;
-	if (RatioY >= 0.975)		EdgeScrolling(0, -15);
-	else if (RatioY <= 0.025)	EdgeScrolling(0, 15);
-	else						EdgeScrolling(0, 0);
-}
-
-void ARTSPlayerController::EdgeScrolling(float dx, float dy)
-{
-	CameraRef->AddActorLocalOffset(FVector(dy, dx, 0), true);
-}
-
-void ARTSPlayerController::RotatePanX(float value)
-{
-	if (bDisablePanRotation) RotatePan(value, 0);
-}
-
-void ARTSPlayerController::RotatePanY(float value)
-{
-	if (bDisablePanRotation) RotatePan(0, value);
-}
-
-void ARTSPlayerController::RotatePan(float x, float y)
-{
-	FRotator rotation = CameraRef->GetActorRotation();
-	float pitch = rotation.Pitch, yaw = rotation.Yaw, roll = rotation.Roll;
-	yaw += x * PanRotationSpeed;
-	pitch += y * PanRotationSpeed;
-	CameraRef->SetActorRotation(FRotator(pitch, yaw, roll));
-}
-
-void ARTSPlayerController::PanReset()
-{
-	CameraRef->SetActorRotation(FRotator(0, 0, 0));
-}
-
-void ARTSPlayerController::EnableCameraMovement()
-{
-	bDisablePanRotation = false;
-}
-
-void ARTSPlayerController::DisableCameraMovement()
-{
-	bDisablePanRotation = true;
+	const float RatioY = MouseY / static_cast<float>(SizeY);
+	if (RatioY >= 0.975)		CameraRef->EdgeScrolling(0, -15);
+	else if (RatioY <= 0.025)	CameraRef->EdgeScrolling(0, 15);
+	else						CameraRef->EdgeScrolling(0, 0);
 }
 
 void ARTSPlayerController::LMBPressed()
 {
 	bLMBPressed = true;
-	DeselectUnits();
-	SelectedActors.Empty();
+	// If shift pressed then new selected units will add to already selected
+	// thus SelectedActors shouldn't be emptied 
+	if (!bShiftPressed)	SelectedActors.Empty();
+	ShouldBeSelected.Empty();
 	GameHUD->OnInputStart();
 }
 
@@ -264,6 +125,57 @@ void ARTSPlayerController::LMBReleased()
 {
 	bLMBPressed = false;
 	GameHUD->OnInputRelease();
+	// Adding new actors (ShouldBeSelected) to selection pool (SelectedActors)
+	if (ShouldBeSelected.Num() == 0) return;
+	bool bOnlyBuildings = false, bOnlyShips = false;
+	// Pre check fo actors in SelectedActors if shift is pressed
+	// e.d. buildings or ships are already in SelectedActors
+	if (SelectedActors.Num() != 0)
+	{
+		if (IsArrayContainThisTypeActors<AShip>(SelectedActors)) bOnlyShips = true;
+		else if (IsArrayContainThisTypeActors<ABuilding>(SelectedActors)) bOnlyBuildings = true;
+	}
+	for (const auto& a : ShouldBeSelected)
+	{
+		if (PlayersActors.Contains(a))
+		{
+			// If SelectedActors has no actors then add first
+			if (SelectedActors.Num() == 0)
+			{
+				SelectedActors.AddUnique(a);
+				continue;
+			}
+			// If SelectedActors has at least one building then add
+			// building but not ship
+			if (!bOnlyShips && Cast<ABuilding>(a))
+			{
+				SelectedActors.AddUnique(a);
+				bOnlyBuildings = true;
+			}
+			
+			// If SelectedActors has at least one ship then add
+			// ship but not building
+			else if (!bOnlyBuildings && Cast<AShip>(a))
+			{
+				SelectedActors.AddUnique(a);
+				bOnlyShips = true;
+			}
+		}
+	}
+	// Set ShouldBeSelected Execute_Highlighted to false
+	// because actors was highlighted while rectangle was drawn
+	for (auto& a : ShouldBeSelected)
+	{
+		IBaseBehavior* Interface = Cast<IBaseBehavior>(a);
+		if (Interface) Interface->Execute_Highlighted(a, false);
+	}
+	
+	// Set actors Execute_Selected to true
+	for (auto& a : SelectedActors)
+	{
+		IBaseBehavior* Interface = Cast<IBaseBehavior>(a);
+		if (Interface) Interface->Execute_Selected(a, true);
+	}
 }
 
 void ARTSPlayerController::RMBPressed()
@@ -274,107 +186,72 @@ void ARTSPlayerController::RMBPressed()
 void ARTSPlayerController::RMBReleased()
 {
 	bRMBPressed = false;
-	MoveSelectedActors();
+	MoveSelectedShips();
+	SetSpawnPointForSelectedBuildings();
 }
 
-bool ARTSPlayerController::SelectedShips()
+void ARTSPlayerController::DamagePressed()
 {
-	for (auto& e : SelectedActors)
-	{
-		AShip* Ship = Cast<AShip>(e);
-		if (IsValid(Ship)) return true;
-	}
-	return false;
-}
-
-bool ARTSPlayerController::SelectedBuildings()
-{
-	for (auto& e : SelectedActors)
-	{
-		ABuilding* Building = Cast<ABuilding>(e);
-		if (IsValid(Building)) return true;
-	}
-	return false;
+	AShip* Ship = Cast<AShip>(HighlightedActor);
+	if (Ship) DamageDealer::DealDamage(30, Ship);
 }
 
 void ARTSPlayerController::UpdateSelection()
 {
-	DeselectUnits();
+	// All actors should be deselected unless shift is pressed
+	// in this case SelectedActors won't be deselected
+	for (auto& a : PlayersActors)
+	{
+		if (!SelectedActors.Contains(a))
+		{
+			IBaseBehavior* Interface = Cast<IBaseBehavior>(a);
+			if (Interface) Interface->Execute_Selected(a, false);
+		}
+	}
+
 	GameHUD->OnInputHold();
-	/*for (const auto& a : SelectedActors) {
-		FString str = UKismetSystemLibrary::GetDisplayName(Cast<AShip>(a));
-		GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Red, str);
-	}*/
-	SelectUnits();
+
+	// Select actors which came from GameHUD selection rectangle
+	for (auto& a : ShouldBeSelected)
+	{
+		IBaseBehavior* Interface = Cast<IBaseBehavior>(a);
+		if (Interface) Interface->Execute_Highlighted(a, true);
+	}
 }
 
 void ARTSPlayerController::HighlightActorsUnderCursor()
 {
-	DehighlightUnit();
-	FHitResult hit;
-	bool bHit = GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, hit);
-	if (bHit) HighlightedActor = hit.GetActor();
-	HighlightUnit();
-}
-
-void ARTSPlayerController::HighlightUnit()
-{
-	IBaseBehavior* Interface = Cast<IBaseBehavior>(HighlightedActor);
-	if (Interface) Interface->Execute_Highlighted(HighlightedActor, true);
-}
-
-void ARTSPlayerController::DehighlightUnit()
-{
-	IBaseBehavior* Interface = Cast<IBaseBehavior>(HighlightedActor);
-	if (Interface) Interface->Execute_Highlighted(HighlightedActor, false);
-
-	for (auto& a : PlayersActors)
-	{
-		Interface = Cast<IBaseBehavior>(a);
-		if(Interface) Interface->Execute_Highlighted(a, false);
-	}
-}
-
-void ARTSPlayerController::SelectUnits()
-{
-	if (SelectedActors.Num() == 0) return;
-	IBaseBehavior* Interface;
-	for (auto& a : SelectedActors) 
-	{
-		if (PlayersActors.Contains(a)) 
-		{
-			Interface = Cast<IBaseBehavior>(a);
-			if (Interface) Interface->Execute_Selected(a, true);
-		}
-	}
-}
-
-void ARTSPlayerController::DeselectUnits()
-{
-	IBaseBehavior* Interface;
+	// If HighlightedActor is in SelectedActors then
+	// it shouldn't be highlighted
 	for (auto& a : SelectedActors)
 	{
-		Interface = Cast<IBaseBehavior>(a);
-		if (Interface) Interface->Execute_Selected(a, false);
+		if (SelectedActors.Contains(HighlightedActor)) return;
 	}
-	for (auto& a : PlayersActors)
-	{
-		Interface = Cast<IBaseBehavior>(a);
-		if (Interface) Interface->Execute_Selected(a, false);
-	}
+	// Dehighlight unit
+	IBaseBehavior* Interface = Cast<IBaseBehavior>(HighlightedActor);
+	if (Interface) Interface->Execute_Highlighted(HighlightedActor, false);
 	
+	FHitResult Hit;
+	const bool bHit = GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
+	if (bHit)
+	{
+		HighlightedActor = Hit.GetActor();
+		// Highlight unit
+		Interface = Cast<IBaseBehavior>(HighlightedActor);
+		if (Interface) Interface->Execute_Highlighted(HighlightedActor, true);
+	}
 }
 
-
-void ARTSPlayerController::MoveSelectedActors()
+void ARTSPlayerController::MoveSelectedShips()
 {
+	if (SelectedActors.Num() == 0) return;
 	for (auto& a : SelectedActors)
 	{
 		AShip* Ship = Cast<AShip>(a);
 		if (Ship)
 		{
 			FHitResult Hit;
-			bool bHit = GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
+			const bool bHit = GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
 			if (bHit)
 			{
 				float Z = Ship->GetActorLocation().Z;
@@ -383,6 +260,24 @@ void ARTSPlayerController::MoveSelectedActors()
 			}
 		}
 	}
-
 }
 
+void ARTSPlayerController::SetSpawnPointForSelectedBuildings()
+{
+	if (SelectedActors.Num() == 0) return;
+	for (auto& a : SelectedActors)
+	{
+		ABuilding* Building = Cast<ABuilding>(a);
+		if(Building)
+		{
+			FHitResult Hit;
+			const bool bHit = GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
+			if (bHit)
+			{
+				float Z = Building->GetActorLocation().Z;
+				float X = Hit.Location.X, Y = Hit.Location.Y;
+				Building->SetSpawnPointLocation(FVector(X, Y, Z));
+			}
+		}
+	}
+}

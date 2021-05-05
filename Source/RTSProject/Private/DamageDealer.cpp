@@ -1,12 +1,15 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "DamageDealer.h"
 
 #include "HealthShield.h"
 #include "Ship.h"
 #include "Turret.h"
 #include "Rocket.h"
+
+void DamageDealer::DealDamage(int DamageValue, AShip* Target)
+{
+	if (!Target) return;
+	Target->HealthShieldComponent->TakeDamage(DamageValue);
+}
 
 void DamageDealer::DealDamage(ARocket* Dealer, AShip* Target)
 {

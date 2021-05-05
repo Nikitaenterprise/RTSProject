@@ -12,9 +12,11 @@ class RTSPROJECT_API UBasicButtonsHUD : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
 
 public:
+	
 	//UBasicButtonsHUD(const FObjectInitializer& ObjectInitializer);
 
 	virtual void NativeConstruct() override;
@@ -25,10 +27,4 @@ public:
 	void SpawnAsteroidField();
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 	void SpawnBuilding();
-
-	
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "HUD")
-	void ShowUI();
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "HUD")
-	void HideUI();
 };

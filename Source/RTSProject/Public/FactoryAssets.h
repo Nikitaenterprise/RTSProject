@@ -4,6 +4,7 @@
 #include "Engine/DataAsset.h"
 #include "FactoryAssets.generated.h"
 
+
 class AShip;
 class ATurret;
 class ABuilding;
@@ -16,18 +17,20 @@ class RTSPROJECT_API UFactoryAssets : public UDataAsset
 	GENERATED_BODY()
 
 public:
-
-	UPROPERTY(EditDefaultsOnly, Category = "Ship")
-	TSubclassOf<AShip> ShipClass;
-	UPROPERTY(EditDefaultsOnly, Category = "Turret")
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship")
+	TArray<TSubclassOf<AShip>> ShipClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Turret")
 	TSubclassOf<ATurret> TurretClass;
-	UPROPERTY(EditDefaultsOnly, Category = "Building")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Building")
 	TSubclassOf<ABuilding> BuildingClass;
-	UPROPERTY(EditDefaultsOnly, Category = "Resource")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource")
 	TSubclassOf<AAsteroidField> AsteroidFieldClass;
-	UPROPERTY(EditDefaultsOnly, Category = "Resource")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource")
 	TSubclassOf<AAsteroidResource> AsteroidResourceClass;
 	
 public:
 
+	UFUNCTION(BlueprintCallable)
+	TArray<TSubclassOf<AShip>> GetShipClass() { return ShipClass; };
 };
