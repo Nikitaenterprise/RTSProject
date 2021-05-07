@@ -1,10 +1,13 @@
 #include "Building.h"
 
+
+#include "FogOfWar.h"
 #include "HealthShield.h"
 #include "RTSPlayerController.h"
 #include "HealthShieldBarHUD.h"
 #include "ShipFactory.h"
 #include "Ship.h"
+#include "FogOfWarComponent.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
@@ -28,7 +31,7 @@ ABuilding::ABuilding()
 	
 	
 	HealthShieldComponent = CreateDefaultSubobject<UHealthShield>(TEXT("HealthShield"));
-
+	FogOfWarDispellerComponent = CreateDefaultSubobject<UFogOfWarComponent>(TEXT("FogOfWarDispeller"));
 }
 
 void ABuilding::BeginPlay()
@@ -44,6 +47,9 @@ void ABuilding::Initialize(ARTSPlayerController* RTSController)
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
 		HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
 		HealthShieldBar->SetVisibility(false);
+		FogOfWarDispellerComponent->Manager = PlayerController->FogOfWar;
+		PlayerController->FogOfWar->RegisterFowActor(this);
+		PlayerController->FogOfWar->LogNames();
 	}
 	else
 	{

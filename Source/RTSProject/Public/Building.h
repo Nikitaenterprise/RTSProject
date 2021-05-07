@@ -10,6 +10,7 @@ class UWidgetComponent;
 class UHealthShield;
 class ARTSPlayerController;
 class UHealthShieldBarHUD;
+class UFogOfWarComponent;
 
 enum class EConstructionState
 {
@@ -53,6 +54,8 @@ public:
 	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	UHealthShieldBarHUD* HealthShieldBarHUD = nullptr;
+	UPROPERTY(BlueprintReadOnly)
+	UFogOfWarComponent* FogOfWarDispellerComponent = nullptr;
 
 	float DeltaTime = 0;
 	float PastTime = 0;

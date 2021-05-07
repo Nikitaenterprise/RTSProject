@@ -7,6 +7,7 @@
 #include "GameHUD.h"
 
 #include "DamageDealer.h"
+#include "FogOfWar.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -36,7 +37,20 @@ void ARTSPlayerController::BeginPlay()
 	GameHUD = Cast<AGameHUD>(GetHUD());
 	if (GameHUD) GameHUD->BindController(this);
 	else GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("GameHUD=nullptr in ARTSPlayerController"));
-
+	/*TArray<AActor*> FogOfWarArray;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFogOfWar::StaticClass(), FogOfWarArray);
+	for(auto&a:FogOfWarArray)
+	{
+		AFogOfWar* CastTo = Cast<AFogOfWar>(a);
+		if (CastTo)
+		{
+			FogOfWar = CastTo;
+			GEngine->AddOnScreenDebugMessage(-1, 5, FColor::White, TEXT("working"));
+		}
+	}*/
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	FogOfWar = GetWorld()->SpawnActor<AFogOfWar>(FactoryAssets->FogOfWarClass.Get(), FVector(0,0,0), FRotator(0,0,0), Params);
 }
 
 void ARTSPlayerController::Tick(float mainDeltaTime)

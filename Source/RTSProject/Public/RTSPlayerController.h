@@ -7,6 +7,7 @@
 class UInputController;
 class ACamera;
 class AGameHUD;
+class AFogOfWar;
 class UShipHUD;
 class UBuildingHUD;
 class UBasicButtonsHUD;
@@ -48,6 +49,9 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	AGameHUD* GameHUD = nullptr;
+
+	UPROPERTY()
+	AFogOfWar* FogOfWar = nullptr;
 
 public:
 

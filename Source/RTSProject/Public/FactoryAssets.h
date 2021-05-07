@@ -10,6 +10,7 @@ class ATurret;
 class ABuilding;
 class AAsteroidField;
 class AAsteroidResource;
+class AFogOfWar;
 
 UCLASS(BlueprintType)
 class RTSPROJECT_API UFactoryAssets : public UDataAsset
@@ -28,6 +29,8 @@ public:
 	TSubclassOf<AAsteroidField> AsteroidFieldClass;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource")
 	TSubclassOf<AAsteroidResource> AsteroidResourceClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game")
+	TSubclassOf<AFogOfWar> FogOfWarClass;
 	
 public:
 
