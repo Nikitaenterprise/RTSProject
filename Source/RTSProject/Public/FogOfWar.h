@@ -45,6 +45,9 @@ public:
 
 	//The size of our textures
 	uint32 TextureSize = 1024;
+	//The size of our textures (parameter for UE4 editor)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int TextureSizeForPropertyWindow = TextureSize;
 
 	//Array containing what parts of the map we've unveiled.
 	UPROPERTY()

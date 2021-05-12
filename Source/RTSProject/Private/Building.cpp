@@ -31,7 +31,7 @@ ABuilding::ABuilding()
 	
 	
 	HealthShieldComponent = CreateDefaultSubobject<UHealthShield>(TEXT("HealthShield"));
-	FogOfWarDispellerComponent = CreateDefaultSubobject<UFogOfWarComponent>(TEXT("FogOfWarDispeller"));
+	FOWInfluencer = CreateDefaultSubobject<UFogOfWarComponent>(TEXT("FogOfWarInfluencer"));
 }
 
 void ABuilding::BeginPlay()
@@ -47,9 +47,8 @@ void ABuilding::Initialize(ARTSPlayerController* RTSController)
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
 		HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
 		HealthShieldBar->SetVisibility(false);
-		FogOfWarDispellerComponent->Manager = PlayerController->FogOfWar;
+		FOWInfluencer->Manager = PlayerController->FogOfWar;
 		PlayerController->FogOfWar->RegisterFowActor(this);
-		PlayerController->FogOfWar->LogNames();
 	}
 	else
 	{

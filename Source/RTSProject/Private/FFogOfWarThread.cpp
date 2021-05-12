@@ -2,8 +2,6 @@
 #include "FogOfWar.h"
 #include "FogOfWarComponent.h"
 
-FFogOfWarThread::FFogOfWarThread() {}
-
 FFogOfWarThread::FFogOfWarThread(AFogOfWar* manager) {
 	Manager = manager;
 	Thread = FRunnableThread::Create(this, TEXT("AFogOfWarWorker"), 0U, TPri_BelowNormal);
@@ -31,7 +29,7 @@ bool FFogOfWarThread::Init() {
 uint32 FFogOfWarThread::Run() {
 	FPlatformProcess::Sleep(0.03f);
 	while (StopTaskCounter.GetValue() == 0) {
-		//the compiler was complaining about the time variable not being initiallized, so = 0.0f
+		//the compiler was complaining about the time variable not being initialized, so = 0.0f
 		float time = 0.0f;
 		if (Manager && Manager->GetWorld()) {
 			time = Manager->GetWorld()->TimeSeconds;
@@ -50,7 +48,7 @@ uint32 FFogOfWarThread::Run() {
 void FFogOfWarThread::UpdateFowTexture() {
 	Manager->LastFrameTextureData = TArray<FColor>(Manager->TextureData);
 	uint32 halfTextureSize = Manager->TextureSize / 2;
-	int signedSize = (int)Manager->TextureSize; //For convenience....
+	int signedSize = static_cast<int>(Manager->TextureSize); //For convenience....
 	TSet<FVector2D> currentlyInSight;
 	TSet<FVector2D> texelsToBlur;
 	int sightTexels = Manager->SightRange * Manager->SamplesPerMeter;
@@ -94,25 +92,25 @@ void FFogOfWarThread::UpdateFowTexture() {
 		//Dont forget the braces >()
 
 		if (*Itr != nullptr) {
-			isWriteUnFog = (*Itr)->FindComponentByClass<UFogOfWarComponent>()->bCanWriteUnFog;
-			isWriteFow = (*Itr)->FindComponentByClass<UFogOfWarComponent>()->bCanWriteFow;
-			isWriteTerraIncog = (*Itr)->FindComponentByClass<UFogOfWarComponent>()->bCanWriteTerraIncog;
+			bIsWriteUnFog = (*Itr)->FindComponentByClass<UFogOfWarComponent>()->bCanWriteUnFog;
+			bIsWriteFow = (*Itr)->FindComponentByClass<UFogOfWarComponent>()->bCanWriteFow;
+			bIsWriteTerraIncognita = (*Itr)->FindComponentByClass<UFogOfWarComponent>()->bCanWriteTerraIncognita;
 		}
 
 
 
-		if (isWriteUnFog) {
+		if (bIsWriteUnFog) {
 			//Unveil the positions our actors are currently looking at
 			for (int y = posY - sightTexels; y <= posY + sightTexels; y++) {
 				for (int x = posX - sightTexels; x <= posX + sightTexels; x++) {
 					//Kernel for radial sight
 					if (x > 0 && x < size && y > 0 && y < size) {
 						FVector2D currentTextureSpacePos = FVector2D(x, y);
-						int length = (int)(textureSpacePos - currentTextureSpacePos).Size();
+						int length = static_cast<int>((textureSpacePos - currentTextureSpacePos).Size());
 						if (length <= sightTexels) {
 							FVector currentWorldSpacePos = FVector(
-								((x - (int)halfTextureSize)) * dividend,
-								((y - (int)halfTextureSize)) * dividend,
+								((x - static_cast<int>(halfTextureSize))) * dividend,
+								((y - static_cast<int>(halfTextureSize))) * dividend,
 								position.Z);
 
 							//CONSIDER: This is NOT the most efficient way to do conditional unfogging. With long view distances and/or a lot of actors affecting the FOW-data
@@ -128,7 +126,7 @@ void FFogOfWarThread::UpdateFowTexture() {
 
 								//Is the actor able to affect the terra incognita
 
-								if (isWriteTerraIncog) {
+								if (bIsWriteTerraIncognita) {
 									//if the actor is able then
 									//Unveil the positions we are currently seeing
 									Manager->UnfoggedData[x + y * Manager->TextureSize] = true;
@@ -146,16 +144,16 @@ void FFogOfWarThread::UpdateFowTexture() {
 		//Is the current actor marked for checking if is in terra incognita
 
 		if (*Itr != nullptr) {
-			bCheckActorInTerraIncog = (*Itr)->FindComponentByClass<UFogOfWarComponent>()->bCheckActorTerraIncog;
+			bCheckActorIsInTerraIncognita = (*Itr)->FindComponentByClass<UFogOfWarComponent>()->bCheckActorIsInTerraIncognita;
 		}
-		if (bCheckActorInTerraIncog) {
+		if (bCheckActorIsInTerraIncognita) {
 			//if the current position textureSpacePosXY in the UnfoggedData bool array is false the actor is in the Terra Incognita
 			if (Manager->UnfoggedData[textureSpacePos.X + textureSpacePos.Y * Manager->TextureSize] == false) {
-				(*Itr)->FindComponentByClass<UFogOfWarComponent>()->isActorInTerraIncog = true;
+				(*Itr)->FindComponentByClass<UFogOfWarComponent>()->bIsActorInTerraIncognita = true;
 
 			}
 			else {
-				(*Itr)->FindComponentByClass<UFogOfWarComponent>()->isActorInTerraIncog = false;
+				(*Itr)->FindComponentByClass<UFogOfWarComponent>()->bIsActorInTerraIncognita = false;
 			}
 		}
 
@@ -184,7 +182,7 @@ void FFogOfWarThread::UpdateFowTexture() {
 					}
 				}
 			}
-			Manager->HorizontalBlurData[x + y * signedSize] = (uint8)sum;
+			Manager->HorizontalBlurData[x + y * signedSize] = static_cast<uint8>(sum);
 		}
 
 
@@ -199,7 +197,7 @@ void FFogOfWarThread::UpdateFowTexture() {
 					sum += (Manager->blurKernel[i] * Manager->HorizontalBlurData[x + (y + shiftedIndex) * signedSize]);
 				}
 			}
-			Manager->TextureData[x + y * signedSize] = FColor((uint8)sum, (uint8)sum, (uint8)sum, 255);
+			Manager->TextureData[x + y * signedSize] = FColor(static_cast<uint8>(sum), static_cast<uint8>(sum), static_cast<uint8>(sum), 255);
 		}
 	}
 	else {

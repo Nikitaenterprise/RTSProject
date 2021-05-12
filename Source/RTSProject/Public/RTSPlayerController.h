@@ -50,7 +50,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	AGameHUD* GameHUD = nullptr;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="FOW")
 	AFogOfWar* FogOfWar = nullptr;
 
 public:

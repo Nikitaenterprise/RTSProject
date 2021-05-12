@@ -14,7 +14,7 @@ class RTSPROJECT_API UFogOfWarComponent : public UActorComponent
 public:
 
 	/*Select the FOW Manager*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FogOfWar")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "FogOfWar")
 	AFogOfWar* Manager = nullptr;
 	/*Is the actor able to influence unfogged texels*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FogOfWar")
@@ -24,13 +24,13 @@ public:
 	bool bCanWriteFow = true;
 	/*Is the actor able to influence terra incognita texels*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FogOfWar")
-	bool bCanWriteTerraIncog = true;
+	bool bCanWriteTerraIncognita = true;
 	/*Check if the actor is in terra incognita*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FogOfWar")
-	bool bCheckActorTerraIncog = false;
-	/**/
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "FogOfWar")
-	bool isActorInTerraIncog = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FogOfWar")
+	bool bCheckActorIsInTerraIncognita = false;
+	/*Is the actor in terra incognita*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FogOfWar")
+	bool bIsActorInTerraIncognita = false;
 	
 public:
 

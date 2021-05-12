@@ -7,8 +7,7 @@
 AFogOfWar::AFogOfWar()
 {
  	PrimaryActorTick.bCanEverTick = true;
-	textureRegions = new FUpdateTextureRegion2D(0, 0, 0, 0, TextureSize, TextureSize);
-
+	
 	//15 Gaussian samples. Sigma is 2.0.
 	//CONSIDER: Calculate the kernel instead, more flexibility...
 	blurKernel.Init(0.0f, blurKernelSize);
@@ -37,6 +36,8 @@ AFogOfWar::~AFogOfWar() {
 
 void AFogOfWar::BeginPlay() {
 	Super::BeginPlay();
+	TextureSize = static_cast<decltype(TextureSize)>(TextureSizeForPropertyWindow); // init TextureSize by value from UE4 editor window
+	textureRegions = new FUpdateTextureRegion2D(0, 0, 0, 0, TextureSize, TextureSize);
 	bIsDoneBlending = true;
 	StartFOWTextureUpdate();
 	//I commented this to remove the player from the FOW
@@ -103,10 +104,14 @@ void AFogOfWar::StartFOWTextureUpdate() {
 		FOWTexture = UTexture2D::CreateTransient(TextureSize, TextureSize);
 		LastFOWTexture = UTexture2D::CreateTransient(TextureSize, TextureSize);
 		int arraySize = TextureSize * TextureSize;
+
+		/*TextureData.Init(FColor(100, 100, 100, 255), arraySize);
+		LastFrameTextureData.Init(FColor(100, 100, 100, 255), arraySize);*/
+		
 		TextureData.Init(FColor(0, 0, 0, 255), arraySize);
 		LastFrameTextureData.Init(FColor(0, 0, 0, 255), arraySize);
 		HorizontalBlurData.Init(0, arraySize);
-		UnfoggedData.Init(false, arraySize);
+		UnfoggedData.Init(true, arraySize);
 		FowThread = new FFogOfWarThread(this);
 
 		//Time stuff
@@ -115,7 +120,7 @@ void AFogOfWar::StartFOWTextureUpdate() {
 	}
 
 	//Loading texture to array
-	//Copy Texture File in disk (mask) to unfoggedData array of bools
+	//Copy Texture File in disk (mask) to UnfoggedData array of bools
 
 	if (GetIsTextureFileEnabled()) {
 
@@ -147,7 +152,7 @@ void AFogOfWar::StartFOWTextureUpdate() {
 
 			FTexture2DMipMap& Mip = TextureInFile->PlatformData->Mips[0];
 			void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
-			uint8* raw = NULL;
+			uint8* raw = nullptr;
 			raw = (uint8*)Data;
 			FColor pixel = FColor(0, 0, 0, 255);//used for spliting the data stored in raw form
 
@@ -159,10 +164,9 @@ void AFogOfWar::StartFOWTextureUpdate() {
 					pixel.B = raw[4 * (TextureInFileSize * y + x) + 0];
 					pixel.G = raw[4 * (TextureInFileSize * y + x) + 1];
 					pixel.R = raw[4 * (TextureInFileSize * y + x) + 2];
-					TextureInFileData[x + y * TextureInFileSize] = FColor((uint8)pixel.R, (uint8)pixel.G, (uint8)pixel.B, 255);
+					TextureInFileData[x + y * TextureInFileSize] = FColor(static_cast<uint8>(pixel.R), static_cast<uint8>(pixel.G), static_cast<uint8>(pixel.B), 255);
 
-					//ToDo: IMPORTANT, YOU NEED TO THINK WHAT HAPPENS IF THE TEXTURE IN FILE HAS A DIFFERRENT SIZE THAN BOOL UNFOGGEDDATA, THIS IS COULD
-					//CAUSE AN OUT OF BOUNDS ARRAY, OR SOMETHING
+					//ToDo: IMPORTANT, YOU NEED TO THINK WHAT HAPPENS IF THE TEXTURE IN FILE HAS A DIFFERENT SIZE THAN BOOL UNFOGGEDDATA, THIS IS COULD CAUSE AN OUT OF BOUNDS ARRAY, OR SOMETHING
 
 					//Here we are writing to the UnfoggedData Array the values that are already unveiled, from the texture file
 					if (pixel.B >= 100) {
@@ -228,18 +232,14 @@ void AFogOfWar::LogNames()
 		UE_LOG(LogTemp, Warning, TEXT("The name of this actor is: %s"), *Name);
 		Name = Actor->FindComponentByClass<UFogOfWarComponent>()->GetName();
 		UE_LOG(LogTemp, Warning, TEXT("And the actor has a component: %s"), *Name);
-		bool temp = Actor->FindComponentByClass<UFogOfWarComponent>()->bCanWriteTerraIncog;
+		bool temp = Actor->FindComponentByClass<UFogOfWarComponent>()->bCanWriteTerraIncognita;
 		if (temp) {
 			UE_LOG(LogTemp, Warning, TEXT("can write Terra Incognita: TRUE"));
 		}
 		else {
 			UE_LOG(LogTemp, Warning, TEXT("can write Terra Incognita: FALSE"));
 		}
-
-
 	}
-
-	//FString TempString = GetName();
 }
 
 void AFogOfWar::UpdateTextureRegions(UTexture2D* Texture, int32 MipIndex, uint32 NumRegions, FUpdateTextureRegion2D* Regions, uint32 SrcPitch, uint32 SrcBpp, uint8* SrcData, bool bFreeData)
@@ -259,7 +259,7 @@ void AFogOfWar::UpdateTextureRegions(UTexture2D* Texture, int32 MipIndex, uint32
 
 		FUpdateTextureRegionsData* RegionData = new FUpdateTextureRegionsData;
 
-		RegionData->Texture2DResource = (FTexture2DResource*)Texture->Resource;
+		RegionData->Texture2DResource = static_cast<FTexture2DResource*>(Texture->Resource);
 		RegionData->MipIndex = MipIndex;
 		RegionData->NumRegions = NumRegions;
 		RegionData->Regions = Regions;
