@@ -6,6 +6,8 @@
 
 class FFogOfWarThread;
 
+//https://forums.unrealengine.com/t/tutorial-fog-of-war/18222
+
 UCLASS()
 class RTSPROJECT_API AFogOfWar : public AActor
 {
