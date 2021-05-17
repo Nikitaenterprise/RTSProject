@@ -34,7 +34,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = FogOfWar)
 	UTexture2D* TextureInFile = nullptr;
-
+	// Set this variable to floor in level so map size can be known
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	AActor* MapFloor = nullptr;
 	//If the last texture blending is done
 	UPROPERTY(BlueprintReadWrite)
 	bool bIsDoneBlending;

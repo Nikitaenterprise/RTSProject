@@ -20,6 +20,7 @@ public:
 	bool bIsWriteFow = false;
 	bool bIsWriteTerraIncognita = false;
 	bool bCheckActorIsInTerraIncognita = false;//Bool, is the actor in terra incognita territory
+
 public:
 
 	FFogOfWarThread(AFogOfWar* manager);

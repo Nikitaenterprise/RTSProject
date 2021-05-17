@@ -2,6 +2,9 @@
 
 #include "FFogOfWarThread.h"
 #include "FogOfWarComponent.h"
+#include "Engine/StaticMeshActor.h"
+#include "Materials/MaterialInterface.h"
+#include "Kismet/GameplayStatics.h"
 #include "Rendering/Texture2DResource.h"
 
 AFogOfWar::AFogOfWar()
@@ -36,6 +39,19 @@ AFogOfWar::~AFogOfWar() {
 
 void AFogOfWar::BeginPlay() {
 	Super::BeginPlay();
+	if (MapFloor)
+	{
+		// trying to get texture size of floor static mesh from level
+		// to correctly set up texture size fo FOW
+		AStaticMeshActor* Floor = Cast<AStaticMeshActor>(MapFloor);
+		UMaterialInterface* MI = Floor->GetStaticMeshComponent()->GetStaticMesh()->GetMaterial(0);
+		TArray<UTexture*> Textures;
+		MI->GetUsedTextures(Textures, EMaterialQualityLevel::Low, false, ERHIFeatureLevel::Num, false);
+		FString out = "";
+		out += FString(" Width = ") + FString::SanitizeFloat(Textures[0]->GetSurfaceWidth());
+		out += FString(" height = ") + FString::SanitizeFloat(Textures[0]->GetSurfaceHeight());
+		GEngine->AddOnScreenDebugMessage(-1, 0.5, FColor::White, out);
+	}
 	TextureSize = static_cast<decltype(TextureSize)>(TextureSizeForPropertyWindow); // init TextureSize by value from UE4 editor window
 	textureRegions = new FUpdateTextureRegion2D(0, 0, 0, 0, TextureSize, TextureSize);
 	bIsDoneBlending = true;
@@ -47,7 +63,8 @@ void AFogOfWar::BeginPlay() {
 
 void AFogOfWar::Tick(float DeltaSeconds) {
 	Super::Tick(DeltaSeconds);
-	if (FOWTexture && LastFOWTexture && bHasFOWTextureUpdate && bIsDoneBlending) {
+	if (FOWTexture && LastFOWTexture && bHasFOWTextureUpdate && bIsDoneBlending) 
+	{
 		LastFOWTexture->UpdateResource();
 		UpdateTextureRegions(
 			LastFOWTexture, 
@@ -58,6 +75,7 @@ void AFogOfWar::Tick(float DeltaSeconds) {
 			static_cast<uint32>(4),
 			reinterpret_cast<uint8*>(LastFrameTextureData.GetData()),
 			false);
+		
 		FOWTexture->UpdateResource();
 		UpdateTextureRegions(
 			FOWTexture,
@@ -68,6 +86,7 @@ void AFogOfWar::Tick(float DeltaSeconds) {
 			static_cast<uint32>(4),
 			reinterpret_cast<uint8*>(TextureData.GetData()),
 			false);
+		
 		bHasFOWTextureUpdate = false;
 		bIsDoneBlending = false;
 		//Trigger the blueprint update
@@ -77,46 +96,49 @@ void AFogOfWar::Tick(float DeltaSeconds) {
 
 
 	if (bIsFowTimerEnabled) {
-		//Keeping the Measure of the time outside the Worker thread, otherwise the it does not work
+		//Keeping the Measure of the time outside the Worker thread, otherwise it does not work
 		//i guest that asking for the delta seconds inside the worker that not make sense, hence, it is detached
 		//from the main game thread
 		//also this part of the code is NOT inside the if that checks for bIsDoneBlending
-		int signedSize = static_cast<int>(TextureSize);
-		for (int y = 0; y < signedSize; y++) {
-			for (int x = 0; x < signedSize; x++) {
-
+		const int SignedSize = static_cast<int>(TextureSize);
+		for (int y = 0; y < SignedSize; y++) 
+		{
+			for (int x = 0; x < SignedSize; x++) 
+			{
 				//check the FOWArray written by the worker, if is tagged for keeping the time then:
-				if (FOWArray[x + y * signedSize]) {
-					FOWTimeArray[x + y * signedSize] = (FOWTimeArray[x + y * signedSize]) + (GetWorld()->GetDeltaSeconds());
+				if (FOWArray[x + y * SignedSize]) 
+				{
+					FOWTimeArray[x + y * SignedSize] = (FOWTimeArray[x + y * SignedSize]) + (GetWorld()->GetDeltaSeconds());
 				}
 				//if the current value is not tagged for time, reset the value
-				if (!FOWArray[x + y * signedSize]) {
-					FOWTimeArray[x + y * signedSize] = 0.0f;
+				if (!FOWArray[x + y * SignedSize]) 
+				{
+					FOWTimeArray[x + y * SignedSize] = 0.0f;
 				}
-
 			}
 		}
 	}
 }
 
 void AFogOfWar::StartFOWTextureUpdate() {
-	if (!FOWTexture) {
+	if (!FOWTexture) 
+	{
 		FOWTexture = UTexture2D::CreateTransient(TextureSize, TextureSize);
 		LastFOWTexture = UTexture2D::CreateTransient(TextureSize, TextureSize);
-		int arraySize = TextureSize * TextureSize;
+		const int ArraySize = TextureSize * TextureSize;
 
 		/*TextureData.Init(FColor(100, 100, 100, 255), arraySize);
 		LastFrameTextureData.Init(FColor(100, 100, 100, 255), arraySize);*/
+		TextureData.Init(FColor(0, 0, 0, 255), ArraySize);
+		LastFrameTextureData.Init(FColor(0, 0, 0, 255), ArraySize);
 		
-		TextureData.Init(FColor(0, 0, 0, 255), arraySize);
-		LastFrameTextureData.Init(FColor(0, 0, 0, 255), arraySize);
-		HorizontalBlurData.Init(0, arraySize);
-		UnfoggedData.Init(true, arraySize);
+		HorizontalBlurData.Init(0, ArraySize);
+		UnfoggedData.Init(true, ArraySize);
 		FowThread = new FFogOfWarThread(this);
 
 		//Time stuff
-		FOWTimeArray.Init(0.0f, arraySize);
-		FOWArray.Init(false, arraySize);
+		FOWTimeArray.Init(0.0f, ArraySize);
+		FOWArray.Init(false, ArraySize);
 	}
 
 	//Loading texture to array
@@ -129,88 +151,80 @@ void AFogOfWar::StartFOWTextureUpdate() {
 			UE_LOG(LogTemp, Error, TEXT("Missing texture in LevelInfo, please load the mask!"));
 			return;
 		}
-		if (TextureInFile != nullptr) {
+		const int TextureInFileSize = TextureInFile->GetSizeX();
+		TextureInFileData.Init(FColor(1, 1, 1, 255), TextureInFileSize * TextureInFileSize);
+		//init TArray
+		//TextureInFileData.Init(FColor(0, 0, 0, 255), arraySize * arraySize);//init TArray, use this in unified version
+		//The operation from Texture File ->to-> TArray of FColors
 
-			int TextureInFileSize = TextureInFile->GetSizeX();
-			TextureInFileData.Init(FColor(1, 1, 1, 255), TextureInFileSize * TextureInFileSize);
-			//init TArray
-			//TextureInFileData.Init(FColor(0, 0, 0, 255), arraySize * arraySize);//init TArray, use this in unified version
-			//The operation from Texture File ->to-> TArray of FColors
+		UE_LOG(LogTemp, Warning, TEXT("Texture in file is :  %d  pixels wide"), TextureInFileSize);
 
-			UE_LOG(LogTemp, Warning, TEXT("Texture in file is :  %d  pixels wide"), TextureInFileSize);
+		//Force texture compression to vectorDispl , https://wiki.unrealengine.com/Procedural_Materials
 
-			//Force texture compression to vectorDispl , https://wiki.unrealengine.com/Procedural_Materials
+		//TODO: here you need to add a halt or a warning to prevent the loading of textures that don't meet the criteria
+		//no mipmaps, compression to vector Displacement
+		//i could check the compression settings, but they are in enum form
 
-			//TODO here you need to add a halt or a warning to prevent the loading of textures that don´t meet the criteria
-			//no mipmaps, compression to vector Displacement
-			//i could check the compression settings, but they are in enum form
+		//template<class TEnum>
+		//class TEnumAsByte TextureCompressionStatus = TextureInFile->CompressionSettings;
 
-			//template<class TEnum>
-			//class TEnumAsByte TextureCompressionStatus = TextureInFile->CompressionSettings;
+		FTexture2DMipMap& Mip = TextureInFile->PlatformData->Mips[0];
+		uint8* RawData = static_cast<uint8*>(Mip.BulkData.Lock(LOCK_READ_WRITE));
+		FColor Pixel = FColor(0, 0, 0, 255); //used for splitting the data stored in raw form
 
+		for (int y = 0; y < TextureInFileSize; y++) 
+		{
+			//data in the RawData is serialized i think ;)
+			//so a pixel is four consecutive numbers e.g 0,0,0,255
+			//and the following code split the values in single components and store them in a FColor
+			for (int x = 0; x < TextureInFileSize; x++) 
+			{
+				Pixel.B = RawData[4 * (TextureInFileSize * y + x) + 0];
+				Pixel.G = RawData[4 * (TextureInFileSize * y + x) + 1];
+				Pixel.R = RawData[4 * (TextureInFileSize * y + x) + 2];
+				TextureInFileData[x + y * TextureInFileSize] = FColor(static_cast<uint8>(Pixel.R), static_cast<uint8>(Pixel.G), static_cast<uint8>(Pixel.B), 255);
 
+				//TODO: important, you need to think what happens if the texture in file has a different size than bool UnfoggedData, this could cause an iut of bound array, or something
 
-			FTexture2DMipMap& Mip = TextureInFile->PlatformData->Mips[0];
-			void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
-			uint8* raw = nullptr;
-			raw = (uint8*)Data;
-			FColor pixel = FColor(0, 0, 0, 255);//used for spliting the data stored in raw form
-
-			for (int y = 0; y < TextureInFileSize; y++) {
-				//data in the raw var is serialized i think ;)
-				//so a pixel is four consecutive numbers e.g 0,0,0,255
-				//and the following code split the values in single components and store them in a FColor
-				for (int x = 0; x < TextureInFileSize; x++) {
-					pixel.B = raw[4 * (TextureInFileSize * y + x) + 0];
-					pixel.G = raw[4 * (TextureInFileSize * y + x) + 1];
-					pixel.R = raw[4 * (TextureInFileSize * y + x) + 2];
-					TextureInFileData[x + y * TextureInFileSize] = FColor(static_cast<uint8>(pixel.R), static_cast<uint8>(pixel.G), static_cast<uint8>(pixel.B), 255);
-
-					//ToDo: IMPORTANT, YOU NEED TO THINK WHAT HAPPENS IF THE TEXTURE IN FILE HAS A DIFFERENT SIZE THAN BOOL UNFOGGEDDATA, THIS IS COULD CAUSE AN OUT OF BOUNDS ARRAY, OR SOMETHING
-
-					//Here we are writing to the UnfoggedData Array the values that are already unveiled, from the texture file
-					if (pixel.B >= 100) {
-						UnfoggedData[x + y * TextureInFileSize] = true;
-					}
-
+				//Here we are writing to the UnfoggedData Array the values that are already unveiled, from the texture file
+				if (Pixel.B >= 100) 
+				{
+					UnfoggedData[x + y * TextureInFileSize] = true;
 				}
-				//FColor Colorcito = TextureInFileData[y ];
-				//UE_LOG(LogTemp, Warning, TEXT("TArray in y:  %d is :  %s"), y , *Colorcito.ToString());
+
 			}
-
-			//FColor Colorcito = TextureInFileData[524288];
-			//UE_LOG(LogTemp, Warning, TEXT("TArray in 524288 is :  %s"), *Colorcito.ToString());
-
-			Mip.BulkData.Unlock();
-			TextureInFile->UpdateResource();
+			//FColor Colorcito = TextureInFileData[y ];
+			//UE_LOG(LogTemp, Warning, TEXT("TArray in y:  %d is :  %s"), y , *Colorcito.ToString());
 		}
 
+		//FColor Colorcito = TextureInFileData[524288];
+		//UE_LOG(LogTemp, Warning, TEXT("TArray in 524288 is :  %s"), *Colorcito.ToString());
 
-		if (FOWTexture) {
-
+		delete RawData;
+		Mip.BulkData.Unlock();
+		TextureInFile->UpdateResource();
+		
+		if (FOWTexture) 
+		{
 			TextureData = TextureInFileData;
 			LastFrameTextureData = TextureInFileData;
 			//Missing the TArray<bool> for unfogged data, do this
 		}
-
 	}
-
-
 }
 
-void AFogOfWar::OnFowTextureUpdated_Implementation(UTexture2D* currentTexture, UTexture2D* lastTexture) {
+void AFogOfWar::OnFowTextureUpdated_Implementation(UTexture2D* currentTexture, UTexture2D* lastTexture)
+{
 	//Handle in blueprint
 }
 
 void AFogOfWar::debugTextureAccess()
 {
-
-
 }
 
 void AFogOfWar::RegisterFowActor(AActor* Actor)
 {
-	FowActors.Add(Actor);
+	FowActors.AddUnique(Actor);
 }
 
 bool AFogOfWar::GetIsBlurEnabled() const
@@ -267,9 +281,7 @@ void AFogOfWar::UpdateTextureRegions(UTexture2D* Texture, int32 MipIndex, uint32
 		RegionData->SrcBpp = SrcBpp;
 		RegionData->SrcData = SrcData;
 
-		ENQUEUE_RENDER_COMMAND(FUpdateTextureRegionsData)(
-			[RegionData = RegionData, bFreeData = bFreeData](FRHICommandListImmediate& RHICmdList)
-
+		ENQUEUE_RENDER_COMMAND(FUpdateTextureRegionsData)([RegionData = RegionData, bFreeData = bFreeData](FRHICommandListImmediate& RHICmdList)
 			{
 				for (uint32 RegionIndex = 0; RegionIndex < RegionData->NumRegions; ++RegionIndex)
 				{
@@ -293,6 +305,7 @@ void AFogOfWar::UpdateTextureRegions(UTexture2D* Texture, int32 MipIndex, uint32
 					FMemory::Free(RegionData->SrcData);
 				}
 				delete RegionData;
-			});
+			}
+		);
 	}
 }

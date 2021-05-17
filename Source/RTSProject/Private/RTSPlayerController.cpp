@@ -37,7 +37,10 @@ void ARTSPlayerController::BeginPlay()
 	GameHUD = Cast<AGameHUD>(GetHUD());
 	if (GameHUD) GameHUD->BindController(this);
 	else GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("GameHUD=nullptr in ARTSPlayerController"));
-	/*TArray<AActor*> FogOfWarArray;
+
+	// Setup FogOfWar
+	// Find FOW actor in world
+	TArray<AActor*> FogOfWarArray;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFogOfWar::StaticClass(), FogOfWarArray);
 	for(auto&a:FogOfWarArray)
 	{
@@ -47,10 +50,15 @@ void ARTSPlayerController::BeginPlay()
 			FogOfWar = CastTo;
 			GEngine->AddOnScreenDebugMessage(-1, 5, FColor::White, TEXT("working"));
 		}
-	}*/
-	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	FogOfWar = GetWorld()->SpawnActor<AFogOfWar>(FactoryAssets->FogOfWarClass.Get(), FVector(0,0,0), FRotator(0,0,0), Params);
+	}
+	// If there are no FOW actor placed in world then spawn it
+	if (!FogOfWar)
+	{
+		FActorSpawnParameters Params;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		FogOfWar = GetWorld()->SpawnActor<AFogOfWar>(GetFactoryAssets()->FogOfWarClass.Get(), FVector(0,0,0), FRotator(0,0,0), Params);
+	}
+	
 }
 
 void ARTSPlayerController::Tick(float mainDeltaTime)
