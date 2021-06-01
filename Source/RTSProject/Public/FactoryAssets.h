@@ -4,6 +4,8 @@
 #include "Engine/DataAsset.h"
 #include "FactoryAssets.generated.h"
 
+class AFogOfWar;
+class AFogOfWarBoundsVolume;
 
 class AShip;
 class ATurret;
@@ -17,6 +19,11 @@ class RTSPROJECT_API UFactoryAssets : public UDataAsset
 	GENERATED_BODY()
 
 public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FogOfWar")
+	TSubclassOf<AFogOfWar> FogOfWarClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FogOfWar")
+	TSubclassOf<AFogOfWarBoundsVolume> FogOfWarBoundsVolumeClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship")
 	TArray<TSubclassOf<AShip>> ShipClass;

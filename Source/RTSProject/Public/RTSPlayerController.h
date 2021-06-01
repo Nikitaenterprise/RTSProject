@@ -11,6 +11,7 @@ class UShipHUD;
 class UBuildingHUD;
 class UBasicButtonsHUD;
 class UFactoryAssets;
+class AFogOfWar;
 
 
 UCLASS()
@@ -19,8 +20,6 @@ class RTSPROJECT_API ARTSPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(BlueprintReadOnly, Category = "Camera")
-	ACamera* CameraRef = nullptr;
 
 	// Key press
 	bool bShiftPressed = false;
@@ -32,6 +31,10 @@ public:
 	// Mouse wheel
 	bool bDisableZooming = false;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Camera")
+	ACamera* CameraRef = nullptr;
+	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
+	AFogOfWar* FogOfWar = nullptr;
 
 	// Units selection
 	UPROPERTY(BlueprintReadOnly, Category = "Selection")
