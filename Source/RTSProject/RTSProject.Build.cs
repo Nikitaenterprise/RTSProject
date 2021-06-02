@@ -11,7 +11,7 @@ public class RTSProject : ModuleRules
         bFasterWithoutUnity = true;
 
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "UMG", "Slate", "SlateCore", "AIModule", "NavigationSystem" });
-
+		PublicDependencyModuleNames.AddRange(new string[] { "RHI", "RenderCore" });
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
 		// Uncomment if you are using Slate UI

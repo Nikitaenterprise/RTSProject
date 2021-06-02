@@ -5,6 +5,7 @@
 #include "FogOfWarInfluencer.h"
 #include "Engine/PostProcessVolume.h"
 #include "Kismet/GameplayStatics.h"
+#include "Rendering/Texture2DResource.h"
 
 AFogOfWar::AFogOfWar()
 {
@@ -53,16 +54,18 @@ void AFogOfWar::Initialize(ARTSPlayerController* Controller)
 	}
 	FOWPostProcessVolume->bUnbound = true;
 
-	FOWTexture = UTexture2D::CreateTransient(1024, 1024);
+	const float Size = FOWBoundsVolume->GetVolumeLength();
+	const uint32 SizeInTiles = FOWBoundsVolume->GetVolumeLengthInCells();
+	FOWTexture = UTexture2D::CreateTransient(SizeInTiles, SizeInTiles);
 	FOWTexture->AddToRoot();
 	FOWTexture->UpdateResource();
-	FOWTextureBuffer = new uint8[1024 * 1024 * 4];
-	FOWUpdateTextureRegion = new FUpdateTextureRegion2D(0, 0, 0, 0, 1024, 1024);
+	FOWTextureBuffer = new uint8[SizeInTiles * SizeInTiles * 4];
+	FOWUpdateTextureRegion = new FUpdateTextureRegion2D(0, 0, 0, 0, SizeInTiles, SizeInTiles);
 	FOWMaterialInstance = UMaterialInstanceDynamic::Create(FOWMaterial, nullptr);
 	FOWMaterialInstance->SetTextureParameterValue(FName("VisibilityMask"), FOWTexture);
-	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverWorldSize"), 1.0f / 1024);
-	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverTileSize"), 1.0f / 1024);
-
+	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverWorldSize"), 1.0f / Size);
+	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverTileSize"), 1.0f / SizeInTiles);
+	
 	FOWPostProcessVolume->AddOrUpdateBlendable(FOWMaterialInstance);
 }
 
@@ -81,10 +84,10 @@ void AFogOfWar::Tick(float DeltaTime)
 		
 	}
 	
-	int32 SizeInTiles = 1024;
-	for (int32 Y = 0; Y < SizeInTiles; ++Y)
+	const uint32 SizeInTiles = FOWBoundsVolume->GetVolumeLengthInCells();
+	for (uint32 Y = 0; Y < SizeInTiles; ++Y)
 	{
-		for (int32 X = 0; X < SizeInTiles; ++X)
+		for (uint32 X = 0; X < SizeInTiles; ++X)
 		{
 			const int i = X + Y * SizeInTiles;
 
@@ -103,7 +106,6 @@ void AFogOfWar::Tick(float DeltaTime)
 	FOWTexture->UpdateTextureRegions(0, 1, FOWUpdateTextureRegion, SizeInTiles * 4, static_cast<uint32>(4), FOWTextureBuffer);
 	//UpdateTextureRegions(FOWTexture, 0, 1, FOWUpdateTextureRegion, SizeInTiles * 4, static_cast<uint32>(4), FOWTextureBuffer, false);
 }
-
 
 void AFogOfWar::RegisterActor(AActor* ActorToRegister)
 {
@@ -129,7 +131,7 @@ void AFogOfWar::UpdateTextureRegions(UTexture2D* Texture, int32 MipIndex, uint32
 
 		FUpdateTextureRegionsData* RegionData = new FUpdateTextureRegionsData;
 
-		RegionData->Texture2DResource = (FTexture2DResource*)Texture->Resource;
+		RegionData->Texture2DResource = (FTexture2DResource*)(Texture->Resource);
 		RegionData->MipIndex = MipIndex;
 		RegionData->NumRegions = NumRegions;
 		RegionData->Regions = Regions;
@@ -138,30 +140,31 @@ void AFogOfWar::UpdateTextureRegions(UTexture2D* Texture, int32 MipIndex, uint32
 		RegionData->SrcData = SrcData;
 
 		ENQUEUE_RENDER_COMMAND(FUpdateTextureRegionsData)([RegionData = RegionData, bFreeData = bFreeData](FRHICommandListImmediate& RHICmdList)
-		{
-			for (uint32 RegionIndex = 0; RegionIndex < RegionData->NumRegions; ++RegionIndex)
 			{
-				const int32 CurrentFirstMip = RegionData->Texture2DResource->GetCurrentFirstMip();
-				if (RegionData->MipIndex >= CurrentFirstMip)
+				for (uint32 RegionIndex = 0; RegionIndex < RegionData->NumRegions; ++RegionIndex)
 				{
-					RHIUpdateTexture2D(
-						RegionData->Texture2DResource->GetTexture2DRHI(),
-						RegionData->MipIndex - CurrentFirstMip,
-						RegionData->Regions[RegionIndex],
-						RegionData->SrcPitch,
-						RegionData->SrcData
-						+ RegionData->Regions[RegionIndex].SrcY * RegionData->SrcPitch
-						+ RegionData->Regions[RegionIndex].SrcX * RegionData->SrcBpp
-					);
+					int32 CurrentFirstMip = RegionData->Texture2DResource->GetCurrentFirstMip();
+					if (RegionData->MipIndex >= CurrentFirstMip)
+					{
+						RHIUpdateTexture2D(
+							RegionData->Texture2DResource->GetTexture2DRHI(),
+							RegionData->MipIndex - CurrentFirstMip,
+							RegionData->Regions[RegionIndex],
+							RegionData->SrcPitch,
+							RegionData->SrcData
+							+ RegionData->Regions[RegionIndex].SrcY * RegionData->SrcPitch
+							+ RegionData->Regions[RegionIndex].SrcX * RegionData->SrcBpp
+						);
+					}
 				}
+				if (bFreeData)
+				{
+					FMemory::Free(RegionData->Regions);
+					FMemory::Free(RegionData->SrcData);
+				}
+				delete RegionData;
 			}
-			if (bFreeData)
-			{
-				FMemory::Free(RegionData->Regions);
-				FMemory::Free(RegionData->SrcData);
-			}
-			delete RegionData;
-		});
+		);
 	}
 }
 
