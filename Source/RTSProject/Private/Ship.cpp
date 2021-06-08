@@ -15,6 +15,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
+#include "FogOfWarInfluencer.h"
 
 
 AShip::AShip(const FObjectInitializer& OI)
@@ -45,6 +46,9 @@ AShip::AShip(const FObjectInitializer& OI)
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 
 	MovementComponent = CreateDefaultSubobject<UShipMovementComponent>(TEXT("ShipMovementComponent"));
+
+	FOWInfluencer = CreateDefaultSubobject<UFogOfWarInfluencer>(TEXT("FOWInfluencer"));
+
 }
 
 void AShip::BeginPlay()
@@ -109,6 +113,8 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
 		HealthShieldBar->SetVisibility(false);
 		SelectionCircle->SetVisibility(false);
+
+		FOWInfluencer->Initialize(PlayerController);
 	}
 	else
 	{

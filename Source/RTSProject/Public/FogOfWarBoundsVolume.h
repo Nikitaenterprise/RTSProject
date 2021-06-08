@@ -15,9 +15,10 @@ class RTSPROJECT_API AFogOfWarBoundsVolume : public AVolume
 
 public:
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	AFogOfWar* FOW = nullptr;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int DesiredCellSizeLength = 32;
 	template <class T>
 	struct FGridCell
 	{
@@ -41,7 +42,7 @@ public:
 
 private:
 
-	uint32 CellSideLength = 256;
+	uint32 CellSideLength = 32;
 
 public:
 
@@ -50,11 +51,18 @@ public:
 	
 	FORCEINLINE float GetVolumeLength() const { return GetBrushComponent()->CalcBounds(GetBrushComponent()->GetComponentTransform()).BoxExtent.X * 2 * GetActorScale().X; }
 	FORCEINLINE float GetVolumeWidth() const { return GetBrushComponent()->CalcBounds(GetBrushComponent()->GetComponentTransform()).BoxExtent.Y * 2 * GetActorScale().Y; }
-	FORCEINLINE uint32 GetVolumeLengthInCells() const { return static_cast<uint32>(GetVolumeLength()) * CellSideLength; }
-	FORCEINLINE uint32 GetVolumeWidthInCells() const { return static_cast<uint32>(GetVolumeWidth()) * CellSideLength; }
-	FVector2D Vector2DToGridCoordinates(const FVector2D& Position) const { return FVector2D(floorf(Position.X), floorf(Position.Y)); }
+	FORCEINLINE uint32 GetCellSideLength() const { return CellSideLength; }
+	FORCEINLINE uint32 GetVolumeLengthInCells() const { return static_cast<uint32>(floorf(GetVolumeLength() / CellSideLength)); }
+	FORCEINLINE uint32 GetVolumeWidthInCells() const { return static_cast<uint32>(floorf(GetVolumeWidth() / CellSideLength)); }
+	
 	template<class T>
-	FORCEINLINE FGridCell<T> GetGridCellByCoordinate(const FVector2D& Position) const { return Grid[(floorf(Position.X / CellSideLength) + 1) * floorf(Position.Y / CellSideLength)]; } // return Grid[x*y+y]
+	FGridCell<T> GetGridCellByCoordinate(const FVector2D& Position) const
+	{
+		uint32 X = floorf(Position.X / CellSideLength) + GetVolumeWidthInCells() / 2;
+		uint32 Y = floorf(Position.Y / CellSideLength) + GetVolumeLengthInCells() / 2;
+		return Grid[X * GetVolumeWidthInCells() + Y];
+	}
+
 	template<class T>
 	FORCEINLINE FVector2D GetXYMinOfGridCell(const FGridCell<T>& Cell) const { return FVector2D(Cell.Column, Cell.Row) * CellSideLength; }
 	template<class T>

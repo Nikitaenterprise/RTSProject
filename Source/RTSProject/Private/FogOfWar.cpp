@@ -54,19 +54,46 @@ void AFogOfWar::Initialize(ARTSPlayerController* Controller)
 	}
 	FOWPostProcessVolume->bUnbound = true;
 
-	const float Size = FOWBoundsVolume->GetVolumeLength();
-	const uint32 SizeInTiles = FOWBoundsVolume->GetVolumeLengthInCells();
-	FOWTexture = UTexture2D::CreateTransient(SizeInTiles, SizeInTiles);
+	VolumeLengthInCells = FOWBoundsVolume->GetVolumeLengthInCells();
+	TextureBufferSize = VolumeLengthInCells * VolumeLengthInCells * 4;
+	VolumeLength = static_cast<float>(FOWBoundsVolume->GetVolumeLength());
+	FOWTexture = UTexture2D::CreateTransient(VolumeLengthInCells, VolumeLengthInCells);
 	FOWTexture->AddToRoot();
 	FOWTexture->UpdateResource();
-	FOWTextureBuffer = new uint8[SizeInTiles * SizeInTiles * 4];
-	FOWUpdateTextureRegion = new FUpdateTextureRegion2D(0, 0, 0, 0, SizeInTiles, SizeInTiles);
+	FOWTextureBuffer = new uint8[TextureBufferSize];
+	// Will update whole texture at once
+	FOWUpdateTextureRegion = new FUpdateTextureRegion2D(0, 0, 0, 0, VolumeLengthInCells, VolumeLengthInCells);
 	FOWMaterialInstance = UMaterialInstanceDynamic::Create(FOWMaterial, nullptr);
 	FOWMaterialInstance->SetTextureParameterValue(FName("VisibilityMask"), FOWTexture);
-	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverWorldSize"), 1.0f / Size);
-	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverTileSize"), 1.0f / SizeInTiles);
-	
+	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverWorldSize"), 1.0f / VolumeLength);
+	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverTileSize"), 1.0f / VolumeLengthInCells);
+
 	FOWPostProcessVolume->AddOrUpdateBlendable(FOWMaterialInstance);
+
+	FString out = "";
+	out += FString("\nSizeInTiles = ") + FString::SanitizeFloat(VolumeLengthInCells);
+	out += FString("\nOneOverTileSize = ") + FString::SanitizeFloat(1.0f / VolumeLengthInCells);
+	out += FString("\nOneOverWorldSize = ") + FString::SanitizeFloat(1.0f / VolumeLength);
+	out += FString("\nBufferSize = ") + FString::SanitizeFloat(TextureBufferSize);
+	GEngine->AddOnScreenDebugMessage(-1, 100, FColor::White, out);
+
+	// Paint texture to FOW_UNKNOWN
+	for (uint32 Y = 0; Y < VolumeLengthInCells; Y++)
+	{
+		for (uint32 X = 0; X < VolumeLengthInCells; X++)
+		{
+			const int i = X + Y * VolumeLengthInCells;
+			const int Blue = i * 4 + 0;
+			const int Green = i * 4 + 1;
+			const int Red = i * 4 + 2;
+			const int Alpha = i * 4 + 3;
+			FOWTextureBuffer[Blue] = 0;
+			FOWTextureBuffer[Green] = 0;
+			FOWTextureBuffer[Red] = 0;
+			FOWTextureBuffer[Alpha] = 0;
+		}
+	}
+	FOWTexture->UpdateTextureRegions(0, 1, FOWUpdateTextureRegion, VolumeLengthInCells * 4, static_cast<uint32>(4), FOWTextureBuffer);
 }
 
 void AFogOfWar::Tick(float DeltaTime)
@@ -78,40 +105,132 @@ void AFogOfWar::Tick(float DeltaTime)
 		return;
 	}
 
-	for(auto& Actor : RegistredActors)
+	for (const auto& Tuple : RegisteredActors)
 	{
-		UFogOfWarInfluencer* ActorFOWInfluencer = Actor->FindComponentByClass<UFogOfWarInfluencer>();
-		
-	}
-	
-	const uint32 SizeInTiles = FOWBoundsVolume->GetVolumeLengthInCells();
-	for (uint32 Y = 0; Y < SizeInTiles; ++Y)
-	{
-		for (uint32 X = 0; X < SizeInTiles; ++X)
+		const FVector2D Location = FVector2D(Tuple.Key->GetActorLocation());
+		AFogOfWarBoundsVolume::FGridCell<bool> Cell = FOWBoundsVolume->GetGridCellByCoordinate<bool>(Location);
+		const int32 SightRadiusInCells = FMath::FloorToInt(Tuple.Value->SightRadius / FOWBoundsVolume->GetCellSideLength());
+
+		for (int32 RadiusY = -SightRadiusInCells; RadiusY <= SightRadiusInCells; RadiusY++)
 		{
-			const int i = X + Y * SizeInTiles;
+			int32 TileY = Cell.Row + RadiusY;
+			const int32 RadiusYSqr = RadiusY * RadiusY;
+			int32 LocalTileY = RadiusY + SightRadiusInCells;
+
+			if (TileY >= 0 && TileY < static_cast<int32>(VolumeLengthInCells))
+			{
+				for (int32 RadiusX = -SightRadiusInCells; RadiusX <= SightRadiusInCells; RadiusX++)
+				{
+					int32 TileX = Cell.Column + RadiusX;
+					const int32 RadiusXSqr = RadiusX * RadiusX;
+					int32 LocalTileX = RadiusX + SightRadiusInCells;
+
+					// Check if within circle.
+					if (TileX >= 0 && TileX < static_cast<int32>(VolumeLengthInCells))
+					{
+						GEngine->AddOnScreenDebugMessage(-1, 0.001, FColor::White, TEXT("0"));
+						const int i = TileX + TileY * VolumeLengthInCells;
+						const int Blue = i * 4 + 0;
+						const int Green = i * 4 + 1;
+						const int Red = i * 4 + 2;
+						const int Alpha = i * 4 + 3;
+						if (RadiusXSqr + RadiusYSqr <= SightRadiusInCells * SightRadiusInCells)
+						{
+							GEngine->AddOnScreenDebugMessage(-1,0.001, FColor::White, TEXT("1"));
+							FOWTextureBuffer[Blue] = 0;
+							FOWTextureBuffer[Green] = 0;
+							FOWTextureBuffer[Red] = 255;
+							FOWTextureBuffer[Alpha] = 0;
+						}
+					}
+				}
+			}
+		}
+	}
+	/*for (uint32 Y = 0; Y < VolumeLengthInCells; Y++)
+	{
+		for (uint32 X = 0; X < VolumeLengthInCells; X++)
+		{
+			const int i = X + Y * VolumeLengthInCells;
 
 			const int Blue = i * 4 + 0;
 			const int Green = i * 4 + 1;
 			const int Red = i * 4 + 2;
 			const int Alpha = i * 4 + 3;
+			
+			switch(GetActorVisionData(X,Y))
+			{
+			case EFOWState::FOW_VISIBLE:
+				FOWTextureBuffer[Blue] = 0;
+				FOWTextureBuffer[Green] = 0;
+				FOWTextureBuffer[Red] = 255;
+				FOWTextureBuffer[Alpha] = 0;
+				break;
 
-			FOWTextureBuffer[Blue] = 0;
-			FOWTextureBuffer[Green] = 0;
-			FOWTextureBuffer[Red] = 255;
-			FOWTextureBuffer[Alpha] = 0;
+			case EFOWState::FOW_KNOWN:
+				FOWTextureBuffer[Blue] = 0;
+				FOWTextureBuffer[Green] = 255;
+				FOWTextureBuffer[Red] = 0;
+				FOWTextureBuffer[Alpha] = 0;
+				break;
+
+			case EFOWState::FOW_TERRA_INCOGNITA:
+				FOWTextureBuffer[Blue] = 0;
+				FOWTextureBuffer[Green] = 0;
+				FOWTextureBuffer[Red] = 0;
+				FOWTextureBuffer[Alpha] = 0;
+				break;
+			}
+
 		}
-	}
-
-	FOWTexture->UpdateTextureRegions(0, 1, FOWUpdateTextureRegion, SizeInTiles * 4, static_cast<uint32>(4), FOWTextureBuffer);
+	}*/
+	// SrcPitch is width * bytes_per_pixel in my case SizeInTiles * 4
+	// SrcBpp is the size one pixel data in bytes so RGBA is 4 bytes
+	FOWTexture->UpdateTextureRegions(0, 1, FOWUpdateTextureRegion, VolumeLengthInCells * 4, static_cast<uint32>(4), FOWTextureBuffer);
 	//UpdateTextureRegions(FOWTexture, 0, 1, FOWUpdateTextureRegion, SizeInTiles * 4, static_cast<uint32>(4), FOWTextureBuffer, false);
 }
 
 void AFogOfWar::RegisterActor(AActor* ActorToRegister)
 {
 	if (ActorToRegister == nullptr) return;
-	if (ActorToRegister->FindComponentByClass(UFogOfWarInfluencer::StaticClass()) == nullptr) return;
-	RegistredActors.AddUnique(ActorToRegister);
+	UFogOfWarInfluencer* Influencer = Cast<UFogOfWarInfluencer>(ActorToRegister->FindComponentByClass(UFogOfWarInfluencer::StaticClass()));
+	if (Influencer == nullptr) return;
+	RegisteredActors.AddUnique(TPair<AActor*, UFogOfWarInfluencer*>(ActorToRegister, Influencer));
+	GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Green, FString::Printf(TEXT("Actor %s registered"), *ActorToRegister->GetHumanReadableName()));
+}
+
+void AFogOfWar::UnRegisterActor(AActor* ActorToRegister)
+{
+	if (ActorToRegister == nullptr) return;
+	UFogOfWarInfluencer* Influencer = Cast<UFogOfWarInfluencer>(ActorToRegister->FindComponentByClass(UFogOfWarInfluencer::StaticClass()));
+	if (Influencer == nullptr) return;
+	RegisteredActors.Remove(TPair<AActor*, UFogOfWarInfluencer*>(ActorToRegister, Influencer));
+	GEngine->AddOnScreenDebugMessage(-1, 2, FColor::White, FString::Printf(TEXT("Actor %s unregistered"), *ActorToRegister->GetHumanReadableName()));
+}
+
+inline TArray<AActor*> AFogOfWar::GetRegisteredActors() const
+{
+	TArray<AActor*> Actors;
+	Actors.Reserve(RegisteredActors.Num());
+	for (const auto& Tuple : RegisteredActors)
+	{
+		Actors.Add(Tuple.Key);
+	}
+	return Actors;
+}
+
+EFOWState AFogOfWar::GetActorVisionData(uint32 X, uint32 Y)
+{
+	for (auto& Tuple : RegisteredActors)
+	{
+		
+		const FVector2D Location = FVector2D(Tuple.Key->GetActorLocation());
+		AFogOfWarBoundsVolume::FGridCell<bool> Cell = FOWBoundsVolume->GetGridCellByCoordinate<bool>(Location);
+		FVector2D XYMin = FOWBoundsVolume->GetXYMinOfGridCell(Cell);
+		FVector2D XYMax = FOWBoundsVolume->GetXYMaxOfGridCell(Cell);
+		if (Location.X > XYMin.X && Location.Y < XYMin.Y && Location.X < XYMax.X && Location.Y > XYMax.Y) return EFOWState::FOW_VISIBLE;
+	}
+	return EFOWState::FOW_TERRA_INCOGNITA;
 }
 
 void AFogOfWar::UpdateTextureRegions(UTexture2D* Texture, int32 MipIndex, uint32 NumRegions, FUpdateTextureRegion2D* Regions, uint32 SrcPitch, uint32 SrcBpp, uint8* SrcData, bool bFreeData)
@@ -168,4 +287,36 @@ void AFogOfWar::UpdateTextureRegions(UTexture2D* Texture, int32 MipIndex, uint32
 	}
 }
 
+void AFogOfWar::ApplyVision(TPair<AActor*, UFogOfWarInfluencer*>* Tuple)
+{
+	const FVector2D Location = FVector2D(Tuple->Key->GetActorLocation());
+	AFogOfWarBoundsVolume::FGridCell<bool> Cell = FOWBoundsVolume->GetGridCellByCoordinate<bool>(Location);
+	const int32 SightRadiusInCells = FMath::FloorToInt(Tuple->Value->SightRadius / FOWBoundsVolume->GetCellSideLength());
 
+	for (int32 RadiusY = -SightRadiusInCells; RadiusY <= SightRadiusInCells; RadiusY++)
+	{
+		uint32 TileY = Cell.Row + RadiusY;
+		const int32 RadiusYSqr = RadiusY * RadiusY;
+		int32 LocalTileY = RadiusY + SightRadiusInCells;
+
+		if (TileY >= 0 && TileY < VolumeLengthInCells)
+		{
+			for (int32 RadiusX = -SightRadiusInCells; RadiusX <= SightRadiusInCells; RadiusX++)
+			{
+				uint32 TileX = Cell.Column + RadiusX;
+				const int32 RadiusXSqr = RadiusX * RadiusX;
+				int32 LocalTileX = RadiusX + SightRadiusInCells;
+
+				// Check if within circle.
+				if (TileX >= 0 && TileX < VolumeLengthInCells && (RadiusXSqr + RadiusYSqr <= SightRadiusInCells*SightRadiusInCells))
+				{
+					/*if (HasLocalVisionAt(LocalTileX, LocalTileY, ActorSightRadiusTile, TileX, TileY,
+							ActorLocationTile.X, ActorLocationTile.Y, ActorLocationHeightLevel))
+					{
+						CachedTiles.Add(GetTileIndex(TileX, TileY));
+					}*/
+				}
+			}
+		}
+	}
+}

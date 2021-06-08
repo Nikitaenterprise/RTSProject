@@ -3,6 +3,7 @@
 #include "BaseBehavior.h"
 
 #include "CoreMinimal.h"
+
 #include "GameFramework/Actor.h"
 #include "Building.generated.h"
 
@@ -10,6 +11,7 @@ class UWidgetComponent;
 class UHealthShield;
 class ARTSPlayerController;
 class UHealthShieldBarHUD;
+class UFogOfWarInfluencer;
 
 enum class EConstructionState
 {
@@ -53,7 +55,9 @@ public:
 	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	UHealthShieldBarHUD* HealthShieldBarHUD = nullptr;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
+	UFogOfWarInfluencer* FOWInfluencer = nullptr;
+	
 	float DeltaTime = 0;
 	float PastTime = 0;
 

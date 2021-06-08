@@ -90,6 +90,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Factory")
 	UFactoryAssets* GetFactoryAssets();
 
+	float GetScaleValueFromSettings();
+
 protected:
 
 	virtual void BeginPlay() override;

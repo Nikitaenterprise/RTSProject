@@ -4,10 +4,22 @@
 #include "GameFramework/Actor.h"
 #include "FogOfWar.generated.h"
 
+class UFogOfWarInfluencer;
 class ARTSPlayerController;
 class APostProcessVolume;
 class AFogOfWarBoundsVolume;
 class UTexture2DDynamic;
+
+UENUM(BlueprintType)
+enum class EFOWState : uint8
+{
+	/** Area has never been visited before. */
+	FOW_TERRA_INCOGNITA,
+	/** Area has been visited before, but is currently not. */
+	FOW_KNOWN,
+	/** Area is revealed right now. */
+	FOW_VISIBLE
+};
 
 UCLASS()
 class RTSPROJECT_API AFogOfWar : public AActor
@@ -31,9 +43,12 @@ public:
 	UTexture2DDynamic* FOWTextureDynamic = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	AFogOfWarBoundsVolume* FOWBoundsVolume = nullptr;
-	UPROPERTY(BlueprintReadWrite)
-	TArray<AActor*> RegistredActors;
 	
+	TArray<TPair<AActor*, UFogOfWarInfluencer*>> RegisteredActors;
+
+	uint32 VolumeLengthInCells = 0;
+	uint32 TextureBufferSize = 0;
+	float VolumeLength = 0;
 public:	
 
 	AFogOfWar();
@@ -41,10 +56,21 @@ public:
 	void Initialize(ARTSPlayerController* Controller);
 	UFUNCTION(BlueprintCallable)
 	void RegisterActor(AActor* ActorToRegister);
+	UFUNCTION(BlueprintCallable)
+	void UnRegisterActor(AActor* ActorToRegister);
+	UFUNCTION(BlueprintCallable)
+	TArray<AActor*> GetRegisteredActors() const;
+	
+	EFOWState GetActorVisionData(uint32 X, uint32 Y);
 
 	void UpdateTextureRegions(UTexture2D* Texture,	int32 MipIndex, uint32 NumRegions, FUpdateTextureRegion2D* Regions, uint32 SrcPitch, uint32 SrcBpp, uint8* SrcData, bool bFreeData);
-	
+
 protected:
 
 	virtual void BeginPlay() override;
+
+private:
+
+	void ApplyVision(TPair<AActor*, UFogOfWarInfluencer*>* Tuple);
+	
 };

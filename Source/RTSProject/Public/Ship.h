@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Ship.generated.h"
 
+class UFogOfWarInfluencer;
 class UShipMovementComponent;
 class UStaticMeshComponent;
 class UWidgetComponent;
@@ -43,6 +44,8 @@ public:
 	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "Input")
 	UInputComponent* DebugInputComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
+	UFogOfWarInfluencer* FOWInfluencer = nullptr;
 	
 	// Widget
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")

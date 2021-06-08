@@ -5,6 +5,7 @@
 #include "FogOfWarInfluencer.generated.h"
 
 class AFogOfWar;
+class ARTSPlayerController;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RTSPROJECT_API UFogOfWarInfluencer : public UActorComponent
@@ -16,7 +17,7 @@ public:
 	UPROPERTY()
 	AFogOfWar* FOW = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FogOfWar")
-	uint8 SightRadius = 100;
+	int32 SightRadius = 1000;
 	UPROPERTY(BlueprintReadOnly, Category="FogOfWar")
 	bool bIsActorInTerraIncognita = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FogOfWar")
@@ -27,7 +28,7 @@ public:
 	UFogOfWarInfluencer();
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+	void Initialize(ARTSPlayerController* PlayerController);
 
 protected:
 
