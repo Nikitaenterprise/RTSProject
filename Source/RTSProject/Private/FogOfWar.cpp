@@ -113,7 +113,7 @@ void AFogOfWar::Tick(float DeltaTime)
 
 		for (int32 RadiusY = -SightRadiusInCells; RadiusY <= SightRadiusInCells; RadiusY++)
 		{
-			int32 TileY = Cell.Row + RadiusY;
+			const int32 TileY = Cell.Row + RadiusY;
 			const int32 RadiusYSqr = RadiusY * RadiusY;
 			int32 LocalTileY = RadiusY + SightRadiusInCells;
 
@@ -121,14 +121,13 @@ void AFogOfWar::Tick(float DeltaTime)
 			{
 				for (int32 RadiusX = -SightRadiusInCells; RadiusX <= SightRadiusInCells; RadiusX++)
 				{
-					int32 TileX = Cell.Column + RadiusX;
+					const int32 TileX = Cell.Column + RadiusX;
 					const int32 RadiusXSqr = RadiusX * RadiusX;
 					int32 LocalTileX = RadiusX + SightRadiusInCells;
 
 					// Check if within circle.
 					if (TileX >= 0 && TileX < static_cast<int32>(VolumeLengthInCells))
 					{
-						GEngine->AddOnScreenDebugMessage(-1, 0.001, FColor::White, TEXT("0"));
 						const int i = TileX + TileY * VolumeLengthInCells;
 						const int Blue = i * 4 + 0;
 						const int Green = i * 4 + 1;
@@ -136,7 +135,6 @@ void AFogOfWar::Tick(float DeltaTime)
 						const int Alpha = i * 4 + 3;
 						if (RadiusXSqr + RadiusYSqr <= SightRadiusInCells * SightRadiusInCells)
 						{
-							GEngine->AddOnScreenDebugMessage(-1,0.001, FColor::White, TEXT("1"));
 							FOWTextureBuffer[Blue] = 0;
 							FOWTextureBuffer[Green] = 0;
 							FOWTextureBuffer[Red] = 255;

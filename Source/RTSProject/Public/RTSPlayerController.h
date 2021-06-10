@@ -65,10 +65,6 @@ public:
 	void ShiftPressed();
 	void ShiftReleased();
 
-	// Edge scrolling
-	void EdgeScrollingX(float value);
-	void EdgeScrollingY(float value);
-
 	// Mouse clicks
 	void LMBPressed();
 	void LMBReleased();
@@ -88,8 +84,9 @@ public:
 	
 	// FactoryAssets	
 	UFUNCTION(BlueprintCallable, Category = "Factory")
-	UFactoryAssets* GetFactoryAssets();
-
+	UFactoryAssets* GetFactoryAssets() const { return FactoryAssets; }
+	UFUNCTION(BlueprintCallable, Category = "FogOfWar")
+	AFogOfWar* GetFOWManager() const { return FogOfWar; }
 	float GetScaleValueFromSettings();
 
 protected:

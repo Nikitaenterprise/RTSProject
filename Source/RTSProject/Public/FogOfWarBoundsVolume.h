@@ -60,7 +60,7 @@ public:
 	{
 		uint32 X = floorf(Position.X / CellSideLength) + GetVolumeWidthInCells() / 2;
 		uint32 Y = floorf(Position.Y / CellSideLength) + GetVolumeLengthInCells() / 2;
-		return Grid[X * GetVolumeWidthInCells() + Y];
+		return Grid[Y * GetVolumeWidthInCells() + X];
 	}
 
 	template<class T>
