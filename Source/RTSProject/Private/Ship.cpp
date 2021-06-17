@@ -1,11 +1,12 @@
 #include "Ship.h"
 
 #include "RTSPlayerController.h"
-#include "HealthShield.h"
 #include "Turret.h"
 #include "HealthShieldBarHUD.h"
 #include "ShipMovementComponent.h"
 #include "Camera.h"
+#include "FogOfWarInfluencerComponent.h"
+#include "HealthShieldComponent.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -15,7 +16,6 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
-#include "FogOfWarInfluencer.h"
 
 
 AShip::AShip(const FObjectInitializer& OI)
@@ -41,14 +41,14 @@ AShip::AShip(const FObjectInitializer& OI)
 	HealthShieldBar->SetWidgetSpace(EWidgetSpace::Screen);
 	HealthShieldBar->SetupAttachment(GetRootComponent());
 	
-	HealthShieldComponent = CreateDefaultSubobject<UHealthShield>(TEXT("HealthShield"));
 
+	HealthShieldComponent = CreateDefaultSubobject<UHealthShieldComponent>(TEXT("HealthShieldComponent"));
+	
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 
 	MovementComponent = CreateDefaultSubobject<UShipMovementComponent>(TEXT("ShipMovementComponent"));
 
-	FOWInfluencer = CreateDefaultSubobject<UFogOfWarInfluencer>(TEXT("FOWInfluencer"));
-
+	FOWInfluencerComponent = CreateDefaultSubobject<UFogOfWarInfluencerComponent>(TEXT("FOWInfluencerComponent"));
 }
 
 void AShip::BeginPlay()
@@ -114,7 +114,7 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		HealthShieldBar->SetVisibility(false);
 		SelectionCircle->SetVisibility(false);
 
-		FOWInfluencer->Initialize(PlayerController);
+		FOWInfluencerComponent->Initialize(PlayerController);
 	}
 	else
 	{

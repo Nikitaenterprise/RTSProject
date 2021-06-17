@@ -1,8 +1,7 @@
 #include "FogOfWar.h"
 
-
+#include "FogOfWarInfluencerComponent.h"
 #include "FogOfWarBoundsVolume.h"
-#include "FogOfWarInfluencer.h"
 #include "Engine/PostProcessVolume.h"
 #include "Kismet/GameplayStatics.h"
 #include "Rendering/Texture2DResource.h"
@@ -191,18 +190,18 @@ void AFogOfWar::Tick(float DeltaTime)
 void AFogOfWar::RegisterActor(AActor* ActorToRegister)
 {
 	if (ActorToRegister == nullptr) return;
-	UFogOfWarInfluencer* Influencer = Cast<UFogOfWarInfluencer>(ActorToRegister->FindComponentByClass(UFogOfWarInfluencer::StaticClass()));
+	UFogOfWarInfluencerComponent* Influencer = Cast<UFogOfWarInfluencerComponent>(ActorToRegister->FindComponentByClass(UFogOfWarInfluencerComponent::StaticClass()));
 	if (Influencer == nullptr) return;
-	RegisteredActors.AddUnique(TPair<AActor*, UFogOfWarInfluencer*>(ActorToRegister, Influencer));
+	RegisteredActors.AddUnique(TPair<AActor*, UFogOfWarInfluencerComponent*>(ActorToRegister, Influencer));
 	GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Green, FString::Printf(TEXT("Actor %s registered"), *ActorToRegister->GetHumanReadableName()));
 }
 
 void AFogOfWar::UnRegisterActor(AActor* ActorToRegister)
 {
 	if (ActorToRegister == nullptr) return;
-	UFogOfWarInfluencer* Influencer = Cast<UFogOfWarInfluencer>(ActorToRegister->FindComponentByClass(UFogOfWarInfluencer::StaticClass()));
+	UFogOfWarInfluencerComponent* Influencer = Cast<UFogOfWarInfluencerComponent>(ActorToRegister->FindComponentByClass(UFogOfWarInfluencerComponent::StaticClass()));
 	if (Influencer == nullptr) return;
-	RegisteredActors.Remove(TPair<AActor*, UFogOfWarInfluencer*>(ActorToRegister, Influencer));
+	RegisteredActors.Remove(TPair<AActor*, UFogOfWarInfluencerComponent*>(ActorToRegister, Influencer));
 	GEngine->AddOnScreenDebugMessage(-1, 2, FColor::White, FString::Printf(TEXT("Actor %s unregistered"), *ActorToRegister->GetHumanReadableName()));
 }
 
@@ -285,7 +284,7 @@ void AFogOfWar::UpdateTextureRegions(UTexture2D* Texture, int32 MipIndex, uint32
 	}
 }
 
-void AFogOfWar::ApplyVision(TPair<AActor*, UFogOfWarInfluencer*>* Tuple)
+void AFogOfWar::ApplyVision(TPair<AActor*, UFogOfWarInfluencerComponent*>* Tuple)
 {
 	const FVector2D Location = FVector2D(Tuple->Key->GetActorLocation());
 	AFogOfWarBoundsVolume::FGridCell<bool> Cell = FOWBoundsVolume->GetGridCellByCoordinate<bool>(Location);

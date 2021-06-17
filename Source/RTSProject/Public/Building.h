@@ -7,11 +7,12 @@
 #include "GameFramework/Actor.h"
 #include "Building.generated.h"
 
+class UFogOfWarInfluencerComponent;
+class UHealthShieldComponent;
 class UWidgetComponent;
 class UHealthShield;
 class ARTSPlayerController;
 class UHealthShieldBarHUD;
-class UFogOfWarInfluencer;
 
 enum class EConstructionState
 {
@@ -49,14 +50,15 @@ public:
 	UWidgetComponent* HealthShieldBar = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UParticleSystemComponent* SpawnPoint = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HUD")
-	UHealthShield* HealthShieldComponent = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UHealthShieldComponent* HealthShieldComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
+	UFogOfWarInfluencerComponent* FOWInfluencerComponent;
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	UHealthShieldBarHUD* HealthShieldBarHUD = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
-	UFogOfWarInfluencer* FOWInfluencer = nullptr;
 	
 	float DeltaTime = 0;
 	float PastTime = 0;

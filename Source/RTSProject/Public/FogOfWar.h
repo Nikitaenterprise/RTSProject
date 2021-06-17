@@ -4,7 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "FogOfWar.generated.h"
 
-class UFogOfWarInfluencer;
+class UFogOfWarInfluencerComponent;
 class ARTSPlayerController;
 class APostProcessVolume;
 class AFogOfWarBoundsVolume;
@@ -44,7 +44,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	AFogOfWarBoundsVolume* FOWBoundsVolume = nullptr;
 	
-	TArray<TPair<AActor*, UFogOfWarInfluencer*>> RegisteredActors;
+	TArray<TPair<AActor*, UFogOfWarInfluencerComponent*>> RegisteredActors;
 
 	uint32 VolumeLengthInCells = 0;
 	uint32 TextureBufferSize = 0;
@@ -71,6 +71,6 @@ protected:
 
 private:
 
-	void ApplyVision(TPair<AActor*, UFogOfWarInfluencer*>* Tuple);
+	void ApplyVision(TPair<AActor*, UFogOfWarInfluencerComponent*>* Tuple);
 	
 };

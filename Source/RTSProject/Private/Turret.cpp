@@ -3,7 +3,7 @@
 #include "RTSPlayerController.h"
 #include "Ship.h"
 #include "AnglesFunctions.h"
-#include "HealthShield.h"
+#include "HealthShieldComponent.h"
 #include "RocketFactory.h"
 #include "Rocket.h"
 
@@ -24,9 +24,8 @@ ATurret::ATurret()
 
 	Arrow = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
 	Arrow->SetupAttachment(GetRootComponent());
-
-	HealthShieldComponent = CreateDefaultSubobject<UHealthShield>(TEXT("HealthShield"));
-
+	
+	HealthShieldComponent = CreateDefaultSubobject<UHealthShieldComponent>(TEXT("HealthShieldComponent"));
 }
 
 // Called when the game starts or when spawned

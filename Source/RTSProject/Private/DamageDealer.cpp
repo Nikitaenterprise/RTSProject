@@ -1,6 +1,6 @@
 #include "DamageDealer.h"
 
-#include "HealthShield.h"
+#include "HealthShieldComponent.h"
 #include "Ship.h"
 #include "Turret.h"
 #include "Rocket.h"
@@ -8,7 +8,7 @@
 void DamageDealer::DealDamage(int DamageValue, AShip* Target)
 {
 	if (!Target) return;
-	Target->HealthShieldComponent->TakeDamage(DamageValue);
+	//Target->HealthShieldComponent->TakeDamage(DamageValue);
 }
 
 void DamageDealer::DealDamage(ARocket* Dealer, AShip* Target)
@@ -23,6 +23,6 @@ void DamageDealer::DealDamage(ARocket* Dealer, ATurret* Target)
 {
 	if (Dealer && Target && Dealer->OwnerTurret != Target)
 	{
-		//Target->HealthShieldComponent->TakeDamage(int(Dealer->Damage));
+		Target->HealthShieldComponent->TakeDamage(int(Dealer->Damage));
 	}
 }
