@@ -1,11 +1,12 @@
 #include "Ship.h"
 
 #include "RTSPlayerController.h"
-#include "HealthShield.h"
 #include "Turret.h"
 #include "HealthShieldBarHUD.h"
 #include "ShipMovementComponent.h"
 #include "Camera.h"
+#include "FogOfWarInfluencerComponent.h"
+#include "HealthShieldComponent.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -40,11 +41,14 @@ AShip::AShip(const FObjectInitializer& OI)
 	HealthShieldBar->SetWidgetSpace(EWidgetSpace::Screen);
 	HealthShieldBar->SetupAttachment(GetRootComponent());
 	
-	HealthShieldComponent = CreateDefaultSubobject<UHealthShield>(TEXT("HealthShield"));
 
+	HealthShieldComponent = CreateDefaultSubobject<UHealthShieldComponent>(TEXT("HealthShieldComponent"));
+	
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 
 	MovementComponent = CreateDefaultSubobject<UShipMovementComponent>(TEXT("ShipMovementComponent"));
+
+	FOWInfluencerComponent = CreateDefaultSubobject<UFogOfWarInfluencerComponent>(TEXT("FOWInfluencerComponent"));
 }
 
 void AShip::BeginPlay()
@@ -109,6 +113,8 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
 		HealthShieldBar->SetVisibility(false);
 		SelectionCircle->SetVisibility(false);
+
+		FOWInfluencerComponent->Initialize(PlayerController);
 	}
 	else
 	{

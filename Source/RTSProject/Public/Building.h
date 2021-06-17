@@ -3,9 +3,12 @@
 #include "BaseBehavior.h"
 
 #include "CoreMinimal.h"
+
 #include "GameFramework/Actor.h"
 #include "Building.generated.h"
 
+class UFogOfWarInfluencerComponent;
+class UHealthShieldComponent;
 class UWidgetComponent;
 class UHealthShield;
 class ARTSPlayerController;
@@ -47,13 +50,16 @@ public:
 	UWidgetComponent* HealthShieldBar = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UParticleSystemComponent* SpawnPoint = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HUD")
-	UHealthShield* HealthShieldComponent = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UHealthShieldComponent* HealthShieldComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
+	UFogOfWarInfluencerComponent* FOWInfluencerComponent;
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	UHealthShieldBarHUD* HealthShieldBarHUD = nullptr;
-
+	
 	float DeltaTime = 0;
 	float PastTime = 0;
 

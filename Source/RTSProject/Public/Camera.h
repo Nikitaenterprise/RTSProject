@@ -24,7 +24,7 @@ public:
 	UCameraComponent* Camera = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UFloatingPawnMovement* FloatingMovement = nullptr;
-
+	UPROPERTY(BlueprintReadOnly)
 	ARTSPlayerController* PlayerController = nullptr;
 	
 	// Movement
@@ -32,6 +32,8 @@ public:
 	float DefaultMovementSpeed = 15;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MovementSpeedModifier = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool AllowEdgeScrolling = true;
 	// Pan rotation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float PanRotationSpeed = 5;
@@ -61,7 +63,11 @@ public:
 	void MovementDecrease();
 	void ResetMovementModifier();
 
-	void EdgeScrolling(float dx, float dy);
+	// Edge scrolling
+	void EdgeScrolling();
+	void EdgeScrollingX(float MouseX);
+	void EdgeScrollingY(float MouseY);
+	
 	void MouseWheelYPositiveStart();
 	void MouseWheelYNegativeStart();
 	void ZoomIn() const;

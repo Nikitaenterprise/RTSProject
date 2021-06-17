@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Turret.generated.h"
 
+class UHealthShieldComponent;
 class UStaticMeshComponent;
 class ARTSPlayerController;
 class UArrowComponent;
@@ -29,11 +30,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
-	UHealthShield* HealthShieldComponent = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UArrowComponent* Arrow = nullptr;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UHealthShieldComponent* HealthShieldComponent = nullptr;
+	UPROPERTY()
 	ARTSPlayerController* PlayerController = nullptr;
+	UPROPERTY()
 	AShip* OwnerShip = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Time")

@@ -6,10 +6,11 @@
 #include "GameFramework/Character.h"
 #include "Ship.generated.h"
 
+class UFogOfWarInfluencerComponent;
+class UHealthShieldComponent;
 class UShipMovementComponent;
 class UStaticMeshComponent;
 class UWidgetComponent;
-class UHealthShield;
 class UPawnSensingComponent;
 class ARTSPlayerController;
 class ATurret;
@@ -29,16 +30,19 @@ public:
 	UStaticMeshComponent* StaticMesh = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UCapsuleComponent* CapsuleComponent = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
-	UHealthShield* HealthShieldComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UStaticMeshComponent* SelectionCircle = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HUD")
 	UWidgetComponent* HealthShieldBar = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UPawnSensingComponent* PawnSensing = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UHealthShieldComponent* HealthShieldComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UShipMovementComponent* MovementComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
+	UFogOfWarInfluencerComponent* FOWInfluencerComponent = nullptr;
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "Input")

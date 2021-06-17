@@ -18,11 +18,13 @@ class RTSPROJECT_API ARocket : public AActor, public IShootable, public IBaseBeh
 	
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
-	UStaticMeshComponent* StaticMesh = NULL;
+	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
-	ARTSPlayerController* PlayerController = NULL;
+	UStaticMeshComponent* StaticMesh = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
+	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-	ATurret* OwnerTurret = NULL;
+	ATurret* OwnerTurret = nullptr;
 
 	float DeltaTime = 0;
 	float PastTime = 0;
@@ -63,6 +65,6 @@ public:
 	
 
 protected:
-	// Called when the game starts or when spawned
+	
 	virtual void BeginPlay() override;
 };

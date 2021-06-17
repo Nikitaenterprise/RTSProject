@@ -7,9 +7,11 @@
 #include "GameHUD.h"
 
 #include "DamageDealer.h"
+#include "FogOfWar.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Math/UnitConversion.h"
 
 
 ARTSPlayerController::ARTSPlayerController(){	
@@ -18,12 +20,6 @@ ARTSPlayerController::ARTSPlayerController(){
 
 void ARTSPlayerController::TestThis(){
 	GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Cyan, TEXT("I'm PlayerController"));
-}
-
-UFactoryAssets* ARTSPlayerController::GetFactoryAssets()
-{
-	if (FactoryAssets) return FactoryAssets;
-	return nullptr;
 }
 
 void ARTSPlayerController::BeginPlay()
@@ -37,6 +33,21 @@ void ARTSPlayerController::BeginPlay()
 	if (GameHUD) GameHUD->BindController(this);
 	else GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("GameHUD=nullptr in ARTSPlayerController"));
 
+	TArray<AActor*> OutActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFogOfWar::StaticClass(), OutActors);
+	for(auto& a : OutActors)
+	{
+		AFogOfWar* test = Cast<AFogOfWar>(a);
+		if (test) FogOfWar = test;
+	}
+	if (!FogOfWar)
+	{
+		FActorSpawnParameters Params;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		UClass* SpawnClass = FactoryAssets->FogOfWarClass.Get();
+		FogOfWar = GetWorld()->SpawnActor<AFogOfWar>(SpawnClass, FVector(0, 0, 0), FRotator(0, 0, 0), Params);
+	}
+	FogOfWar->Initialize(this);
 }
 
 void ARTSPlayerController::Tick(float mainDeltaTime)
@@ -60,12 +71,7 @@ void ARTSPlayerController::SetupInputComponent()
 	
 	InputComponent->BindAction(TEXT("Shift"), IE_Pressed, this, &ARTSPlayerController::ShiftPressed);
 	InputComponent->BindAction(TEXT("Shift"), IE_Released, this, &ARTSPlayerController::ShiftReleased);
-		
-	// Edge scrolling
-	InputComponent->BindAxis(TEXT("MouseX"), this, &ARTSPlayerController::EdgeScrollingX);
-	InputComponent->BindAxis(TEXT("MouseY"), this, &ARTSPlayerController::EdgeScrollingY);
 	
-	// Mouse clicks
 	bShowMouseCursor = true;
 	InputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &ARTSPlayerController::LMBPressed);
 	InputComponent->BindAction(TEXT("LMB"), IE_Released, this, &ARTSPlayerController::LMBReleased);
@@ -85,31 +91,7 @@ void ARTSPlayerController::ShiftReleased()
 	bShiftPressed = false;
 }
 
-void ARTSPlayerController::EdgeScrollingX(float value)
-{
-	float MouseX = 0, MouseY = 0;
-	int32 SizeX = 0, SizeY = 0;
-	GetMousePosition(MouseX, MouseY);
-	GetViewportSize(SizeX, SizeY);
 
-	const float RatioX = MouseX / static_cast<float>(SizeX);
-	if (RatioX >= 0.975)		CameraRef->EdgeScrolling(15, 0);
-	else if (RatioX <= 0.025)	CameraRef->EdgeScrolling(-15, 0);
-	else						CameraRef->EdgeScrolling(0, 0);
-}
-
-void ARTSPlayerController::EdgeScrollingY(float value)
-{
-	float MouseX = 0, MouseY = 0;
-	int32 SizeX = 0, SizeY = 0;
-	GetMousePosition(MouseX, MouseY);
-	GetViewportSize(SizeX, SizeY);
-
-	const float RatioY = MouseY / static_cast<float>(SizeY);
-	if (RatioY >= 0.975)		CameraRef->EdgeScrolling(0, -15);
-	else if (RatioY <= 0.025)	CameraRef->EdgeScrolling(0, 15);
-	else						CameraRef->EdgeScrolling(0, 0);
-}
 
 void ARTSPlayerController::LMBPressed()
 {
@@ -280,4 +262,42 @@ void ARTSPlayerController::SetSpawnPointForSelectedBuildings()
 			}
 		}
 	}
+}
+
+float ARTSPlayerController::GetScaleValueFromSettings()
+{
+	float DistanceUnitScale = 0;
+	FString ValueReceived;
+	if (GConfig->GetString(
+		TEXT("/Script/UnrealEd.EditorProjectAppearanceSettings"),
+		TEXT("DistanceUnits"),
+		ValueReceived,
+		GEditorIni))
+	{
+		TOptional<EUnit> CurrentUnit = FUnitConversion::UnitFromString(*ValueReceived);
+		if (!CurrentUnit.IsSet())
+			CurrentUnit = EUnit::Centimeters;
+
+		switch (CurrentUnit.GetValue())
+		{
+		case EUnit::Micrometers:
+			DistanceUnitScale = 1000000.0;
+			break;
+		case EUnit::Millimeters:
+			DistanceUnitScale = 1000.0;
+			break;
+		case EUnit::Centimeters:
+			DistanceUnitScale = 100.0;
+			break;
+		case EUnit::Meters:
+			DistanceUnitScale = 1.0;
+			break;
+		case EUnit::Kilometers:
+			DistanceUnitScale = 0.001;
+			break;
+		default:
+			DistanceUnitScale = 100.0;
+		}
+	}
+	return DistanceUnitScale;
 }

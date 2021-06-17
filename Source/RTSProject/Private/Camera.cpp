@@ -49,6 +49,9 @@ void ACamera::Initialize(ARTSPlayerController* RTSController)
 			InputComponent->BindAction(TEXT("Shift"), IE_Released, this, &ACamera::ResetMovementModifier);
 			InputComponent->BindAction(TEXT("Alt"), IE_Pressed, this, &ACamera::MovementDecrease);
 			InputComponent->BindAction(TEXT("Alt"), IE_Released, this, &ACamera::ResetMovementModifier);
+			// Edge scrolling
+			InputComponent->BindAxis(TEXT("MouseX"), this, &ACamera::EdgeScrollingX);
+			InputComponent->BindAxis(TEXT("MouseY"), this, &ACamera::EdgeScrollingY);
 			// Zoom
 			InputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Pressed, this, &ACamera::MouseWheelYPositiveStart);
 			InputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &ACamera::MouseWheelYNegativeStart);
@@ -112,9 +115,32 @@ void ACamera::ResetMovementModifier()
 	MovementSpeedModifier = 1;
 }
 
-void ACamera::EdgeScrolling(float dx, float dy)
+void ACamera::EdgeScrolling()
 {
-	AddActorLocalOffset(FVector(dy, dx, 0), true);
+	int32 SizeX = 0, SizeY = 0;
+	float MouseX = 0, MouseY = 0;
+	PlayerController->GetMousePosition(MouseX, MouseY);
+	PlayerController->GetViewportSize(SizeX, SizeY);
+
+	const float RatioX = MouseX / static_cast<float>(SizeX),
+				 RatioY = MouseY / static_cast<float>(SizeY);
+	int DX = 0, DY = 0;
+	if		(RatioX >= 0.975 && RatioX > 0)	DX = 15;
+	else if (RatioX <= 0.025 && RatioX > 0)	DX = -15;
+	else if (RatioY >= 0.975 && RatioY > 0)	DY = -15;
+	else if (RatioY <= 0.025 && RatioY > 0)	DY = 15;
+
+	AddActorLocalOffset(FVector(DY, DX, 0), true);
+}
+
+void ACamera::EdgeScrollingX(float MouseX)
+{
+	if (AllowEdgeScrolling) EdgeScrolling();
+}
+
+void ACamera::EdgeScrollingY(float MouseY)
+{
+	if (AllowEdgeScrolling) EdgeScrolling();
 }
 
 void ACamera::MouseWheelYPositiveStart()

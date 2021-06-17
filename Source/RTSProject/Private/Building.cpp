@@ -1,8 +1,9 @@
 #include "Building.h"
 
-#include "HealthShield.h"
+#include "FogOfWarInfluencerComponent.h"
 #include "RTSPlayerController.h"
 #include "HealthShieldBarHUD.h"
+#include "HealthShieldComponent.h"
 #include "ShipFactory.h"
 #include "Ship.h"
 
@@ -24,11 +25,11 @@ ABuilding::ABuilding()
 	HealthShieldBar->SetDrawSize(FVector2D(150, 150));
 	HealthShieldBar->SetWidgetSpace(EWidgetSpace::Screen);
 
+	FOWInfluencerComponent = CreateDefaultSubobject<UFogOfWarInfluencerComponent>(TEXT("FOWInfluencerComponent"));
+	
 	SpawnPoint = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SpawnPoint"));
 	
-	
-	HealthShieldComponent = CreateDefaultSubobject<UHealthShield>(TEXT("HealthShield"));
-
+	HealthShieldComponent = CreateDefaultSubobject<UHealthShieldComponent>(TEXT("HealthShieldComponent"));
 }
 
 void ABuilding::BeginPlay()
@@ -44,6 +45,8 @@ void ABuilding::Initialize(ARTSPlayerController* RTSController)
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
 		HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
 		HealthShieldBar->SetVisibility(false);
+		FOWInfluencerComponent->Initialize(PlayerController);
+		
 	}
 	else
 	{
@@ -155,7 +158,7 @@ void ABuilding::StartBuildingUnit()
 {
 	if (BuildingQueue.Num() == 0) return;
 	ConstructionState = EConstructionState::Constructing;
-	float BaseTimeToBuild = 5;
+	float BaseTimeToBuild = 1;
 	// Binding BuildUnit() function that will spawn ship in SpawnLocation
 	// when timer hits BaseTimeToBuild
 	FTimerDelegate TimerDelegate;
