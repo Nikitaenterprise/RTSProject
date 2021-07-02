@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Turret.generated.h"
 
+class ARocket;
 class UHealthShieldComponent;
 class UStaticMeshComponent;
 class ARTSPlayerController;
@@ -13,7 +14,7 @@ class UArrowComponent;
 class UHealthShield;
 class AShip;
 
-enum ESide
+enum class ESide
 {
 	Left,
 	Right
@@ -33,19 +34,18 @@ public:
 	UArrowComponent* Arrow = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UHealthShieldComponent* HealthShieldComponent = nullptr;
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	AShip* OwnerShip = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Time")
-	float DeltaTime = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Time")
-	float PastTime = 0;
+	FTimerHandle TimerHandle;
+	TArray<ARocket*> FiredRockets;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	int FireEveryThisSeconds = 2;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	float ChanceToFire = 0.5;
+	float ChanceToFire = 0.1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation")
 	float RotationSpeed = 1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation")
@@ -59,28 +59,20 @@ public:
 
 	ATurret();
 
-	virtual void Tick(float mainDeltaTime) override;
-
-	// Interfaces
+	virtual void Tick(float DeltaTime) override;
+	void Initialize(ARTSPlayerController* RTSController, AShip* Ship);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
-
 	UFUNCTION(BlueprintCallable)
 	void SetFacingOnMouse();
-
 	UFUNCTION(BlueprintCallable)
-	void ShootRocket();
-
+	void Fire();
 	UFUNCTION(BlueprintCallable)
 	void SetFacingLeftRight();
-
 	UFUNCTION(BlueprintCallable)
 	void CheckAngle();
-
 	UFUNCTION(BlueprintCallable)
-	void RotateTurret();
-
-	virtual void SetOwner(AActor* NewOwner) override;
+	void RotateTurret(float DeltaTime);
 
 protected:
 	

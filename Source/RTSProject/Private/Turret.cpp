@@ -5,7 +5,6 @@
 #include "AnglesFunctions.h"
 #include "HealthShieldComponent.h"
 #include "RocketFactory.h"
-#include "Rocket.h"
 
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/StaticMeshComponent.h"
@@ -28,25 +27,50 @@ ATurret::ATurret()
 	HealthShieldComponent = CreateDefaultSubobject<UHealthShieldComponent>(TEXT("HealthShieldComponent"));
 }
 
-// Called when the game starts or when spawned
 void ATurret::BeginPlay()
 {
 	Super::BeginPlay();
-	//PlayerController = Cast<ARTSPlayerController>(GetWorld()->GetFirstPlayerController());
+	FiredRockets.Reserve(20);
+	// Binding Destroy() function that will destroy rocket
+	// when timer hits MaxLifeTime
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindUFunction(this, FName("Fire"));
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, FireEveryThisSeconds, false);
 }
 
-// Called every frame
-void ATurret::Tick(float mainDeltaTime)
+void ATurret::Initialize(ARTSPlayerController* RTSController, AShip* Ship)
 {
-	Super::Tick(mainDeltaTime);
-	DeltaTime = mainDeltaTime;
-	PastTime += mainDeltaTime;
+	if (RTSController)
+	{
+		PlayerController = RTSController;
+	}
+	if (Ship)
+	{
+		OwnerShip = Ship;
+	}
+	
+	// Decide on which side the turret is
+	const FVector ShipForward = OwnerShip->GetActorForwardVector();
+	const FVector FromCenterOfShipToTurret = GetActorLocation() - OwnerShip->GetActorLocation();
+	const bool bClockwise = AnglesFunctions::FindRotationDirectionBetweenVectorsOn2D(ShipForward, FromCenterOfShipToTurret);
+	if (bClockwise) OnWhichSide = ESide::Right;
+	if (!bClockwise) OnWhichSide = ESide::Left;
+	
+	SetFacingLeftRight();
+
+	OwnerShip->bHasWorkingTurrets = true;
+}
+
+void ATurret::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
 
 	if (OwnerShip->bIsSelected)
 	{
 		SetFacingOnMouse();
-		ShootRocket();
+		Fire();
 	}
 	else
 	{
@@ -54,8 +78,9 @@ void ATurret::Tick(float mainDeltaTime)
 	}
 
 	CheckAngle();
-	RotateTurret();
+	RotateTurret(DeltaTime);
 }
+
 
 bool ATurret::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
 {
@@ -75,26 +100,20 @@ void ATurret::SetFacingOnMouse()
 	Rotation = FRotator(0, Rotator.Yaw, 0);
 }
 
-void ATurret::ShootRocket()
+void ATurret::Fire()
 {
-	static bool flag = false;
-	if (UKismetMathLibrary::Round(PastTime) % FireEveryThisSeconds == 0)
+	if (UKismetMathLibrary::RandomFloat() > ChanceToFire)
 	{
-		if (flag && UKismetMathLibrary::RandomFloat() > ChanceToFire)
-		{
-			// Fire rocket from arrow
-			ARocket* SpawnedRocket = RocketFactory::NewRocket(this->GetWorld(), Arrow->K2_GetComponentToWorld());
-			SpawnedRocket->OwnerTurret = this;
-			flag = false;
-		}
+		// Fire rocket from arrow
+		ARocket* SpawnedRocket = RocketFactory::NewRocket(GetWorld(), PlayerController, this, Arrow->K2_GetComponentToWorld());
+		//FiredRockets.Add(SpawnedRocket);
 	}
-	else flag = true;
 }
 
 void ATurret::SetFacingLeftRight()
 {
-	FVector Forward = GetActorForwardVector();
-	FVector ShipRightVector = OwnerShip->GetActorRightVector();
+	const FVector Forward = GetActorForwardVector();
+	const FVector ShipRightVector = OwnerShip->GetActorRightVector();
 	FRotator Rotator(0, 0, 0);
 
 	if (OnWhichSide == ESide::Right)
@@ -111,7 +130,7 @@ void ATurret::SetFacingLeftRight()
 void ATurret::CheckAngle()
 {
 	float Angle = 0;
-	FRotator Rotator(0, 0, 0);
+	FRotator Rotator;
 	if (OnWhichSide == ESide::Right)
 	{
 		Rotator = AnglesFunctions::FindYawRotatorOn2D(GetActorForwardVector(), OwnerShip->GetActorRightVector());
@@ -128,17 +147,9 @@ void ATurret::CheckAngle()
 	if (Angle < 0 && Angle < -1 * MaxAngleDeviation) Rotation = FRotator(0, 10, 0);
 }
 
-void ATurret::RotateTurret()
+void ATurret::RotateTurret(float DeltaTime)
 {
-	FRotator Rotator = GetActorRotation() + Rotation;
-	FRotator NewRotation = UKismetMathLibrary::RInterpTo(GetActorRotation(), Rotator, DeltaTime, RotationSpeed);
+	const FRotator Rotator = GetActorRotation() + Rotation;
+	const FRotator NewRotation = UKismetMathLibrary::RInterpTo(GetActorRotation(), Rotator, DeltaTime, RotationSpeed);
 	SetActorRotation(NewRotation, ETeleportType::None);
 }
-
-void ATurret::SetOwner(AActor* NewOwner)
-{
-	Super::SetOwner(NewOwner);
-	AShip* Ship = Cast<AShip>(NewOwner);
-	if(Ship) OwnerShip = Ship;
-}
-

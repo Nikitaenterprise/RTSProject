@@ -60,9 +60,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	UHealthShieldBarHUD* HealthShieldBarHUD = nullptr;
 	
-	float DeltaTime = 0;
-	float PastTime = 0;
-
 	bool bIsSelected = false;
 	bool bIsHighlighted = false;
 	bool bJustCreated = false;
@@ -73,14 +70,14 @@ private:
 	
 	EConstructionState ConstructionState = EConstructionState::NotConstructing;
 	TArray<TSubclassOf<AActor>> BuildingQueue;
-	FTimerHandle Timer;
+	FTimerHandle TimerHandle;
 	
 	
 public:	
 
 	ABuilding();
 
-	virtual void Tick(float MainDeltaTime) override;
+	virtual void Tick(float DeltaTime) override;
 	void Initialize(ARTSPlayerController* RTSController);
 	
 	void SetSpawnPointLocation(const FVector& Location = FVector(0, 0, 0)) const;

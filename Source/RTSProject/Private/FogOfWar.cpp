@@ -55,7 +55,7 @@ void AFogOfWar::Initialize(ARTSPlayerController* Controller)
 
 	VolumeLengthInCells = FOWBoundsVolume->GetVolumeLengthInCells();
 	TextureBufferSize = VolumeLengthInCells * VolumeLengthInCells * 4;
-	VolumeLength = static_cast<float>(FOWBoundsVolume->GetVolumeLength());
+	VolumeLength = FOWBoundsVolume->GetVolumeLength();
 	FOWTexture = UTexture2D::CreateTransient(VolumeLengthInCells, VolumeLengthInCells);
 	FOWTexture->AddToRoot();
 	FOWTexture->UpdateResource();
@@ -74,8 +74,8 @@ void AFogOfWar::Initialize(ARTSPlayerController* Controller)
 	out += FString("\nOneOverTileSize = ") + FString::SanitizeFloat(1.0f / VolumeLengthInCells);
 	out += FString("\nOneOverWorldSize = ") + FString::SanitizeFloat(1.0f / VolumeLength);
 	out += FString("\nBufferSize = ") + FString::SanitizeFloat(TextureBufferSize);
-	GEngine->AddOnScreenDebugMessage(-1, 100, FColor::White, out);
-
+	UE_LOG(LogTemp, Log, TEXT("%s"), *out)
+	
 	// Paint texture to FOW_UNKNOWN
 	for (uint32 Y = 0; Y < VolumeLengthInCells; Y++)
 	{
@@ -193,7 +193,7 @@ void AFogOfWar::RegisterActor(AActor* ActorToRegister)
 	UFogOfWarInfluencerComponent* Influencer = Cast<UFogOfWarInfluencerComponent>(ActorToRegister->FindComponentByClass(UFogOfWarInfluencerComponent::StaticClass()));
 	if (Influencer == nullptr) return;
 	RegisteredActors.AddUnique(TPair<AActor*, UFogOfWarInfluencerComponent*>(ActorToRegister, Influencer));
-	GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Green, FString::Printf(TEXT("Actor %s registered"), *ActorToRegister->GetHumanReadableName()));
+	UE_LOG(LogTemp, Log, TEXT("Actor %s registered in FogOfWar"), *ActorToRegister->GetHumanReadableName());
 }
 
 void AFogOfWar::UnRegisterActor(AActor* ActorToRegister)
@@ -202,7 +202,7 @@ void AFogOfWar::UnRegisterActor(AActor* ActorToRegister)
 	UFogOfWarInfluencerComponent* Influencer = Cast<UFogOfWarInfluencerComponent>(ActorToRegister->FindComponentByClass(UFogOfWarInfluencerComponent::StaticClass()));
 	if (Influencer == nullptr) return;
 	RegisteredActors.Remove(TPair<AActor*, UFogOfWarInfluencerComponent*>(ActorToRegister, Influencer));
-	GEngine->AddOnScreenDebugMessage(-1, 2, FColor::White, FString::Printf(TEXT("Actor %s unregistered"), *ActorToRegister->GetHumanReadableName()));
+	UE_LOG(LogTemp, Log, TEXT("Actor %s unregistered in FogOfWar"), *ActorToRegister->GetHumanReadableName());
 }
 
 inline TArray<AActor*> AFogOfWar::GetRegisteredActors() const

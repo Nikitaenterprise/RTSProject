@@ -1,7 +1,7 @@
 #include "BasicButtonsHUD.h"
 
 #include "RTSPlayerController.h"
-#include "ShipFactory.h"
+
 #include "AsteroidFieldFactory.h"
 #include "BuildingFactory.h"
 
@@ -16,7 +16,6 @@ void UBasicButtonsHUD::NativeConstruct()
 	Super::NativeConstruct();
 
 	PlayerController = Cast<ARTSPlayerController>(GetOwningPlayer());
-	GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Cyan, TEXT("Created BasicButtonsHUD"));
 }
 
 void UBasicButtonsHUD::SpawnShip() 

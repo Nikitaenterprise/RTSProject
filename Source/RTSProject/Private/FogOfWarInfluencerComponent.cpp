@@ -1,7 +1,6 @@
 #include "FogOfWarInfluencerComponent.h"
 
 #include "FogOfWar.h"
-#include "FogOfWarBoundsVolume.h"
 #include "RTSPlayerController.h"
 
 UFogOfWarInfluencerComponent::UFogOfWarInfluencerComponent()

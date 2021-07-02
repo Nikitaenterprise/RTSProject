@@ -56,11 +56,10 @@ void ABuilding::Initialize(ARTSPlayerController* RTSController)
 	SpawnPoint->SetVisibility(false);
 }
 
-void ABuilding::Tick(float MainDeltaTime)
+void ABuilding::Tick(float DeltaTime)
 {
-	Super::Tick(MainDeltaTime);
-	DeltaTime = MainDeltaTime;
-	PastTime += MainDeltaTime;
+	Super::Tick(DeltaTime);
+
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
 
 	if (bJustCreated && !PlayerController->bLMBPressed)
@@ -164,7 +163,7 @@ void ABuilding::StartBuildingUnit()
 	FTimerDelegate TimerDelegate;
 	TimerDelegate.BindUFunction(this, FName("BuildUnit"));
 	// Start timer
-	GetWorld()->GetTimerManager().SetTimer(Timer, TimerDelegate, BaseTimeToBuild, false);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, BaseTimeToBuild, false);
 }
 
 void ABuilding::BuildUnit()

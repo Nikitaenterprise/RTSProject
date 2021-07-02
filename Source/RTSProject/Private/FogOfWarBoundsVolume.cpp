@@ -26,11 +26,11 @@ void AFogOfWarBoundsVolume::PaveVolumeWithGrid()
 			Grid.Emplace(Cell);
 		}
 	}
+	
 	FString out = "";
+	out += "FogOfWarBoundsVolume";
 	out += FString("\nXMax = ") + FString::SanitizeFloat(XMax);
 	out += FString("\nYMax = ") + FString::SanitizeFloat(YMax);
 	out += FString("\nCreated Grid array with size = ") + FString::SanitizeFloat(Grid.Num());
-	
-	GEngine->AddOnScreenDebugMessage(-1, 100, FColor::White, out);
-	
+	UE_LOG(LogTemp, Log, TEXT("%S"), *out);
 }

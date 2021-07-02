@@ -7,9 +7,9 @@
 #include "GameHUD.h"
 
 #include "DamageDealer.h"
+#include "DrawDebugHelpers.h"
 #include "FogOfWar.h"
 
-#include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Math/UnitConversion.h"
 
@@ -20,6 +20,7 @@ ARTSPlayerController::ARTSPlayerController(){
 
 void ARTSPlayerController::TestThis(){
 	GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Cyan, TEXT("I'm PlayerController"));
+	UE_LOG(LogTemp, Log, TEXT("I'm PlayerController"));
 }
 
 void ARTSPlayerController::BeginPlay()
@@ -31,8 +32,12 @@ void ARTSPlayerController::BeginPlay()
 	
 	GameHUD = Cast<AGameHUD>(GetHUD());
 	if (GameHUD) GameHUD->BindController(this);
-	else GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("GameHUD=nullptr in ARTSPlayerController"));
-
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("GameHUD=nullptr in ARTSPlayerController"));
+		UE_LOG(LogTemp, Error, TEXT("GameHUD=nullptr in ARTSPlayerController"));
+	}
+	
 	TArray<AActor*> OutActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFogOfWar::StaticClass(), OutActors);
 	for(auto& a : OutActors)

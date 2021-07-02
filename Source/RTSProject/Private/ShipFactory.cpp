@@ -4,14 +4,26 @@
 #include "Ship.h"
 #include "Turret.h"
 #include "FactoryAssets.h"
-#include "AnglesFunctions.h"
 
+#include "Chaos/AABB.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Components/StaticMeshComponent.h"
+#include "DrawDebugHelpers.h"
 
 AShip* ShipFactory::NewShip(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location, const FRotator& Rotation)
 {
-	if (!Controller) return nullptr;
-	if (!ClassType) return nullptr;
-	
+	if (!Controller)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn ship, ARTSPlayerController is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn ship, ARTSPlayerController is nullptr"));
+		return nullptr;
+	}
+	if (!ClassType)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn ship, UClass is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn ship, UClass is nullptr"));
+		return nullptr;
+	}
 	AShip* SpawnedShip = World->SpawnActor<AShip>(
 							ClassType,
 					FVector(Location.X, Location.Y, 150), 
@@ -20,6 +32,7 @@ AShip* ShipFactory::NewShip(UWorld* World, UClass* ClassType, ARTSPlayerControll
 	if (!SpawnedShip) 
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn ship"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn ship"));
 		return nullptr;
 	}
 	Controller->PlayersActors.AddUnique(SpawnedShip);
@@ -37,30 +50,54 @@ void ShipFactory::AddTurretsToShip(AShip* Ship)
 	if(TurretClass)
 	{
 		UStaticMeshComponent* StaticMesh = Ship->StaticMesh;
-		for (auto& socket : StaticMesh->GetAllSocketNames())
+
+		for (auto& Socket : StaticMesh->GetAllSocketNames())
 		{
-			FTransform SpawnTransform = StaticMesh->GetSocketTransform(socket);
+			FTransform SocketTransform = StaticMesh->GetSocketTransform(Socket);
+
+			FHitResult Hit;
+			FCollisionObjectQueryParams OQParams;
+			// Set collision to hit ship mesh which is WorldDynamic
+			// Capsule component is PawnCapsule, so it won't be hit
+			OQParams.AddObjectTypesToQuery(ECollisionChannel::ECC_WorldDynamic);
+			FCollisionQueryParams QParams = QParams.DefaultQueryParam;
+			// Trace complex mesh geometry
+			QParams.bTraceComplex = true;
+			
+			bool bHit = Ship->GetWorld()->LineTraceSingleByObjectType(Hit, SocketTransform.GetLocation() + FVector(0, 0, 10), SocketTransform.GetLocation() - FVector(0, 0, 10), OQParams, QParams);
+
+			FVector HitNormal (0,0,1);
+			if (bHit) HitNormal = Hit.ImpactNormal;
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("Finding normal for turret placing failed"));
+				UE_LOG(LogTemp, Error, TEXT("Finding normal for turret placing failed"));
+			}
+			
+			// Find rotation for turret to be aligned with surface normal
+			FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(FVector(0, 0, 1), HitNormal);
+			// Set spawn transform for turret at socket position but with rotation that will align turret up vector with surface normal
+			FTransform SpawnTransform = FTransform(Rotation, SocketTransform.GetTranslation(), SocketTransform.GetScale3D());
+
 			FActorSpawnParameters Params = GetDefaultSpawnParams();
 			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 			ATurret* SpawnedTurret = Ship->GetWorld()->SpawnActor<ATurret>(TurretClass.Get(), SpawnTransform, Params);
-			if(!SpawnedTurret) 
+			if (!SpawnedTurret)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn turret"));
+				UE_LOG(LogTemp, Error, TEXT("Failed to spawn turret"));
 				return;
 			}
-			SpawnedTurret->OwnerShip = Ship;
-			SpawnedTurret->OwnerShip->Turrets.AddUnique(SpawnedTurret);
-			SpawnedTurret->PlayerController = Ship->PlayerController;
-			SetTurretSide(SpawnedTurret);
-			SpawnedTurret->SetFacingLeftRight();
+			
 			FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget,
 														EAttachmentRule::KeepWorld,
 														EAttachmentRule::KeepRelative,
 														true);
-
-			SpawnedTurret->AttachToComponent(StaticMesh, AttachmentRules, socket);
-			SpawnedTurret->OwnerShip->bHasWorkingTurrets = true;
+			SpawnedTurret->AttachToComponent(StaticMesh, AttachmentRules, Socket);
+			SpawnedTurret->Initialize(Ship->PlayerController, Ship);
+			Ship->Turrets.AddUnique(SpawnedTurret);
 		}
+		Ship->bHasWorkingTurrets = true;
 	}
 }
 
@@ -73,14 +110,3 @@ FActorSpawnParameters ShipFactory::GetDefaultSpawnParams()
 	return Params;
 }
 
-
-// Decide on which side the turret is
-void ShipFactory::SetTurretSide(ATurret* Turret)
-{
-	const FVector ShipForward = Turret->OwnerShip->GetActorForwardVector();
-	const FVector FromCenterOfShipToTurret = Turret->GetActorLocation() - Turret->OwnerShip->GetActorLocation();
-	const bool bClockwise = AnglesFunctions::FindRotationDirectionBetweenVectorsOn2D(ShipForward, FromCenterOfShipToTurret);
-
-	if (bClockwise) Turret->OnWhichSide = ESide::Right;
-	if (!bClockwise) Turret->OnWhichSide = ESide::Left;
-}

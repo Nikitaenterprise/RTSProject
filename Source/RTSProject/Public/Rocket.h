@@ -26,17 +26,18 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	ATurret* OwnerTurret = nullptr;
 
-	float DeltaTime = 0;
-	float PastTime = 0;
-	float MaxLifeTime = 0;
+	FTimerHandle TimerHandle;
+	
+	float MaxLifeTime = 5;
 	float Speed = 300;
 	float Damage = 25;
 
-public:	
+public:
+	
 	ARocket();
 
-	virtual void Tick(float mainDeltaTime) override;
-
+	virtual void Tick(float DeltaTime) override;
+	void Initialize(ARTSPlayerController* RTSController, ATurret* Turret);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
 
@@ -59,9 +60,6 @@ public:
 							class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	virtual void OnOverlapEnd_Implementation(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
 												class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
-	
-
-	void SetOwner(AActor* NewOwner) override;
 	
 
 protected:

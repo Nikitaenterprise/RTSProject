@@ -1,5 +1,3 @@
-
-
 #include "Rocket.h"
 
 #include "Components/StaticMeshComponent.h"
@@ -8,7 +6,6 @@
 #include "Turret.h"
 #include "DamageDealer.h"
 
-// Sets default values
 ARocket::ARocket()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -24,25 +21,35 @@ ARocket::ARocket()
 	StaticMesh->OnComponentEndOverlap.AddDynamic(this, &ARocket::OnOverlapEnd);
 }
 
-// Called when the game starts or when spawned
 void ARocket::BeginPlay()
 {
 	Super::BeginPlay();
-	PlayerController = Cast<ARTSPlayerController>(GetWorld()->GetFirstPlayerController());
+	
+	// Binding Destroy() function that will destroy rocket
+	// when timer hits MaxLifeTime
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindUFunction(this, FName("Destroy"), false, false);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, MaxLifeTime, false);
 }
 
-// Called every frame
-void ARocket::Tick(float mainDeltaTime)
+void ARocket::Initialize(ARTSPlayerController* RTSController, ATurret* Turret)
 {
-	Super::Tick(mainDeltaTime);
-	DeltaTime = mainDeltaTime;
-	PastTime += mainDeltaTime;
-	if (PastTime > MaxLifeTime) Destroy(false, true);
+	if (RTSController)
+	{
+		PlayerController = RTSController;
+	}
+	if (Turret)
+	{
+		OwnerTurret = Turret;
+	}
+}
+
+void ARocket::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
 	
-	// Should be in function
-	FHitResult hit;
-	FVector forward = GetActorForwardVector();
-	SetActorLocation(((Speed * DeltaTime * forward) + GetActorLocation()), false, &hit, ETeleportType::None);
+	FVector dR = Speed * DeltaTime * GetActorForwardVector();
+	SetActorLocation(dR + GetActorLocation(), false, nullptr, ETeleportType::None);
 }
 
 bool ARocket::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
@@ -59,14 +66,12 @@ void ARocket::OnOverlapBegin_Implementation(class UPrimitiveComponent* Overlappe
 											class UPrimitiveComponent* OtherComp,
 											int32 OtherBodyIndex, bool bFromSweep,
 											const FHitResult& SweepResult)
-{
-	if (PastTime < 0.01) return;
-	
+{	
 	AShip* Ship = Cast<AShip>(OtherActor);
 	if (!Ship) return;
 	if (OwnerTurret->OwnerShip == Ship) return;
 	DamageDealer::DealDamage(this, Ship);
-	Destroy();
+	Destroy(false, false);
 }
 
 void ARocket::OnOverlapEnd_Implementation(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
@@ -74,11 +79,3 @@ void ARocket::OnOverlapEnd_Implementation(class UPrimitiveComponent* OverlappedC
 {
 
 }
-
-void ARocket::SetOwner(AActor* NewOwner)
-{
-	Super::SetOwner(NewOwner);
-	ATurret* Turret = Cast<ATurret>(NewOwner);
-	if (Turret) OwnerTurret = Turret;
-}
-

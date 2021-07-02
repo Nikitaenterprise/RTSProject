@@ -15,7 +15,5 @@ public:
 	static void AddTurretsToShip(AShip* Ship);
 	
 private:
-	
 	static FActorSpawnParameters GetDefaultSpawnParams();
-	static void SetTurretSide(ATurret* Turret);
 };
