@@ -9,6 +9,7 @@ class AFogOfWarBoundsVolume;
 
 class AShip;
 class ATurret;
+class ARocket;
 class ABuilding;
 class AAsteroidField;
 class AAsteroidResource;
@@ -26,9 +27,11 @@ public:
 	TSubclassOf<AFogOfWarBoundsVolume> FogOfWarBoundsVolumeClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship")
-	TArray<TSubclassOf<AShip>> ShipClass;
+	TArray<TSubclassOf<AShip>> ShipClasses;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Turret")
 	TSubclassOf<ATurret> TurretClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Rocket")
+	TSubclassOf<ARocket> RocketClass;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Building")
 	TSubclassOf<ABuilding> BuildingClass;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource")
@@ -39,5 +42,5 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable)
-	TArray<TSubclassOf<AShip>> GetShipClass() { return ShipClass; };
+	TArray<TSubclassOf<AShip>> GetShipClasses() { return ShipClasses; }
 };

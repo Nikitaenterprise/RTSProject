@@ -3,8 +3,10 @@
 #include "RTSPlayerController.h"
 #include "Ship.h"
 #include "AnglesFunctions.h"
+#include "FactoryAssets.h"
 #include "HealthShieldComponent.h"
 #include "RocketFactory.h"
+#include "Rocket.h"
 
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/StaticMeshComponent.h"
@@ -31,11 +33,10 @@ void ATurret::BeginPlay()
 {
 	Super::BeginPlay();
 	FiredRockets.Reserve(20);
-	// Binding Destroy() function that will destroy rocket
-	// when timer hits MaxLifeTime
-	FTimerDelegate TimerDelegate;
+	// Binding Fire() function that will fire rocket
+	// when timer hits FireEveryThisSeconds
 	TimerDelegate.BindUFunction(this, FName("Fire"));
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, FireEveryThisSeconds, false);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, FireEveryThisSeconds, true);
 }
 
 void ATurret::Initialize(ARTSPlayerController* RTSController, AShip* Ship)
@@ -44,9 +45,17 @@ void ATurret::Initialize(ARTSPlayerController* RTSController, AShip* Ship)
 	{
 		PlayerController = RTSController;
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerController in Turret->Initialize() is nullptr"));
+	}
 	if (Ship)
 	{
 		OwnerShip = Ship;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Ship in Turret->Initialize() is nullptr"));
 	}
 	
 	// Decide on which side the turret is
@@ -59,6 +68,22 @@ void ATurret::Initialize(ARTSPlayerController* RTSController, AShip* Ship)
 	SetFacingLeftRight();
 
 	OwnerShip->bHasWorkingTurrets = true;
+
+	if (PlayerController->GetFactoryAssets())
+	{
+		if(PlayerController->GetFactoryAssets()->RocketClass)
+		{
+			ShootableRocket = PlayerController->GetFactoryAssets()->RocketClass;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("RocketClass in FactoryAssets is empty"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("FactoryAssets in PlayerController is nullptr"));
+	}
 }
 
 void ATurret::Tick(float DeltaTime)
@@ -70,7 +95,7 @@ void ATurret::Tick(float DeltaTime)
 	if (OwnerShip->bIsSelected)
 	{
 		SetFacingOnMouse();
-		Fire();
+		bShouldFire = true;
 	}
 	else
 	{
@@ -102,11 +127,12 @@ void ATurret::SetFacingOnMouse()
 
 void ATurret::Fire()
 {
-	if (UKismetMathLibrary::RandomFloat() > ChanceToFire)
+	if (UKismetMathLibrary::RandomFloat() > ChanceToFire && bShouldFire)
 	{
 		// Fire rocket from arrow
-		ARocket* SpawnedRocket = RocketFactory::NewRocket(GetWorld(), PlayerController, this, Arrow->K2_GetComponentToWorld());
-		//FiredRockets.Add(SpawnedRocket);
+		ARocket* SpawnedRocket = RocketFactory::NewRocket(GetWorld(), ShootableRocket.Get(), PlayerController, this, Arrow->K2_GetComponentToWorld());
+		bShouldFire = false;
+		FiredRockets.Add(SpawnedRocket);
 	}
 }
 

@@ -38,9 +38,13 @@ public:
 	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(BlueprintReadOnly)
 	AShip* OwnerShip = nullptr;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rocket")
+	TSubclassOf<ARocket> ShootableRocket;
+	
 	FTimerHandle TimerHandle;
+	FTimerDelegate TimerDelegate;
 	TArray<ARocket*> FiredRockets;
+	bool bShouldFire = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	int FireEveryThisSeconds = 2;

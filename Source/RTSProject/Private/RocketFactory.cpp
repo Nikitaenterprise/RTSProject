@@ -3,12 +3,12 @@
 #include "Rocket.h"
 #include "Turret.h"
 
-ARocket* RocketFactory::NewRocket(UWorld* World, ARTSPlayerController* Controller, ATurret* Turret)
+ARocket* RocketFactory::NewRocket(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret)
 {
-	return NewRocket(World, Controller, Turret, FTransform());
+	return NewRocket(World, ClassType, Controller, Turret, FTransform());
 }
 
-ARocket* RocketFactory::NewRocket(UWorld* World, ARTSPlayerController* Controller, ATurret* Turret, const FTransform& Transform)
+ARocket* RocketFactory::NewRocket(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FTransform& Transform)
 {
 	if (!Controller)
 	{
@@ -22,7 +22,7 @@ ARocket* RocketFactory::NewRocket(UWorld* World, ARTSPlayerController* Controlle
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn rocket, Turret is nullptr"));
 		return nullptr;
 	}
-	ARocket* SpawnedRocket = World->SpawnActor<ARocket>(ARocket::StaticClass(), Transform, GetDefaultSpawnParams());
+	ARocket* SpawnedRocket = World->SpawnActor<ARocket>(ClassType, Transform, GetDefaultSpawnParams());
 	if (!SpawnedRocket)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn rocket"));
