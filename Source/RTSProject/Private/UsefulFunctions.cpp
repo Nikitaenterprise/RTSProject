@@ -1,5 +1,7 @@
 #include "UsefulFunctions.h"
 
+#include "Math/UnitConversion.h"
+
 
 bool UsefulFunctions::GetVertices(const UStaticMeshComponent* StaticMeshComponent, const FTransform& MeshTransform, TArray<FVector>& Vertices)
 {
@@ -44,4 +46,42 @@ TArray<FVector> UsefulFunctions::GetSortedVectorsByDistanceFromPoint(const TArra
 		Output.Add(Vectors[DistancesSquared[i].Key]);
 	}
 	return Output;
+}
+
+float UsefulFunctions::GetScaleValueFromSettings()
+{
+	float DistanceUnitScale = 0;
+	FString ValueReceived;
+	if (GConfig->GetString(
+		TEXT("/Script/UnrealEd.EditorProjectAppearanceSettings"),
+		TEXT("DistanceUnits"),
+		ValueReceived,
+		GEditorIni))
+	{
+		TOptional<EUnit> CurrentUnit = FUnitConversion::UnitFromString(*ValueReceived);
+		if (!CurrentUnit.IsSet())
+			CurrentUnit = EUnit::Centimeters;
+
+		switch (CurrentUnit.GetValue())
+		{
+		case EUnit::Micrometers:
+			DistanceUnitScale = 1000000.0;
+			break;
+		case EUnit::Millimeters:
+			DistanceUnitScale = 1000.0;
+			break;
+		case EUnit::Centimeters:
+			DistanceUnitScale = 100.0;
+			break;
+		case EUnit::Meters:
+			DistanceUnitScale = 1.0;
+			break;
+		case EUnit::Kilometers:
+			DistanceUnitScale = 0.001;
+			break;
+		default:
+			DistanceUnitScale = 100.0;
+		}
+	}
+	return DistanceUnitScale;
 }

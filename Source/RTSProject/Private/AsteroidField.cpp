@@ -105,7 +105,7 @@ void AAsteroidField::AddAsteroidToField()
 	Params.Instigator = nullptr;
 	Params.Owner = nullptr;
 	
-	const TSubclassOf<AAsteroidResource> AsteroidResourceClass = PlayerController->GetFactoryAssets()->AsteroidResourceClass;
+	const TSubclassOf<AAsteroidResource> AsteroidResourceClass = PlayerController->GetFactoryAssets()->GetAsteroidResourceClass(0);
 	AAsteroidResource* SpawnedAsteroid = GetWorld()->SpawnActor<AAsteroidResource>(AsteroidResourceClass.Get(), Transform, Params);
 	if (SpawnedAsteroid)
 	{

@@ -1,5 +1,6 @@
 #include "Ship.h"
 
+#include "AttackComponent.h"
 #include "RTSPlayerController.h"
 #include "Turret.h"
 #include "HealthShieldBarHUD.h"
@@ -48,6 +49,8 @@ AShip::AShip(const FObjectInitializer& OI)
 
 	MovementComponent = CreateDefaultSubobject<UShipMovementComponent>(TEXT("ShipMovementComponent"));
 
+	AttackComponent = CreateDefaultSubobject<UAttackComponent>(TEXT("AttackComponent"));
+
 	FOWInfluencerComponent = CreateDefaultSubobject<UFogOfWarInfluencerComponent>(TEXT("FOWInfluencerComponent"));
 }
 
@@ -89,12 +92,23 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		if(MovementComponent)
 		{
 			MovementComponent->PlayerController = RTSController;
-			MovementComponent->OwnerShip = this;
+			MovementComponent->Owner = this;
 			MovementComponent->Initialize();	
 		}
 		else
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Init() is null"));
+			UE_LOG(LogTemp, Error, TEXT("MovementComponent in AShip->Init() is null"));
+		}
+		if(AttackComponent)
+		{
+			AttackComponent->PlayerController = RTSController;
+			AttackComponent->Owner = this;
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("AttackComponent in AShip->Init() is null"));
+			UE_LOG(LogTemp, Error, TEXT("AttackComponent in AShip->Init() is null"));
 		}
 		DebugInputComponent = PlayerController->InputComponent;
 		if (DebugInputComponent)
@@ -107,6 +121,7 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		else
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Init() is null"));
+			UE_LOG(LogTemp, Error, TEXT("InputComponent in AShip->Init() is null"));
 		}
 		
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
@@ -119,6 +134,7 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 	else
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerController in AShip->Init() is null"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerController in AShip->Init() is null"));
 	}
 	
 }
@@ -167,18 +183,27 @@ void AShip::Highlighted_Implementation(bool _bIsHighlighted)
 	}
 }
 
-bool AShip::Move(const FVector _TargetLocation)
+bool AShip::Move(const FVector TargetLocation)
 {
 	if (!MovementComponent)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Move() is null"));
+		UE_LOG(LogTemp, Error, TEXT("MovementComponent in AShip->Move() is null"));
 		return false;
 	}
-	const bool bSuccessful = MovementComponent->RequestNavMoving(_TargetLocation);
-	if (!bSuccessful) return false;
+	if (!MovementComponent->RequestNavMoving(TargetLocation)) return false;
 	NavPathCoords = MovementComponent->GetNavPathCoords();
 	//DrawNavLine();
 	return true;
+}
+
+void AShip::Attack(const AActor* ActorToAttack)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::White, FString::Printf(TEXT("Attacking %s"), *ActorToAttack->GetName()));
+	for(const auto Turret : Turrets)
+	{
+		Turret->Attack(ActorToAttack);
+	}
 }
 
 void AShip::DrawNavLine()

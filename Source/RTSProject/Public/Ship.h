@@ -3,6 +3,7 @@
 #include "BaseBehavior.h"
 
 #include "CoreMinimal.h"
+
 #include "GameFramework/Character.h"
 #include "Ship.generated.h"
 
@@ -16,6 +17,7 @@ class ARTSPlayerController;
 class ATurret;
 class UUserWidget;
 class UHealthShieldBarHUD;
+class UAttackComponent;
 
 UCLASS()
 class RTSPROJECT_API AShip : public APawn, public IBaseBehavior
@@ -40,6 +42,8 @@ public:
 	UHealthShieldComponent* HealthShieldComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UShipMovementComponent* MovementComponent = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UAttackComponent* AttackComponent = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
 	UFogOfWarInfluencerComponent* FOWInfluencerComponent = nullptr;
 	
@@ -113,7 +117,10 @@ public:
 
 	// Moving
 	UFUNCTION(BlueprintCallable, Category = "Moving")
-	bool Move(const FVector _TargetLocation);
+	bool Move(const FVector TargetLocation);
+
+	UFUNCTION(BlueprintCallable)
+	void Attack(const AActor* ActorToAttack);
 
 	void DrawNavLine();
 	void UpdatePositionWhenCreated();
@@ -125,7 +132,7 @@ public:
 	void MouseYPositiveEnd();
 	void MouseYNegativeStart();
 	void MouseYNegativeEnd();
-	
+
 protected:
 	
 	virtual void BeginPlay() override;

@@ -28,4 +28,11 @@ public:
 	/// <param name="Point">FVector from which distance will be calculated</param>
 	/// <returns>Sorted array of vectors</returns>
 	static TArray<FVector> GetSortedVectorsByDistanceFromPoint(const TArray<FVector>& Vectors, const FVector& Point);
+
+	/// <summary>
+	/// Returns scale units from project settings:  centimeters, meters, ...
+	/// By default DistanceUnits is meters
+	/// </summary>
+	/// <returns>Float DistanceUnits: Millimeters=1000.0, Meters=1.0, Kilometers=0.001</returns>
+	static float GetScaleValueFromSettings();
 };

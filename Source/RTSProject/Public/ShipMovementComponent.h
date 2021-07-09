@@ -93,7 +93,7 @@ public:
 	
 	TArray<FVector> NavPathCoords;
 
-	AShip* OwnerShip = nullptr;
+	AShip* Owner = nullptr;
 	ARTSPlayerController* PlayerController = nullptr;
 	ARTSAIController* RTSAIController = nullptr;
 	

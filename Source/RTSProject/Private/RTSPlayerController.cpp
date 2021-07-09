@@ -1,5 +1,6 @@
 #include "RTSPlayerController.h"
 
+#include "AttackComponent.h"
 #include "Ship.h"
 #include "Building.h"
 #include "Camera.h"
@@ -37,19 +38,21 @@ void ARTSPlayerController::BeginPlay()
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("GameHUD=nullptr in ARTSPlayerController"));
 		UE_LOG(LogTemp, Error, TEXT("GameHUD=nullptr in ARTSPlayerController"));
 	}
-	
-	TArray<AActor*> OutActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFogOfWar::StaticClass(), OutActors);
-	for(auto& a : OutActors)
+
+	// Trying to find AFogOfWar class on level
+	TArray<AActor*> ActorsOfClass;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFogOfWar::StaticClass(), ActorsOfClass);
+	for(auto& a : ActorsOfClass)
 	{
 		AFogOfWar* test = Cast<AFogOfWar>(a);
 		if (test) FogOfWar = test;
 	}
+	// If no AFogOfWar found then create one
 	if (!FogOfWar)
 	{
 		FActorSpawnParameters Params;
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		UClass* SpawnClass = FactoryAssets->FogOfWarClass.Get();
+		UClass* SpawnClass = FactoryAssets->GetFogOfWarClass().Get();
 		FogOfWar = GetWorld()->SpawnActor<AFogOfWar>(SpawnClass, FVector(0, 0, 0), FRotator(0, 0, 0), Params);
 	}
 	FogOfWar->Initialize(this);
@@ -173,8 +176,9 @@ void ARTSPlayerController::RMBPressed()
 void ARTSPlayerController::RMBReleased()
 {
 	bRMBPressed = false;
-	MoveSelectedShips();
-	SetSpawnPointForSelectedBuildings();
+	ExecuteCommandToSelectedActors<AShip>(&ARTSPlayerController::MoveSelectedActors);
+	ExecuteCommandToSelectedActors<AShip>(&ARTSPlayerController::AttackBySelectedActors);
+	ExecuteCommandToSelectedActors<ABuilding>(&ARTSPlayerController::SetSpawnPointForSelectedBuildings);
 }
 
 void ARTSPlayerController::DamagePressed()
@@ -229,80 +233,37 @@ void ARTSPlayerController::HighlightActorsUnderCursor()
 	}
 }
 
-void ARTSPlayerController::MoveSelectedShips()
+bool ARTSPlayerController::MoveSelectedActors(AShip* Ship, FHitResult HitResult)
 {
-	if (SelectedActors.Num() == 0) return;
-	for (auto& a : SelectedActors)
-	{
-		AShip* Ship = Cast<AShip>(a);
-		if (Ship)
-		{
-			FHitResult Hit;
-			const bool bHit = GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
-			if (bHit)
-			{
-				float Z = Ship->GetActorLocation().Z;
-				float X = Hit.Location.X, Y = Hit.Location.Y;
-				Ship->Move(FVector(X, Y, Z));
-			}
-		}
-	}
+	Ship->Move(FVector(HitResult.Location.X, HitResult.Location.Y, Ship->GetActorLocation().Z));
+	return true;
 }
 
-void ARTSPlayerController::SetSpawnPointForSelectedBuildings()
+bool ARTSPlayerController::AttackBySelectedActors(AShip* Ship, FHitResult HitResult)
 {
-	if (SelectedActors.Num() == 0) return;
-	for (auto& a : SelectedActors)
+	UAttackComponent* AttackComponent = Ship->FindComponentByClass<UAttackComponent>();
+	if (AttackComponent)
 	{
-		ABuilding* Building = Cast<ABuilding>(a);
-		if(Building)
+		AActor* AttackedActor = HitResult.Actor.Get();
+		UAttackComponent* AttackedActorAttackComponent = AttackedActor->FindComponentByClass<UAttackComponent>();
+		if (AttackedActorAttackComponent)
 		{
-			FHitResult Hit;
-			const bool bHit = GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
-			if (bHit)
+			if (AttackComponent->bCanAttack &&
+				AttackedActor != Ship &&
+				AttackedActorAttackComponent->bCanBeAttacked)
 			{
-				float Z = Building->GetActorLocation().Z;
-				float X = Hit.Location.X, Y = Hit.Location.Y;
-				Building->SetSpawnPointLocation(FVector(X, Y, Z));
+				Ship->Attack(AttackedActor);
 			}
+			else return false;
 		}
+		else return false;
 	}
+	else return false;
+	return true;
 }
 
-float ARTSPlayerController::GetScaleValueFromSettings()
+bool ARTSPlayerController::SetSpawnPointForSelectedBuildings(ABuilding* Building, FHitResult HitResult)
 {
-	float DistanceUnitScale = 0;
-	FString ValueReceived;
-	if (GConfig->GetString(
-		TEXT("/Script/UnrealEd.EditorProjectAppearanceSettings"),
-		TEXT("DistanceUnits"),
-		ValueReceived,
-		GEditorIni))
-	{
-		TOptional<EUnit> CurrentUnit = FUnitConversion::UnitFromString(*ValueReceived);
-		if (!CurrentUnit.IsSet())
-			CurrentUnit = EUnit::Centimeters;
-
-		switch (CurrentUnit.GetValue())
-		{
-		case EUnit::Micrometers:
-			DistanceUnitScale = 1000000.0;
-			break;
-		case EUnit::Millimeters:
-			DistanceUnitScale = 1000.0;
-			break;
-		case EUnit::Centimeters:
-			DistanceUnitScale = 100.0;
-			break;
-		case EUnit::Meters:
-			DistanceUnitScale = 1.0;
-			break;
-		case EUnit::Kilometers:
-			DistanceUnitScale = 0.001;
-			break;
-		default:
-			DistanceUnitScale = 100.0;
-		}
-	}
-	return DistanceUnitScale;
+	Building->SetSpawnPointLocation(FVector(HitResult.Location.X, HitResult.Location.Y, Building->GetActorLocation().Z));
+	return true;
 }

@@ -33,10 +33,7 @@ void ATurret::BeginPlay()
 {
 	Super::BeginPlay();
 	FiredRockets.Reserve(20);
-	// Binding Fire() function that will fire rocket
-	// when timer hits FireEveryThisSeconds
-	TimerDelegate.BindUFunction(this, FName("Fire"));
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, FireEveryThisSeconds, true);
+	
 }
 
 void ATurret::Initialize(ARTSPlayerController* RTSController, AShip* Ship)
@@ -69,20 +66,24 @@ void ATurret::Initialize(ARTSPlayerController* RTSController, AShip* Ship)
 
 	OwnerShip->bHasWorkingTurrets = true;
 
-	if (PlayerController->GetFactoryAssets())
+	// If no rocket is set in turret blueprint then set first from FactoryAssets
+	if (RocketClass.Get() == nullptr)
 	{
-		if(PlayerController->GetFactoryAssets()->RocketClass)
+		if (PlayerController->GetFactoryAssets())
 		{
-			ShootableRocket = PlayerController->GetFactoryAssets()->RocketClass;
+			if(PlayerController->GetFactoryAssets()->GetRocketClass(0))
+			{
+				RocketClass = PlayerController->GetFactoryAssets()->GetRocketClass(0);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("RocketClass in FactoryAssets is empty"));
+			}
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("RocketClass in FactoryAssets is empty"));
+			UE_LOG(LogTemp, Error, TEXT("FactoryAssets in PlayerController is nullptr"));
 		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("FactoryAssets in PlayerController is nullptr"));
 	}
 }
 
@@ -92,10 +93,13 @@ void ATurret::Tick(float DeltaTime)
 
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
 
-	if (OwnerShip->bIsSelected)
+	if (OwnerShip->bIsSelected && !bIsOrderedToAttack)
 	{
-		SetFacingOnMouse();
-		bShouldFire = true;
+		//SetFacingOnMouse();
+	}
+	else if (bIsOrderedToAttack)
+	{
+		SetFacingOnActor(ActorToAttack);
 	}
 	else
 	{
@@ -103,7 +107,12 @@ void ATurret::Tick(float DeltaTime)
 	}
 
 	CheckAngle();
-	RotateTurret(DeltaTime);
+
+	// Rotate turret this tick
+	const FRotator Rotator = GetActorRotation() + DeltaRotation * DeltaTime;
+	SetActorRotation(Rotator, ETeleportType::None);
+	//const FRotator NewRotation = UKismetMathLibrary::RInterpTo(GetActorRotation(), Rotator, DeltaTime, RotationSpeed);
+	//SetActorRotation(NewRotation, ETeleportType::None);
 }
 
 
@@ -116,24 +125,50 @@ bool ATurret::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
 	return Super::Destroy(bNetForce, bShouldModifyLevel);
 }
 
+
+void ATurret::Attack(const AActor* _ActorToAttack)
+{
+	if (!IsValid(_ActorToAttack)) return;
+	ActorToAttack = _ActorToAttack;
+	bIsOrderedToAttack = true;
+
+	// Binding Fire() function that will fire rocket when timer hits FireEveryThisSeconds
+	GetWorldTimerManager().SetTimer(THForFiring,this, &ATurret::Fire, FireEveryThisSeconds, true);
+}
+
+void ATurret::Fire()
+{
+	// Stop timer if actor to attack is dead or no order to attack is present
+	if (!IsValid(ActorToAttack) || !bIsOrderedToAttack)
+	{
+		bIsOrderedToAttack = false;
+		bShouldFire = false;
+		GetWorldTimerManager().ClearTimer(THForFiring);
+		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::White, TEXT("Turret is stopping firing"));
+		return;
+	}
+	
+	// Check if turret is facing actor to attack
+	const FVector VectorFromTurretToActorToAttack = ActorToAttack->GetActorLocation() - GetActorLocation();
+	const float AngleBetweenTurretAndActor = AnglesFunctions::FindAngleBetweenVectorsOn2D(GetActorForwardVector(), VectorFromTurretToActorToAttack);
+	if (AngleBetweenTurretAndActor > 0 && AngleBetweenTurretAndActor < 10 || AngleBetweenTurretAndActor < 0 && AngleBetweenTurretAndActor > -10) this->bShouldFire = true;
+	
+	if (bShouldFire && UKismetMathLibrary::RandomFloat() > ChanceToFire)
+	{
+		// Fire rocket from arrow
+		ARocket* SpawnedRocket = RocketFactory::NewRocket(GetWorld(), RocketClass.Get(), PlayerController, this, Arrow->K2_GetComponentToWorld());
+		bShouldFire = false;
+		FiredRockets.Add(SpawnedRocket);
+	}
+}
+
 void ATurret::SetFacingOnMouse()
 {
 	FHitResult Hit;
 	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
 	const FVector VectorFromTurretToCursor = Hit.Location - GetActorLocation();
 	const FRotator Rotator = AnglesFunctions::FindYawRotatorOn2D(GetActorForwardVector(), VectorFromTurretToCursor);
-	Rotation = FRotator(0, Rotator.Yaw, 0);
-}
-
-void ATurret::Fire()
-{
-	if (UKismetMathLibrary::RandomFloat() > ChanceToFire && bShouldFire)
-	{
-		// Fire rocket from arrow
-		ARocket* SpawnedRocket = RocketFactory::NewRocket(GetWorld(), ShootableRocket.Get(), PlayerController, this, Arrow->K2_GetComponentToWorld());
-		bShouldFire = false;
-		FiredRockets.Add(SpawnedRocket);
-	}
+	DeltaRotation = FRotator(0, Rotator.Yaw, 0);
 }
 
 void ATurret::SetFacingLeftRight()
@@ -150,7 +185,13 @@ void ATurret::SetFacingLeftRight()
 	{
 		Rotator = AnglesFunctions::FindYawRotatorOn2D(Forward, -1 * ShipRightVector);
 	}
-	Rotation = FRotator(0, Rotator.Yaw, 0);
+	DeltaRotation = FRotator(0, Rotator.Yaw, 0);
+}
+
+void ATurret::SetFacingOnActor(const AActor* ActorToSetFacingTo)
+{
+	const FVector VectorFromTurretToActor = ActorToSetFacingTo->GetActorLocation() - GetActorLocation();
+	DeltaRotation = AnglesFunctions::FindYawRotatorOn2D(GetActorForwardVector(), VectorFromTurretToActor);
 }
 
 void ATurret::CheckAngle()
@@ -169,13 +210,6 @@ void ATurret::CheckAngle()
 		Angle = -1 * Rotator.Yaw;
 	}
 
-	if (Angle > 0 && Angle > MaxAngleDeviation) Rotation = FRotator(0, -10, 0);
-	if (Angle < 0 && Angle < -1 * MaxAngleDeviation) Rotation = FRotator(0, 10, 0);
-}
-
-void ATurret::RotateTurret(float DeltaTime)
-{
-	const FRotator Rotator = GetActorRotation() + Rotation;
-	const FRotator NewRotation = UKismetMathLibrary::RInterpTo(GetActorRotation(), Rotator, DeltaTime, RotationSpeed);
-	SetActorRotation(NewRotation, ETeleportType::None);
+	if (Angle > 0 && Angle > MaxAngleDeviation) DeltaRotation = FRotator(0, -0.1, 0);
+	if (Angle < 0 && Angle < -1 * MaxAngleDeviation) DeltaRotation = FRotator(0, 0.1, 0);
 }

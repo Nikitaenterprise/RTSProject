@@ -4,6 +4,8 @@
 #include "GameFramework/PlayerController.h"
 #include "RTSPlayerController.generated.h"
 
+class ABuilding;
+class AShip;
 class UInputController;
 class ACamera;
 class AGameHUD;
@@ -57,7 +59,7 @@ public:
 	ARTSPlayerController();
 
 	void TestThis();
-
+	bool FF() { return true; }
 	virtual void Tick(float mainDeltaTime) override;
 
 	virtual void SetupInputComponent() override; //(class UInputComponent* PlayerInputComponent)
@@ -79,16 +81,19 @@ public:
 	template <class ActorType>
 	bool IsArrayContainThisTypeActors(const TArray<AActor*>& Array);
 
-	void MoveSelectedShips();
-	void SetSpawnPointForSelectedBuildings();
+	bool MoveSelectedActors(AShip* Ship, FHitResult HitResult);
+	bool AttackBySelectedActors(AShip* Ship, FHitResult HitResult);
+	bool SetSpawnPointForSelectedBuildings(ABuilding* Building,FHitResult HitResult);
+	template <typename ActorType>
+	bool ExecuteCommandToSelectedActors(bool(ARTSPlayerController::* FnCommand)(ActorType* Actor, FHitResult HitResult));
+
 	
 	// FactoryAssets	
 	UFUNCTION(BlueprintCallable, Category = "Factory")
 	UFactoryAssets* GetFactoryAssets() const { return FactoryAssets; }
 	UFUNCTION(BlueprintCallable, Category = "FogOfWar")
 	AFogOfWar* GetFOWManager() const { return FogOfWar; }
-	float GetScaleValueFromSettings();
-
+	
 protected:
 
 	virtual void BeginPlay() override;
@@ -104,4 +109,25 @@ bool ARTSPlayerController::IsArrayContainThisTypeActors(const TArray<AActor*>& A
 		if (IsValid(Actor)) return true;
 	}
 	return false;
+}
+
+template <typename ActorType>
+bool ARTSPlayerController::ExecuteCommandToSelectedActors(bool(ARTSPlayerController::* FnCommand)(ActorType* Actor, FHitResult HitResult))
+{
+	if (SelectedActors.Num() == 0) return false;
+	for (auto& Actor : SelectedActors)
+	{
+		ActorType* ThisActor = Cast<ActorType>(Actor);
+		if (ThisActor)
+		{
+			FHitResult Hit;
+			const bool bHit = GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
+			if (bHit)
+			{
+				// Calling std::invoke to avoid this monstrosity: (this->*FnCommand)(Actor1, HitResult1);
+				bool bSuccess = std::invoke(FnCommand, this, ThisActor, Hit);
+			}
+		}
+	}
+	return true;
 }
