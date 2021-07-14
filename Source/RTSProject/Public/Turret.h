@@ -75,7 +75,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
 	UFUNCTION(BlueprintCallable)
-	void Attack(const AActor* _ActorToAttack);
+	void RequestAttack(const AActor* _ActorToAttack);
 	UFUNCTION(BlueprintCallable)
 	void Fire();
 	UFUNCTION(BlueprintCallable)

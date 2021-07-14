@@ -63,10 +63,6 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsHighlighted = false;
 
-	UPROPERTY(BlueprintReadOnly)
-	float DeltaTime = 0;
-	UPROPERTY(BlueprintReadOnly)
-	float PastTime = 0;
 	UPROPERTY(BlueprintReadWrite)
 	float TimeToBuild = 5.0;
 
@@ -100,7 +96,7 @@ public:
 
 	AShip(const FObjectInitializer& ObjectInitializer);
 
-	virtual void Tick(float _mainDeltaTime) override;
+	virtual void Tick(float DeltaTime) override;
 	
 	void Initialize(ARTSPlayerController* RTSController);
 
@@ -117,10 +113,10 @@ public:
 
 	// Moving
 	UFUNCTION(BlueprintCallable, Category = "Moving")
-	bool Move(const FVector TargetLocation);
+	bool RequestMove(const FVector TargetLocation);
 
 	UFUNCTION(BlueprintCallable)
-	void Attack(const AActor* ActorToAttack);
+	void RequestAttack(const AActor* ActorToAttack);
 
 	void DrawNavLine();
 	void UpdatePositionWhenCreated();

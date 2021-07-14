@@ -99,8 +99,6 @@ void ARTSPlayerController::ShiftReleased()
 	bShiftPressed = false;
 }
 
-
-
 void ARTSPlayerController::LMBPressed()
 {
 	bLMBPressed = true;
@@ -235,7 +233,7 @@ void ARTSPlayerController::HighlightActorsUnderCursor()
 
 bool ARTSPlayerController::MoveSelectedActors(AShip* Ship, FHitResult HitResult)
 {
-	Ship->Move(FVector(HitResult.Location.X, HitResult.Location.Y, Ship->GetActorLocation().Z));
+	Ship->RequestMove(FVector(HitResult.Location.X, HitResult.Location.Y, Ship->GetActorLocation().Z));
 	return true;
 }
 
@@ -252,7 +250,7 @@ bool ARTSPlayerController::AttackBySelectedActors(AShip* Ship, FHitResult HitRes
 				AttackedActor != Ship &&
 				AttackedActorAttackComponent->bCanBeAttacked)
 			{
-				Ship->Attack(AttackedActor);
+				Ship->RequestAttack(AttackedActor);
 			}
 			else return false;
 		}

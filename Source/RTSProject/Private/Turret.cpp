@@ -126,7 +126,7 @@ bool ATurret::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
 }
 
 
-void ATurret::Attack(const AActor* _ActorToAttack)
+void ATurret::RequestAttack(const AActor* _ActorToAttack)
 {
 	if (!IsValid(_ActorToAttack)) return;
 	ActorToAttack = _ActorToAttack;
@@ -152,11 +152,16 @@ void ATurret::Fire()
 	const FVector VectorFromTurretToActorToAttack = ActorToAttack->GetActorLocation() - GetActorLocation();
 	const float AngleBetweenTurretAndActor = AnglesFunctions::FindAngleBetweenVectorsOn2D(GetActorForwardVector(), VectorFromTurretToActorToAttack);
 	if (AngleBetweenTurretAndActor > 0 && AngleBetweenTurretAndActor < 10 || AngleBetweenTurretAndActor < 0 && AngleBetweenTurretAndActor > -10) this->bShouldFire = true;
-	
+
 	if (bShouldFire && UKismetMathLibrary::RandomFloat() > ChanceToFire)
 	{
 		// Fire rocket from arrow
-		ARocket* SpawnedRocket = RocketFactory::NewRocket(GetWorld(), RocketClass.Get(), PlayerController, this, Arrow->K2_GetComponentToWorld());
+		ARocket* SpawnedRocket = RocketFactory::NewRocket(
+			GetWorld(), 
+			RocketClass.Get(), 
+			PlayerController, 
+			this, 
+			FTransform(VectorFromTurretToActorToAttack.Rotation(), GetActorLocation()));
 		bShouldFire = false;
 		FiredRockets.Add(SpawnedRocket);
 	}

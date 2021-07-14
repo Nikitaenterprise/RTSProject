@@ -32,6 +32,7 @@ AShip::AShip(const FObjectInitializer& OI)
 	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
 	CapsuleComponent->SetRelativeRotation(FRotator(0, 90, 0));
 	CapsuleComponent->SetupAttachment(GetRootComponent());
+	CapsuleComponent->bDynamicObstacle = true;
 	
 	SelectionCircle = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SelectionCircle"));
 	SelectionCircle->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -59,12 +60,10 @@ void AShip::BeginPlay()
 	Super::BeginPlay();
 }
 
-void AShip::Tick(float _mainDeltaTime)
+void AShip::Tick(float DeltaTime)
 {
-	Super::Tick(_mainDeltaTime);
+	Super::Tick(DeltaTime);
 	
-	DeltaTime = _mainDeltaTime;
-	PastTime += _mainDeltaTime;
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
 
 	if (bJustCreated && !PlayerController->bLMBPressed)
@@ -79,8 +78,7 @@ void AShip::Tick(float _mainDeltaTime)
 	}
 
 	bIsMoving = MovementComponent->Velocity.Size() > 0;
-	if (bIsMoving && UKismetMathLibrary::NearlyEqual_FloatFloat(PastTime, DrawNavLineOncePerThisSeconds)) DrawNavLine();
-	
+	//if (bIsMoving && UKismetMathLibrary::NearlyEqual_FloatFloat(PastTime, DrawNavLineOncePerThisSeconds)) DrawNavLine();
 }
 
 void AShip::Initialize(ARTSPlayerController* RTSController)
@@ -97,8 +95,8 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		}
 		else
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Init() is null"));
-			UE_LOG(LogTemp, Error, TEXT("MovementComponent in AShip->Init() is null"));
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Initialize() is null"));
+			UE_LOG(LogTemp, Error, TEXT("MovementComponent in AShip->Initialize() is null"));
 		}
 		if(AttackComponent)
 		{
@@ -107,8 +105,8 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		}
 		else
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("AttackComponent in AShip->Init() is null"));
-			UE_LOG(LogTemp, Error, TEXT("AttackComponent in AShip->Init() is null"));
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("AttackComponent in AShip->Initialize() is null"));
+			UE_LOG(LogTemp, Error, TEXT("AttackComponent in AShip->Initialize() is null"));
 		}
 		DebugInputComponent = PlayerController->InputComponent;
 		if (DebugInputComponent)
@@ -120,8 +118,8 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		}
 		else
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Init() is null"));
-			UE_LOG(LogTemp, Error, TEXT("InputComponent in AShip->Init() is null"));
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Initialize() is null"));
+			UE_LOG(LogTemp, Error, TEXT("InputComponent in AShip->Initialize() is null"));
 		}
 		
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
@@ -133,8 +131,8 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerController in AShip->Init() is null"));
-		UE_LOG(LogTemp, Error, TEXT("PlayerController in AShip->Init() is null"));
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerController in AShip->Initialize() is null"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerController in AShip->Initialize() is null"));
 	}
 	
 }
@@ -183,7 +181,7 @@ void AShip::Highlighted_Implementation(bool _bIsHighlighted)
 	}
 }
 
-bool AShip::Move(const FVector TargetLocation)
+bool AShip::RequestMove(const FVector TargetLocation)
 {
 	if (!MovementComponent)
 	{
@@ -197,12 +195,12 @@ bool AShip::Move(const FVector TargetLocation)
 	return true;
 }
 
-void AShip::Attack(const AActor* ActorToAttack)
+void AShip::RequestAttack(const AActor* ActorToAttack)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::White, FString::Printf(TEXT("Attacking %s"), *ActorToAttack->GetName()));
 	for(const auto Turret : Turrets)
 	{
-		Turret->Attack(ActorToAttack);
+		Turret->RequestAttack(ActorToAttack);
 	}
 }
 
