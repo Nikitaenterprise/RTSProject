@@ -52,15 +52,15 @@ public:
 	FORCEINLINE float GetVolumeLength() const { return GetBrushComponent()->CalcBounds(GetBrushComponent()->GetComponentTransform()).BoxExtent.X * 2 * GetActorScale().X; }
 	FORCEINLINE float GetVolumeWidth() const { return GetBrushComponent()->CalcBounds(GetBrushComponent()->GetComponentTransform()).BoxExtent.Y * 2 * GetActorScale().Y; }
 	FORCEINLINE uint32 GetCellSideLength() const { return CellSideLength; }
-	FORCEINLINE uint32 GetVolumeLengthInCells() const { return static_cast<uint32>(floorf(GetVolumeLength() / CellSideLength)); }
-	FORCEINLINE uint32 GetVolumeWidthInCells() const { return static_cast<uint32>(floorf(GetVolumeWidth() / CellSideLength)); }
+	FORCEINLINE uint32 GetVolumeLengthInCells() const { return static_cast<uint32>(floorf(GetVolumeLength() / static_cast<float>(CellSideLength))); }
+	FORCEINLINE uint32 GetVolumeWidthInCells() const { return static_cast<uint32>(floorf(GetVolumeWidth() / static_cast<float>(CellSideLength))); }
 	
 	template<class T>
 	FGridCell<T> GetGridCellByCoordinate(const FVector2D& Position) const
 	{
-		uint32 X = floorf(Position.X / CellSideLength) + GetVolumeWidthInCells() / 2;
-		uint32 Y = floorf(Position.Y / CellSideLength) + GetVolumeLengthInCells() / 2;
-		return Grid[Y * GetVolumeWidthInCells() + X];
+		uint32 X = floorf(Position.X / static_cast<float>(CellSideLength)) + static_cast<float>(GetVolumeWidthInCells()) / 2.0f;
+		uint32 Y = floorf(Position.Y / static_cast<float>(CellSideLength)) + static_cast<float>(GetVolumeLengthInCells()) / 2.0f;
+		return Grid[X + Y * GetVolumeWidthInCells()];
 	}
 
 	template<class T>

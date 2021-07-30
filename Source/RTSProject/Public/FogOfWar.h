@@ -71,6 +71,6 @@ protected:
 
 private:
 
-	void ApplyVision(TPair<AActor*, UFogOfWarInfluencerComponent*>* Tuple);
+	
 	
 };
