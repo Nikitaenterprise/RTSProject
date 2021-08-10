@@ -93,7 +93,7 @@ public:
 	
 	TArray<FVector> NavPathCoords;
 
-	AShip* OwnerShip = nullptr;
+	AShip* Owner = nullptr;
 	ARTSPlayerController* PlayerController = nullptr;
 	ARTSAIController* RTSAIController = nullptr;
 	
@@ -181,15 +181,17 @@ public:
 
 	TArray<FVector> GetNavPathCoords() const { return NavPathCoords; }
 	
-	bool RequestNavMoving(const FVector _TargetLocation);
+	bool RequestNavMoving(const FVector TargetLocation);
 	void TurnOnCapsuleCollision(const bool TurnOn) const;
 
 private:
-
+	
+	inline void ProcessStraightLine(float DeltaTime);
+	inline void ProcessArcLine(float DeltaTime);
+	
 	inline void ReverceLineSegments();
 	void BuildLineSegments();
-	inline void MakePathInXYPlane(float _SetZToThisValue);
-	inline void GetPoint();
+	inline void MakePathInXYPlane(float SetZToThisValue);
 	inline void CalculateForwardSpeed();
 	inline void CalculateYawSpeed();
 	inline void CalculateRoll();

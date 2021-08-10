@@ -18,7 +18,7 @@ ABuilding* BuildingFactory::NewBuilding(UWorld* _World, const FVector& _Location
 {
 	if (!_Controller) return nullptr;
 
-	const TSubclassOf<ABuilding> BuildingClass = _Controller->GetFactoryAssets()->BuildingClass;
+	const TSubclassOf<ABuilding> BuildingClass = _Controller->GetFactoryAssets()->GetBuildingClass(0);
 	if (!BuildingClass) return nullptr;
 
 	ABuilding* SpawnedBuilding = _World->SpawnActor<ABuilding>(

@@ -4,6 +4,7 @@
 #include "RTSPlayerController.h"
 #include "HealthShieldBarHUD.h"
 #include "HealthShieldComponent.h"
+#include "MiniMapInfluencerComponent.h"
 #include "ShipFactory.h"
 #include "Ship.h"
 
@@ -30,6 +31,8 @@ ABuilding::ABuilding()
 	SpawnPoint = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SpawnPoint"));
 	
 	HealthShieldComponent = CreateDefaultSubobject<UHealthShieldComponent>(TEXT("HealthShieldComponent"));
+
+	MiniMapInfluencerComponent = CreateDefaultSubobject<UMiniMapInfluencerComponent>(TEXT("MiniMapInfluencerComponent"));
 }
 
 void ABuilding::BeginPlay()
@@ -46,6 +49,7 @@ void ABuilding::Initialize(ARTSPlayerController* RTSController)
 		HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
 		HealthShieldBar->SetVisibility(false);
 		FOWInfluencerComponent->Initialize(PlayerController);
+		MiniMapInfluencerComponent->Initialize(PlayerController);
 		
 	}
 	else

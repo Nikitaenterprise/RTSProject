@@ -14,7 +14,7 @@ class RTSPROJECT_API UFogOfWarInfluencerComponent : public UActorComponent
 
 public:
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	AFogOfWar* FOW = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FogOfWar")
 	int32 SightRadius = 1000;
@@ -28,7 +28,7 @@ public:
 	UFogOfWarInfluencerComponent();
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	void Initialize(ARTSPlayerController* PlayerController);
+	void Initialize(const ARTSPlayerController* PlayerController);
 
 protected:
 

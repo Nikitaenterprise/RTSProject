@@ -3,6 +3,7 @@
 #include "BaseBehavior.h"
 
 #include "CoreMinimal.h"
+
 #include "GameFramework/Character.h"
 #include "Ship.generated.h"
 
@@ -16,6 +17,8 @@ class ARTSPlayerController;
 class ATurret;
 class UUserWidget;
 class UHealthShieldBarHUD;
+class UAttackComponent;
+class UMiniMapInfluencerComponent;
 
 UCLASS()
 class RTSPROJECT_API AShip : public APawn, public IBaseBehavior
@@ -40,8 +43,12 @@ public:
 	UHealthShieldComponent* HealthShieldComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UShipMovementComponent* MovementComponent = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UAttackComponent* AttackComponent = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
 	UFogOfWarInfluencerComponent* FOWInfluencerComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UMiniMapInfluencerComponent* MiniMapInfluencerComponent = nullptr;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
@@ -59,10 +66,6 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsHighlighted = false;
 
-	UPROPERTY(BlueprintReadOnly)
-	float DeltaTime = 0;
-	UPROPERTY(BlueprintReadOnly)
-	float PastTime = 0;
 	UPROPERTY(BlueprintReadWrite)
 	float TimeToBuild = 5.0;
 
@@ -96,7 +99,7 @@ public:
 
 	AShip(const FObjectInitializer& ObjectInitializer);
 
-	virtual void Tick(float _mainDeltaTime) override;
+	virtual void Tick(float DeltaTime) override;
 	
 	void Initialize(ARTSPlayerController* RTSController);
 
@@ -113,7 +116,10 @@ public:
 
 	// Moving
 	UFUNCTION(BlueprintCallable, Category = "Moving")
-	bool Move(const FVector _TargetLocation);
+	bool RequestMove(const FVector TargetLocation);
+
+	UFUNCTION(BlueprintCallable)
+	void RequestAttack(const AActor* ActorToAttack);
 
 	void DrawNavLine();
 	void UpdatePositionWhenCreated();
@@ -125,7 +131,7 @@ public:
 	void MouseYPositiveEnd();
 	void MouseYNegativeStart();
 	void MouseYNegativeEnd();
-	
+
 protected:
 	
 	virtual void BeginPlay() override;

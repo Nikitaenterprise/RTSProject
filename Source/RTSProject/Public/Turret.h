@@ -26,6 +26,7 @@ class RTSPROJECT_API ATurret : public AActor, public IBaseBehavior
 	GENERATED_BODY()
 	
 public:
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
@@ -38,10 +39,13 @@ public:
 	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(BlueprintReadOnly)
 	AShip* OwnerShip = nullptr;
-
-	FTimerHandle TimerHandle;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rocket")
+	TSubclassOf<ARocket> RocketClass;
+	UPROPERTY(BlueprintReadOnly, Category = "Rocket")
 	TArray<ARocket*> FiredRockets;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	const AActor* ActorToAttack = nullptr;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	int FireEveryThisSeconds = 2;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
@@ -51,10 +55,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation")
 	float MaxAngleDeviation = 45;
 
+	
+
+private:
+	
+	// Timer handle for firing rockets
+	FTimerHandle THForFiring;
+	bool bShouldFire = false;
+	bool bIsOrderedToAttack = false;
 	ESide OnWhichSide;
-
-	FRotator Rotation = FRotator(0, 0, 0);
-
+	FRotator DeltaRotation = FRotator(0, 0, 0);
+	
 public:	
 
 	ATurret();
@@ -64,17 +75,20 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
 	UFUNCTION(BlueprintCallable)
-	void SetFacingOnMouse();
+	void RequestAttack(const AActor* _ActorToAttack);
 	UFUNCTION(BlueprintCallable)
 	void Fire();
 	UFUNCTION(BlueprintCallable)
+	void SetFacingOnMouse();
+	UFUNCTION(BlueprintCallable)
 	void SetFacingLeftRight();
 	UFUNCTION(BlueprintCallable)
-	void CheckAngle();
+	void SetFacingOnActor(const AActor* ActorToSetFacingTo);
 	UFUNCTION(BlueprintCallable)
-	void RotateTurret(float DeltaTime);
+	void CheckAngle();
 
 protected:
 	
 	virtual void BeginPlay() override;
+	
 };

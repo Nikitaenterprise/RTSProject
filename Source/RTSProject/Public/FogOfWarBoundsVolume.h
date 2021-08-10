@@ -49,22 +49,35 @@ public:
 	//AFogOfWarBoundsVolume();
 	void Initialize();
 	
-	FORCEINLINE float GetVolumeLength() const { return GetBrushComponent()->CalcBounds(GetBrushComponent()->GetComponentTransform()).BoxExtent.X * 2 * GetActorScale().X; }
-	FORCEINLINE float GetVolumeWidth() const { return GetBrushComponent()->CalcBounds(GetBrushComponent()->GetComponentTransform()).BoxExtent.Y * 2 * GetActorScale().Y; }
+	FORCEINLINE float GetVolumeHeight() const { return GetBrushComponent()->CalcBounds(GetBrushComponent()->GetComponentTransform()).BoxExtent.Y * 2 * GetActorScale().Y; }
+	FORCEINLINE float GetVolumeWidth() const { return GetBrushComponent()->CalcBounds(GetBrushComponent()->GetComponentTransform()).BoxExtent.X * 2 * GetActorScale().X; }
 	FORCEINLINE uint32 GetCellSideLength() const { return CellSideLength; }
-	FORCEINLINE uint32 GetVolumeLengthInCells() const { return static_cast<uint32>(floorf(GetVolumeLength() / CellSideLength)); }
-	FORCEINLINE uint32 GetVolumeWidthInCells() const { return static_cast<uint32>(floorf(GetVolumeWidth() / CellSideLength)); }
-	
-	template<class T>
-	FGridCell<T> GetGridCellByCoordinate(const FVector2D& Position) const
-	{
-		uint32 X = floorf(Position.X / CellSideLength) + GetVolumeWidthInCells() / 2;
-		uint32 Y = floorf(Position.Y / CellSideLength) + GetVolumeLengthInCells() / 2;
-		return Grid[Y * GetVolumeWidthInCells() + X];
-	}
+	FORCEINLINE uint32 GetVolumeHeightInCells() const { return static_cast<uint32>(floorf(GetVolumeHeight() / static_cast<float>(CellSideLength))); }
+	FORCEINLINE uint32 GetVolumeWidthInCells() const { return static_cast<uint32>(floorf(GetVolumeWidth() / static_cast<float>(CellSideLength))); }
 
 	template<class T>
+	FGridCell<T>& GetGridCellByCoordinate(const FVector2D& Position)
+	{
+		uint32 X = floorf(Position.X / static_cast<float>(CellSideLength)) + static_cast<float>(GetVolumeWidthInCells()) / 2.0f;
+		uint32 Y = floorf(Position.Y / static_cast<float>(CellSideLength)) + static_cast<float>(GetVolumeHeightInCells()) / 2.0f;
+		return Grid[X + Y * GetVolumeWidthInCells()];
+	}
+
+	/// <summary>
+	/// Given the cell grid returns it's top left coordinates
+	/// </summary>
+	/// <typeparam name="T">Cell template type (bool)</typeparam>
+	/// <param name="Cell">Cell to work with</param>
+	/// <returns>Top left coordinate as FVecor2D (minimum X and Y)</returns>
+	template<class T>
 	FORCEINLINE FVector2D GetXYMinOfGridCell(const FGridCell<T>& Cell) const { return FVector2D(Cell.Column, Cell.Row) * CellSideLength; }
+
+	/// <summary>
+	/// Given the cell grid returns it's down right coordinates
+	/// </summary>
+	/// <typeparam name="T">Cell template type (bool)</typeparam>
+	/// <param name="Cell">Cell to work with</param>
+	/// <returns>Down right coordinate as FVecor2D (maximum X and Y)</returns>
 	template<class T>
 	FORCEINLINE FVector2D GetXYMaxOfGridCell(const FGridCell<T>& Cell) const { return FVector2D(Cell.Column + 1, Cell.Row + 1) * CellSideLength; }
 

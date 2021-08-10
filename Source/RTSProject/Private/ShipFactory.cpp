@@ -46,7 +46,7 @@ void ShipFactory::AddTurretsToShip(AShip* Ship)
 {
 	if (!Ship) return;
 	if (Ship->bHasWorkingTurrets) return; 
-	const TSubclassOf<ATurret> TurretClass = Ship->PlayerController->GetFactoryAssets()->TurretClass;
+	const TSubclassOf<ATurret> TurretClass = Ship->PlayerController->GetFactoryAssets()->GetTurretClass(0);
 	if(TurretClass)
 	{
 		UStaticMeshComponent* StaticMesh = Ship->StaticMesh;

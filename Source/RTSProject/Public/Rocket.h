@@ -27,9 +27,12 @@ public:
 	ATurret* OwnerTurret = nullptr;
 
 	FTimerHandle TimerHandle;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxLifeTime = 5;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Speed = 300;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Damage = 25;
 
 public:

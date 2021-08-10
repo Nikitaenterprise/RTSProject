@@ -17,7 +17,7 @@ AAsteroidField* AsteroidFieldFactory::NewAsteroidField(UWorld* _World, ARTSPlaye
 AAsteroidField* AsteroidFieldFactory::NewAsteroidField(UWorld* _World, const FVector& _Location,
                                                        ARTSPlayerController* _Controller)
 {
-	const TSubclassOf<AAsteroidField> AsteroidFieldClass = _Controller->GetFactoryAssets()->AsteroidFieldClass;
+	const TSubclassOf<AAsteroidField> AsteroidFieldClass = _Controller->GetFactoryAssets()->GetAsteroidFieldClass(0);
 	if (AsteroidFieldClass) {
 		
 		AAsteroidField* SpawnedAsteroidField = _World->SpawnActor<AAsteroidField>(AsteroidFieldClass.Get(),

@@ -4,7 +4,9 @@
 
 #include "AsteroidFieldFactory.h"
 #include "BuildingFactory.h"
-
+#include "FactoryAssets.h"
+#include "ShipFactory.h"
+#include "Ship.h"
 #include "Kismet/KismetMathLibrary.h"
 
 //UBasicButtonsHUD::UBasicButtonsHUD(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
@@ -24,7 +26,9 @@ void UBasicButtonsHUD::SpawnShip()
 	v.X = UKismetMathLibrary::RandomIntegerInRange(-1000, 1000);
 	v.Y = UKismetMathLibrary::RandomIntegerInRange(-1000, 1000);
 	v.Z = 150;
-	//ShipFactory::NewShip(GetWorld(), FVector(-1000, 0, -100), PlayerController);
+	AShip* SpawnedShip = ShipFactory::NewShip(GetWorld(), PlayerController->GetFactoryAssets()->GetShipClass(0).Get(), PlayerController,FVector(-1000, 0, 0));
+	if (!SpawnedShip) return;
+	ShipFactory::AddTurretsToShip(SpawnedShip);
 }
 
 void UBasicButtonsHUD::SpawnAsteroidField()

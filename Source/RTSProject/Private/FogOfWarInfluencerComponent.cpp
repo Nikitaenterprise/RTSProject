@@ -21,9 +21,19 @@ void UFogOfWarInfluencerComponent::TickComponent(float DeltaTime, ELevelTick Tic
 
 }
 
-void UFogOfWarInfluencerComponent::Initialize(ARTSPlayerController* PlayerController)
+void UFogOfWarInfluencerComponent::Initialize(const ARTSPlayerController* PlayerController)
 {
-	if (!PlayerController->FogOfWar) return;
+	if (!PlayerController)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerController in UFogOfWarInfluencerComponent->Initialize() is nullptr"));
+		return;
+	}
+	if (!PlayerController->FogOfWar)
+	{
+		UE_LOG(LogTemp, Error, TEXT("FogOfWar in UFogOfWarInfluencerComponent->Initialize() is nullptr"));
+		return;
+	}
 	FOW = PlayerController->FogOfWar;
 	FOW->RegisterActor(GetOwner());
 }
+

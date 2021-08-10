@@ -27,7 +27,8 @@ class RTSPROJECT_API AFogOfWar : public AActor
 	GENERATED_BODY()
 
 public:
-	UPROPERTY()
+	
+	UPROPERTY(BlueprintReadOnly)
 	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	APostProcessVolume* FOWPostProcessVolume = nullptr;
@@ -46,9 +47,11 @@ public:
 	
 	TArray<TPair<AActor*, UFogOfWarInfluencerComponent*>> RegisteredActors;
 
-	uint32 VolumeLengthInCells = 0;
+	uint32 VolumeHeightInCells = 0;
+	uint32 VolumeWidthInCells = 0;
 	uint32 TextureBufferSize = 0;
-	float VolumeLength = 0;
+	float VolumeHeight = 0;
+	float VolumeWidth = 0;
 public:	
 
 	AFogOfWar();
@@ -71,6 +74,6 @@ protected:
 
 private:
 
-	void ApplyVision(TPair<AActor*, UFogOfWarInfluencerComponent*>* Tuple);
+	
 	
 };
