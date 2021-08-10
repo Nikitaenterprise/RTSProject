@@ -12,8 +12,8 @@ void AFogOfWarBoundsVolume::PaveVolumeWithGrid()
 	Grid.Empty();
 	const int32 XMin = -GetVolumeWidth()/2;
 	const int32 XMax = GetVolumeWidth()/2;
-	const int32 YMin = -GetVolumeLength()/2;
-	const int32 YMax = GetVolumeLength()/2;
+	const int32 YMin = -GetVolumeHeight()/2;
+	const int32 YMax = GetVolumeHeight()/2;
 
 
 	Grid.Reserve((XMax - XMin) * (YMax - YMin));

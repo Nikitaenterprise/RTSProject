@@ -17,6 +17,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
+#include "MiniMapInfluencerComponent.h"
 
 
 AShip::AShip(const FObjectInitializer& OI)
@@ -53,6 +54,8 @@ AShip::AShip(const FObjectInitializer& OI)
 	AttackComponent = CreateDefaultSubobject<UAttackComponent>(TEXT("AttackComponent"));
 
 	FOWInfluencerComponent = CreateDefaultSubobject<UFogOfWarInfluencerComponent>(TEXT("FOWInfluencerComponent"));
+
+	MiniMapInfluencerComponent = CreateDefaultSubobject<UMiniMapInfluencerComponent>(TEXT("MiniMapInfluencerComponent"));
 }
 
 void AShip::BeginPlay()
@@ -95,8 +98,8 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		}
 		else
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Initialize() is null"));
-			UE_LOG(LogTemp, Error, TEXT("MovementComponent in AShip->Initialize() is null"));
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Initialize() is nullptr"));
+			UE_LOG(LogTemp, Error, TEXT("MovementComponent in AShip->Initialize() is nullptr"));
 		}
 		if(AttackComponent)
 		{
@@ -105,8 +108,8 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		}
 		else
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("AttackComponent in AShip->Initialize() is null"));
-			UE_LOG(LogTemp, Error, TEXT("AttackComponent in AShip->Initialize() is null"));
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("AttackComponent in AShip->Initialize() is nullptr"));
+			UE_LOG(LogTemp, Error, TEXT("AttackComponent in AShip->Initialize() is nullptr"));
 		}
 		DebugInputComponent = PlayerController->InputComponent;
 		if (DebugInputComponent)
@@ -118,8 +121,8 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		}
 		else
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Initialize() is null"));
-			UE_LOG(LogTemp, Error, TEXT("InputComponent in AShip->Initialize() is null"));
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Initialize() is nullptr"));
+			UE_LOG(LogTemp, Error, TEXT("InputComponent in AShip->Initialize() is nullptr"));
 		}
 		
 		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
@@ -128,11 +131,12 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 		SelectionCircle->SetVisibility(false);
 
 		FOWInfluencerComponent->Initialize(PlayerController);
+		MiniMapInfluencerComponent->Initialize(PlayerController);
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerController in AShip->Initialize() is null"));
-		UE_LOG(LogTemp, Error, TEXT("PlayerController in AShip->Initialize() is null"));
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerController in AShip->Initialize() is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerController in AShip->Initialize() is nullptr"));
 	}
 	
 }

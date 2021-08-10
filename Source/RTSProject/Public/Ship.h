@@ -18,6 +18,7 @@ class ATurret;
 class UUserWidget;
 class UHealthShieldBarHUD;
 class UAttackComponent;
+class UMiniMapInfluencerComponent;
 
 UCLASS()
 class RTSPROJECT_API AShip : public APawn, public IBaseBehavior
@@ -46,6 +47,8 @@ public:
 	UAttackComponent* AttackComponent = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
 	UFogOfWarInfluencerComponent* FOWInfluencerComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UMiniMapInfluencerComponent* MiniMapInfluencerComponent = nullptr;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;

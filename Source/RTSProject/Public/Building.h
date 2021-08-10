@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "Building.generated.h"
 
+class UMiniMapInfluencerComponent;
 class UFogOfWarInfluencerComponent;
 class UHealthShieldComponent;
 class UWidgetComponent;
@@ -54,6 +55,8 @@ public:
 	UHealthShieldComponent* HealthShieldComponent = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
 	UFogOfWarInfluencerComponent* FOWInfluencerComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UMiniMapInfluencerComponent* MiniMapInfluencerComponent = nullptr;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;

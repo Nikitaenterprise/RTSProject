@@ -4,6 +4,7 @@
 #include "BasicButtonsHUD.h"
 #include "ShipHUD.h"
 #include "BuildingHUD.h"
+#include "MiniMapHUD.h"
 
 
 AGameHUD::AGameHUD(const FObjectInitializer& OI) : Super(OI)
@@ -13,12 +14,25 @@ AGameHUD::AGameHUD(const FObjectInitializer& OI) : Super(OI)
 void AGameHUD::BeginPlay()
 {
 	Super::BeginPlay();
+	
 	if (SetupWidget<UBasicButtonsHUD>(BasicButtonsHUD, BasicButtonsHUDClass))
 		BasicButtonsHUD->AddToViewport();
+	else UE_LOG(LogTemp, Error, TEXT("Couldn't add UBasicButtonsHUD to viewport"));
+
 	if(SetupWidget<UShipHUD>(ShipHUD, ShipHUDClass))
 		ShipHUD->AddToViewport();
+	else UE_LOG(LogTemp, Error, TEXT("Couldn't add UShipHUD to viewport"));
+
 	if(SetupWidget<UBuildingHUD>(BuildingHUD, BuildingHUDClass))
 		BuildingHUD->AddToViewport();
+	else UE_LOG(LogTemp, Error, TEXT("Couldn't add UBuildingHUD to viewport"));
+
+	if (SetupWidget<UMiniMapHUD>(MiniMapHUD, MiniMapHUDClass))
+	{
+		MiniMapHUD->Initialize(PlayerController);
+		MiniMapHUD->AddToViewport();
+	}
+	else UE_LOG(LogTemp, Error, TEXT("Couldn't add UMiniMapHUD to viewport"));
 }
 
 void AGameHUD::DrawHUD()
@@ -64,6 +78,12 @@ void AGameHUD::ShowShipHUD() const
 	ShipHUD->SetVisibility(ESlateVisibility::Visible);
 	BasicButtonsHUD->SetVisibility(ESlateVisibility::Hidden);
 	BuildingHUD->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void AGameHUD::ShowMiniMapHUD() const
+{
+	if (bIsShowingMiniMapHUD) return;
+	MiniMapHUD->SetVisibility(ESlateVisibility::Visible);
 }
 
 void AGameHUD::OnInputStart() 

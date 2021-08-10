@@ -19,6 +19,9 @@ void AFogOfWar::BeginPlay()
 
 void AFogOfWar::Initialize(ARTSPlayerController* Controller)
 {
+	if (Controller) PlayerController = Controller;
+	else UE_LOG(LogTemp, Error, TEXT("PlayerController in AFogOfWar->Initialize is nullptr"));
+
 	// Find FOWBoundsVolume
 	if (!FOWBoundsVolume)
 	{
@@ -55,41 +58,47 @@ void AFogOfWar::Initialize(ARTSPlayerController* Controller)
 	}
 	//FOWPostProcessVolume->bUnbound = true;
 
-	VolumeLengthInCells = FOWBoundsVolume->GetVolumeLengthInCells();
-	TextureBufferSize = VolumeLengthInCells * VolumeLengthInCells * 4;
-	VolumeLength = FOWBoundsVolume->GetVolumeLength();
-	FOWTexture = UTexture2D::CreateTransient(VolumeLengthInCells, VolumeLengthInCells);
+	VolumeHeightInCells = FOWBoundsVolume->GetVolumeHeightInCells();
+	VolumeWidthInCells = FOWBoundsVolume->GetVolumeWidthInCells();
+	TextureBufferSize = VolumeWidthInCells * VolumeHeightInCells * 4;
+	VolumeHeight = FOWBoundsVolume->GetVolumeHeight();
+	VolumeWidth = FOWBoundsVolume->GetVolumeWidth();
+	FOWTexture = UTexture2D::CreateTransient(VolumeWidthInCells, VolumeHeightInCells);
 	FOWTexture->AddToRoot();
 	FOWTexture->UpdateResource();
 	FOWTextureBuffer = new uint8[TextureBufferSize];
 	// Will update whole texture at once
-	FOWUpdateTextureRegion = new FUpdateTextureRegion2D(0, 0, 0, 0, VolumeLengthInCells, VolumeLengthInCells);
+	FOWUpdateTextureRegion = new FUpdateTextureRegion2D(0, 0, 0, 0, VolumeWidthInCells, VolumeHeightInCells);
 	FOWMaterialInstance = UMaterialInstanceDynamic::Create(FOWMaterial, nullptr);
 	FOWMaterialInstance->SetTextureParameterValue(FName("VisibilityMask"), FOWTexture);
-	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverWorldSize"), 1.0f / VolumeLength);
-	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverTileSize"), 1.0f / static_cast<float>(VolumeLengthInCells));
-	FOWMaterialInstance->SetScalarParameterValue(FName("MaxX"), FOWBoundsVolume->GetCellSideLength() * (FOWBoundsVolume->GetVolumeLengthInCells() + 1));
-	FOWMaterialInstance->SetScalarParameterValue(FName("MaxY"), FOWBoundsVolume->GetCellSideLength() * (FOWBoundsVolume->GetVolumeLengthInCells() + 1));
+	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverWorldSizeX"), 1.0f / VolumeWidth);
+	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverTileSizeX"), 1.0f / static_cast<float>(VolumeWidthInCells));
+	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverWorldSizeY"), 1.0f / VolumeHeight);
+	FOWMaterialInstance->SetScalarParameterValue(FName("OneOverTileSizeY"), 1.0f / static_cast<float>(VolumeHeightInCells));
+	FOWMaterialInstance->SetScalarParameterValue(FName("MaxX"), FOWBoundsVolume->GetCellSideLength() * (FOWBoundsVolume->GetVolumeWidthInCells() + 1));
+	FOWMaterialInstance->SetScalarParameterValue(FName("MaxY"), FOWBoundsVolume->GetCellSideLength() * (FOWBoundsVolume->GetVolumeHeightInCells() + 1));
 	FOWMaterialInstance->SetScalarParameterValue(FName("MinX"), 0);
 	FOWMaterialInstance->SetScalarParameterValue(FName("MinY"), 0);
 	FOWPostProcessVolume->AddOrUpdateBlendable(FOWMaterialInstance);
 
 	FString out = "";
-	out += "\nVolumeLength = " + FString::SanitizeFloat(FOWBoundsVolume->GetVolumeLength());
-	out += "\nVolumeLengthInCells = " + FString::SanitizeFloat(VolumeLengthInCells);
-	out += "\nOneOverWorldSize = " + FString::SanitizeFloat(1.0f / VolumeLength);
-	out += "\nOneOverTileSize = " + FString::SanitizeFloat(1.0f / VolumeLengthInCells);
+	out += "\nVolumeWidth = " + FString::SanitizeFloat(FOWBoundsVolume->GetVolumeWidth());
+	out += "\nVolumeWidthInCells = " + FString::SanitizeFloat(VolumeWidthInCells);
+	out += "\nVolumeHeight = " + FString::SanitizeFloat(FOWBoundsVolume->GetVolumeHeight());
+	out += "\nVolumeHeightInCells = " + FString::SanitizeFloat(VolumeHeightInCells);
+	out += "\nOneOverWorldSizeX = " + FString::SanitizeFloat(1.0f / VolumeWidth);
+	out += "\nOneOverTileSizeX = " + FString::SanitizeFloat(1.0f / VolumeWidthInCells);
+	out += "\nOneOverWorldSizeY = " + FString::SanitizeFloat(1.0f / VolumeHeight);
+	out += "\nOneOverTileSizeY = " + FString::SanitizeFloat(1.0f / VolumeHeightInCells);
 	out += "\nBufferSize = " + FString::SanitizeFloat(TextureBufferSize);
 	UE_LOG(LogTemp, Log, TEXT("%s"), *out);
-
-	for (uint32 i = 0; i < TextureBufferSize; i++) FOWTextureBuffer[i] = 255;
 	
 	// Paint texture to FOW_UNKNOWN
-	for (uint32 Y = 0; Y < VolumeLengthInCells; Y++)
+	for (uint32 TileY = 0; TileY < VolumeHeightInCells; TileY++)
 	{
-		for (uint32 X = 0; X < VolumeLengthInCells; X++)
+		for (uint32 TileX = 0; TileX < VolumeWidthInCells; TileX++)
 		{
-			const int i = X + Y * VolumeLengthInCells;
+			const int i = TileX + TileY * VolumeWidthInCells;
 			const int Blue = i * 4 + 0;
 			const int Green = i * 4 + 1;
 			const int Red = i * 4 + 2;
@@ -100,7 +109,7 @@ void AFogOfWar::Initialize(ARTSPlayerController* Controller)
 			FOWTextureBuffer[Alpha] = 0;
 		}
 	}
-	FOWTexture->UpdateTextureRegions(0, 1, FOWUpdateTextureRegion, VolumeLengthInCells * 4, static_cast<uint8>(4), FOWTextureBuffer);
+	FOWTexture->UpdateTextureRegions(0, 1, FOWUpdateTextureRegion, VolumeWidthInCells * 4, static_cast<uint8>(4), FOWTextureBuffer);
 }
 
 void AFogOfWar::Tick(float DeltaTime)
@@ -113,36 +122,58 @@ void AFogOfWar::Tick(float DeltaTime)
 		return;
 	}
 
+	// Paint texture to FOW_KNOWN
+	for (uint32 TileY = 0; TileY < VolumeHeightInCells; TileY++)
+	{
+		for (uint32 TileX = 0; TileX < VolumeWidthInCells; TileX++)
+		{
+			const int i = TileX + TileY * VolumeWidthInCells;
+			if (FOWBoundsVolume->Grid[i].GridData == true)
+			{
+				const int Blue = i * 4 + 0;
+				const int Green = i * 4 + 1;
+				const int Red = i * 4 + 2;
+				const int Alpha = i * 4 + 3;
+				FOWTextureBuffer[Blue] = 0;
+				FOWTextureBuffer[Green] = 255;
+				FOWTextureBuffer[Red] = 0;
+				FOWTextureBuffer[Alpha] = 0;
+			}
+		}
+	}
+	
 	for (const auto& Tuple : RegisteredActors)
 	{
 		const FVector2D Location = FVector2D(Tuple.Key->GetActorLocation());
 		AFogOfWarBoundsVolume::FGridCell<bool> ActorCell = FOWBoundsVolume->GetGridCellByCoordinate<bool>(Location);
+		// Set this cell to be seen
+		ActorCell.GridData = true;
+		
 		const int32 SightRadiusInCells = FMath::FloorToInt(static_cast<float>(Tuple.Value->SightRadius) / static_cast<float>(FOWBoundsVolume->GetCellSideLength()));
 
 		for (int32 RadiusY = -SightRadiusInCells; RadiusY <= SightRadiusInCells; RadiusY++)
 		{
 			const int32 TileY = ActorCell.Row + RadiusY;
-			const int32 RadiusYSqr = RadiusY * RadiusY;
 			//int32 LocalTileY = RadiusY + SightRadiusInCells;
 
-			if (TileY >= 0 && TileY < static_cast<int32>(VolumeLengthInCells))
+			if (TileY >= 0 && TileY < static_cast<int32>(VolumeHeightInCells))
 			{
 				for (int32 RadiusX = -SightRadiusInCells; RadiusX <= SightRadiusInCells; RadiusX++)
 				{
 					const int32 TileX = ActorCell.Column + RadiusX;
-					const int32 RadiusXSqr = RadiusX * RadiusX;
 					//int32 LocalTileX = RadiusX + SightRadiusInCells;
 
 					// Check if within circle.
-					if (TileX >= 0 && TileX < static_cast<int32>(VolumeLengthInCells))
+					if (TileX >= 0 && TileX < static_cast<int32>(VolumeWidthInCells))
 					{
-						const int i = TileX + TileY * VolumeLengthInCells;
+						const int i = TileX + TileY * VolumeWidthInCells;
 						const int Blue = i * 4 + 0;
 						const int Green = i * 4 + 1;
 						const int Red = i * 4 + 2;
 						const int Alpha = i * 4 + 3;
-						if (RadiusXSqr + RadiusYSqr <= SightRadiusInCells * SightRadiusInCells)
+						if (RadiusX * RadiusX + RadiusY * RadiusY <= SightRadiusInCells * SightRadiusInCells)
 						{
+							FOWBoundsVolume->Grid[i].GridData = true;
 							FOWTextureBuffer[Blue] = 0;
 							FOWTextureBuffer[Green] = 0;
 							FOWTextureBuffer[Red] = 255;
@@ -190,18 +221,26 @@ void AFogOfWar::Tick(float DeltaTime)
 
 		}
 	}*/
-	// SrcPitch is width * bytes_per_pixel in my case SizeInTiles * 4
+	// SrcPitch is width * bytes_per_pixel
 	// SrcBpp is the size one pixel data in bytes so RGBA is 4 bytes
-	FOWTexture->UpdateTextureRegions(0, 1, FOWUpdateTextureRegion, VolumeLengthInCells * 4, static_cast<uint8>(4), FOWTextureBuffer);
+	FOWTexture->UpdateTextureRegions(0, 1, FOWUpdateTextureRegion, VolumeWidthInCells * 4, static_cast<uint8>(4), FOWTextureBuffer);
 	//UpdateTextureRegions(FOWTexture, 0, 1, FOWUpdateTextureRegion, SizeInTiles * 4, static_cast<uint32>(4), FOWTextureBuffer, false);
 }
 
 void AFogOfWar::RegisterActor(AActor* ActorToRegister)
 {
-	if (ActorToRegister == nullptr) return;
-	UFogOfWarInfluencerComponent* Influencer = Cast<UFogOfWarInfluencerComponent>(ActorToRegister->FindComponentByClass(UFogOfWarInfluencerComponent::StaticClass()));
-	if (Influencer == nullptr) return;
-	RegisteredActors.AddUnique(TPair<AActor*, UFogOfWarInfluencerComponent*>(ActorToRegister, Influencer));
+	if (!ActorToRegister)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Actor is unregistered in FogOfWar because it's nullptr"));
+		return;
+	}
+	UFogOfWarInfluencerComponent* Component = Cast<UFogOfWarInfluencerComponent>(ActorToRegister->FindComponentByClass(UFogOfWarInfluencerComponent::StaticClass()));
+	if (!Component)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Actor %s is unregistered in FogOfWar because he hasn't UFogOfWarInfluencerComponent"), *ActorToRegister->GetHumanReadableName());
+		return;
+	}
+	RegisteredActors.AddUnique(TPair<AActor*, UFogOfWarInfluencerComponent*>(ActorToRegister, Component));
 	UE_LOG(LogTemp, Log, TEXT("Actor %s registered in FogOfWar"), *ActorToRegister->GetHumanReadableName());
 }
 
