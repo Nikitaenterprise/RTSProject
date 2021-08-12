@@ -4,6 +4,7 @@
 #include "RTSPlayerController.h"
 #include "HealthShieldBarHUD.h"
 #include "HealthShieldComponent.h"
+#include "MiniMapIconComponent.h"
 #include "MiniMapInfluencerComponent.h"
 #include "ShipFactory.h"
 #include "Ship.h"
@@ -33,6 +34,7 @@ ABuilding::ABuilding()
 	HealthShieldComponent = CreateDefaultSubobject<UHealthShieldComponent>(TEXT("HealthShieldComponent"));
 
 	MiniMapInfluencerComponent = CreateDefaultSubobject<UMiniMapInfluencerComponent>(TEXT("MiniMapInfluencerComponent"));
+	MiniMapIconComponent = CreateDefaultSubobject<UMiniMapIconComponent>(TEXT("MiniMapIconComponent"));
 }
 
 void ABuilding::BeginPlay()

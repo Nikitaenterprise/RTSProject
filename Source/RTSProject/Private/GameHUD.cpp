@@ -15,24 +15,24 @@ void AGameHUD::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (SetupWidget<UBasicButtonsHUD>(BasicButtonsHUD, BasicButtonsHUDClass))
-		BasicButtonsHUD->AddToViewport();
-	else UE_LOG(LogTemp, Error, TEXT("Couldn't add UBasicButtonsHUD to viewport"));
+	//if (SetupWidget<UBasicButtonsHUD>(BasicButtonsHUD, BasicButtonsHUDClass)){}
+	//	//BasicButtonsHUD->AddToViewport();
+	//else UE_LOG(LogTemp, Error, TEXT("Couldn't add UBasicButtonsHUD to viewport"));
 
-	if(SetupWidget<UShipHUD>(ShipHUD, ShipHUDClass))
-		ShipHUD->AddToViewport();
-	else UE_LOG(LogTemp, Error, TEXT("Couldn't add UShipHUD to viewport"));
+	//if(SetupWidget<UShipHUD>(ShipHUD, ShipHUDClass)){}
+	//	//ShipHUD->AddToViewport();
+	//else UE_LOG(LogTemp, Error, TEXT("Couldn't add UShipHUD to viewport"));
 
-	if(SetupWidget<UBuildingHUD>(BuildingHUD, BuildingHUDClass))
-		BuildingHUD->AddToViewport();
-	else UE_LOG(LogTemp, Error, TEXT("Couldn't add UBuildingHUD to viewport"));
+	//if(SetupWidget<UBuildingHUD>(BuildingHUD, BuildingHUDClass)){}
+	//	//BuildingHUD->AddToViewport();
+	//else UE_LOG(LogTemp, Error, TEXT("Couldn't add UBuildingHUD to viewport"));
 
-	if (SetupWidget<UMiniMapHUD>(MiniMapHUD, MiniMapHUDClass))
-	{
-		MiniMapHUD->Initialize(PlayerController);
-		MiniMapHUD->AddToViewport();
-	}
-	else UE_LOG(LogTemp, Error, TEXT("Couldn't add UMiniMapHUD to viewport"));
+	//if (SetupWidget<UMiniMapHUD>(MiniMapHUD, MiniMapHUDClass))
+	//{
+	//	MiniMapHUD->Initialize(PlayerController);
+	//	//MiniMapHUD->AddToViewport();
+	//}
+	//else UE_LOG(LogTemp, Error, TEXT("Couldn't add UMiniMapHUD to viewport"));
 }
 
 void AGameHUD::DrawHUD()

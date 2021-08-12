@@ -2,6 +2,7 @@
 
 #include "FogOfWar.h"
 #include "FogOfWarBoundsVolume.h"
+#include "MiniMapIconComponent.h"
 #include "MiniMapInfluencerComponent.h"
 #include "RTSPlayerController.h"
 
@@ -31,6 +32,12 @@ void UMiniMapHUD::Initialize(ARTSPlayerController* Controller)
 	MiniMapTextureBuffer = new uint8[PlayerController->FogOfWar->VolumeWidthInCells * PlayerController->FogOfWar->VolumeHeightInCells * 4];
 	MiniMapMaterialInstance = UMaterialInstanceDynamic::Create(MiniMapMaterial, nullptr);
 	MiniMapMaterialInstance->SetTextureParameterValue(FName("FogOfWarMask"), FOWTexture);
+
+	if (!DefaultIcon)
+	{
+		UE_LOG(LogTemp, Error, TEXT("DefaultIcon in UMiniMapHUD->Initialize is nullptr"));
+		return;
+	}
 }
 
 void UMiniMapHUD::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -87,6 +94,7 @@ void UMiniMapHUD::RegisterActor(AActor* ActorToRegister)
 		UE_LOG(LogTemp, Error, TEXT("Actor is unregistered in UMiniMapHUD because it's nullptr"));
 		return;
 	}
+
 	UMiniMapInfluencerComponent* Component = Cast<UMiniMapInfluencerComponent>(ActorToRegister->FindComponentByClass(UMiniMapInfluencerComponent::StaticClass()));
 	if (!Component)
 	{
@@ -94,5 +102,14 @@ void UMiniMapHUD::RegisterActor(AActor* ActorToRegister)
 		return;
 	}
 	MiniMapInfluencers.AddUnique(ActorToRegister);
+
+	UMiniMapIconComponent* Icon = Cast<UMiniMapIconComponent>(ActorToRegister->FindComponentByClass(UMiniMapIconComponent::StaticClass()));
+	if (!Icon)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Actor %s has no UMiniMapIconComponent. Will set default icon"), *ActorToRegister->GetHumanReadableName());
+		Icon->MiniMapIcon = DefaultIcon;
+		return;
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("Actor %s registered in UMiniMapHUD"), *ActorToRegister->GetHumanReadableName());
 }

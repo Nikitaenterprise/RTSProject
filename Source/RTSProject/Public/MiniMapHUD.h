@@ -26,6 +26,11 @@ public:
 	uint8* MiniMapTextureBuffer = nullptr;
 	FUpdateTextureRegion2D* MiniMapUpdateTextureRegion = nullptr;
 
+	UPROPERTY()
+	TArray<UTexture2D*> IconsArray;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* DefaultIcon = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	AFogOfWarBoundsVolume* FOWBoundsVolume = nullptr;
 	UPROPERTY()
@@ -34,6 +39,8 @@ public:
 public:
 	
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	UFUNCTION(BlueprintCallable)
 	void Initialize(ARTSPlayerController* Controller);
+	UFUNCTION(BlueprintCallable)
 	void RegisterActor(AActor* ActorToRegister);
 };
