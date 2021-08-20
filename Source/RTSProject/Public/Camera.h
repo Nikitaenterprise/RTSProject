@@ -34,10 +34,12 @@ public:
 	float MovementSpeedModifier = 1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool AllowEdgeScrolling = true;
+	
 	// Pan rotation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float PanRotationSpeed = 5;
 	bool bDisablePanRotation = false;
+
 	// Zoom
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float CameraZoomSpeed = 150;
@@ -81,6 +83,7 @@ public:
 	void DisableCameraMovement();
 
 protected:
+	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 };

@@ -1,7 +1,6 @@
 #include "AsteroidField.h"
 
 #include "RTSPlayerController.h"
-#include "AsteroidFieldFactory.h"
 #include "AsteroidResource.h"
 #include "FactoryAssets.h"
 

@@ -30,22 +30,18 @@ void ARTSPlayerController::BeginPlay()
 
 	CameraRef = Cast<ACamera>(UGameplayStatics::GetPlayerPawn(this, 0));
 	CameraRef->Initialize(this);
-	
-	GameHUD = Cast<AGameHUD>(GetHUD());
-	if (GameHUD) GameHUD->BindController(this);
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("GameHUD=nullptr in ARTSPlayerController"));
-		UE_LOG(LogTemp, Error, TEXT("GameHUD=nullptr in ARTSPlayerController"));
-	}
+
+	AGameHUD* TestGameHUD = Cast<AGameHUD>(GetHUD());
+	if (TestGameHUD) GameHUD = TestGameHUD;
+	else UE_LOG(LogTemp, Error, TEXT("GameHUD=nullptr in ARTSPlayerController::BeginPlay()"));
 
 	// Trying to find AFogOfWar class on level
 	TArray<AActor*> ActorsOfClass;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFogOfWar::StaticClass(), ActorsOfClass);
 	for(auto& a : ActorsOfClass)
 	{
-		AFogOfWar* test = Cast<AFogOfWar>(a);
-		if (test) FogOfWar = test;
+		AFogOfWar* TestFogOfWar = Cast<AFogOfWar>(a);
+		if (TestFogOfWar) FogOfWar = TestFogOfWar;
 	}
 	// If no AFogOfWar found then create one
 	if (!FogOfWar)
@@ -67,9 +63,9 @@ void ARTSPlayerController::Tick(float mainDeltaTime)
 
 	if (GameHUD)
 	{
-		if (IsArrayContainThisTypeActors<AShip>(SelectedActors)) GameHUD->ShowShipHUD();
+		/*if (IsArrayContainThisTypeActors<AShip>(SelectedActors)) GameHUD->ShowShipHUD();
 		else if (IsArrayContainThisTypeActors<ABuilding>(SelectedActors)) GameHUD->ShowBuildingHUD();
-		else GameHUD->ShowBasicButtonsHUD();	
+		else GameHUD->ShowBasicButtonsHUD();	*/
 	}
 }
 
@@ -229,6 +225,16 @@ void ARTSPlayerController::HighlightActorsUnderCursor()
 		Interface = Cast<IBaseBehavior>(HighlightedActor);
 		if (Interface) Interface->Execute_Highlighted(HighlightedActor, true);
 	}
+}
+
+TArray<ABuilding*> ARTSPlayerController::GetSelectedBuildings()
+{
+	return GetSelectedActorsByType<ABuilding>();
+}
+
+TArray<AShip*> ARTSPlayerController::GetSelectedShips()
+{
+	return GetSelectedActorsByType<AShip>();
 }
 
 bool ARTSPlayerController::MoveSelectedActors(AShip* Ship, FHitResult HitResult)

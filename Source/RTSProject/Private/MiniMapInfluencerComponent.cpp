@@ -1,7 +1,7 @@
 #include "MiniMapInfluencerComponent.h"
 
 #include "GameHUD.h"
-#include "MiniMapHUD.h"
+#include "MiniMapWidget.h"
 #include "RTSPlayerController.h"
 
 UMiniMapInfluencerComponent::UMiniMapInfluencerComponent()
@@ -28,11 +28,11 @@ void UMiniMapInfluencerComponent::Initialize(const ARTSPlayerController* PlayerC
 		UE_LOG(LogTemp, Error, TEXT("PlayerController in UFogOfWarInfluencerComponent->Initialize() is nullptr"));
 		return;
 	}
-	if (!PlayerController->GameHUD->MiniMapHUD) 
+	if (!PlayerController->GameHUD->MiniMapWidget) 
 	{
-		UE_LOG(LogTemp, Error, TEXT("MiniMapHUD in UFogOfWarInfluencerComponent->Initialize() is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("MiniMapWidget in UFogOfWarInfluencerComponent->Initialize() is nullptr"));
 		return;
 	}
-	MiniMapHUD = PlayerController->GameHUD->MiniMapHUD;
+	MiniMapHUD = PlayerController->GameHUD->MiniMapWidget;
 	MiniMapHUD->RegisterActor(GetOwner());
 }

@@ -81,6 +81,13 @@ public:
 	template <class ActorType>
 	bool IsArrayContainThisTypeActors(const TArray<AActor*>& Array);
 
+	template <class ActorType>
+	TArray<ActorType*> GetSelectedActorsByType();
+	UFUNCTION(BlueprintCallable)
+	TArray<ABuilding*> GetSelectedBuildings(); 
+	UFUNCTION(BlueprintCallable)
+	TArray<AShip*> GetSelectedShips(); 
+
 	bool MoveSelectedActors(AShip* Ship, FHitResult HitResult);
 	bool AttackBySelectedActors(AShip* Ship, FHitResult HitResult);
 	bool SetSpawnPointForSelectedBuildings(ABuilding* Building,FHitResult HitResult);
@@ -109,6 +116,18 @@ bool ARTSPlayerController::IsArrayContainThisTypeActors(const TArray<AActor*>& A
 		if (IsValid(Actor)) return true;
 	}
 	return false;
+}
+
+template <class ActorType>
+TArray<ActorType*> ARTSPlayerController::GetSelectedActorsByType()
+{
+	TArray<ActorType*> Actors;
+	for (auto& Actor : SelectedActors)
+	{
+		ActorType* TestActor = Cast<ActorType>(Actor);
+		if (TestActor) Actors.AddUnique(TestActor);
+	}
+	return Actors;
 }
 
 template <typename ActorType>

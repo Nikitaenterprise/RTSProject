@@ -5,7 +5,7 @@
 #include "MiniMapInfluencerComponent.generated.h"
 
 class ARTSPlayerController;
-class UMiniMapHUD;
+class UMiniMapWidget;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RTSPROJECT_API UMiniMapInfluencerComponent : public UActorComponent
@@ -15,7 +15,7 @@ class RTSPROJECT_API UMiniMapInfluencerComponent : public UActorComponent
 public:
 
 	UPROPERTY(BlueprintReadOnly)
-	UMiniMapHUD* MiniMapHUD = nullptr;
+	UMiniMapWidget* MiniMapHUD = nullptr;
 
 public:
 

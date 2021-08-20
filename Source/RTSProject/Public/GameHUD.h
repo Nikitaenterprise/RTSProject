@@ -2,20 +2,15 @@
 
 #include "CoreMinimal.h"
 
-
 #include "EngineUtils.h"
 #include "Ship.h"
 #include "GameFramework/HUD.h"
 #include "Kismet/KismetSystemLibrary.h"
 
-
 #include "GameHUD.generated.h"
 
 class ARTSPlayerController;
-class UBasicButtonsHUD;
-class UShipHUD;
-class UBuildingHUD;
-class UMiniMapHUD;
+class UMiniMapWidget;
 
 UCLASS()
 class RTSPROJECT_API AGameHUD : public AHUD
@@ -25,25 +20,13 @@ class RTSPROJECT_API AGameHUD : public AHUD
 public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
-	TSubclassOf<UBasicButtonsHUD> BasicButtonsHUDClass;
-	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
-	TSubclassOf<UShipHUD> ShipHUDClass;
-	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
-	TSubclassOf<UBuildingHUD> BuildingHUDClass;
-	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
-	TSubclassOf<UMiniMapHUD> MiniMapHUDClass;
+	TSubclassOf<UMiniMapWidget> MiniMapWidgetClass;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	ARTSPlayerController* PlayerController = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UBasicButtonsHUD* BasicButtonsHUD = nullptr;
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UShipHUD* ShipHUD = nullptr;
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UBuildingHUD* BuildingHUD = nullptr;
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UMiniMapHUD* MiniMapHUD = nullptr;
+	UMiniMapWidget* MiniMapWidget = nullptr;
 	
 private:
 
@@ -54,19 +37,12 @@ private:
 	
 	bool bIsDrawingSelectionRectangle = false;
 
-	bool bIsShowingBasicButtonsHUD = false;
-	bool bIsShowingShipHUD = false;
-	bool bIsShowingBuildingHUD = false;
-	bool bIsShowingMiniMapHUD = false;
-
 public:
 
 	AGameHUD(const FObjectInitializer& OI);
 	virtual void BeginPlay() override;
 	virtual void DrawHUD() override;
-	virtual void Tick(float mainDeltaTime) override;
-	void BindController(ARTSPlayerController* Controller);
-
+	virtual void Tick(float DeltaTime) override;
 
 	// Selection rectangle
 	void OnInputStart();
@@ -75,12 +51,6 @@ public:
 	void DrawMarquee();
 	void DrawSelectionRectAndSelectActors();
 	TArray<AActor*>& GetSelectedActors();
-
-	// Layout HUD
-	void ShowBasicButtonsHUD() const;
-	void ShowBuildingHUD() const;
-	void ShowShipHUD() const;
-	void ShowMiniMapHUD() const;
 
 	template<class T>
 	bool SetupWidget(T*& HUDReference, TSubclassOf<T>& WidgetTemplate);

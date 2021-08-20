@@ -1,10 +1,7 @@
 #include "GameHUD.h"
 
 #include "RTSPlayerController.h"
-#include "BasicButtonsHUD.h"
-#include "ShipHUD.h"
-#include "BuildingHUD.h"
-#include "MiniMapHUD.h"
+#include "MiniMapWidget.h"
 
 
 AGameHUD::AGameHUD(const FObjectInitializer& OI) : Super(OI)
@@ -15,18 +12,10 @@ void AGameHUD::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	//if (SetupWidget<UBasicButtonsHUD>(BasicButtonsHUD, BasicButtonsHUDClass)){}
-	//	//BasicButtonsHUD->AddToViewport();
-	//else UE_LOG(LogTemp, Error, TEXT("Couldn't add UBasicButtonsHUD to viewport"));
-
-	//if(SetupWidget<UShipHUD>(ShipHUD, ShipHUDClass)){}
-	//	//ShipHUD->AddToViewport();
-	//else UE_LOG(LogTemp, Error, TEXT("Couldn't add UShipHUD to viewport"));
-
-	//if(SetupWidget<UBuildingHUD>(BuildingHUD, BuildingHUDClass)){}
-	//	//BuildingHUD->AddToViewport();
-	//else UE_LOG(LogTemp, Error, TEXT("Couldn't add UBuildingHUD to viewport"));
-
+	ARTSPlayerController* TestPlayerController = Cast<ARTSPlayerController>(GetOwningPlayerController());
+	if (TestPlayerController) PlayerController = TestPlayerController;
+	else UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in AGameHUD::BeginPlay()"));
+	
 	//if (SetupWidget<UMiniMapHUD>(MiniMapHUD, MiniMapHUDClass))
 	//{
 	//	MiniMapHUD->Initialize(PlayerController);
@@ -41,49 +30,14 @@ void AGameHUD::DrawHUD()
 	DrawSelectionRectAndSelectActors();
 }
 
-void AGameHUD::Tick(float mainDeltaTime)
+void AGameHUD::Tick(float DeltaTime)
 {
-	Super::Tick(mainDeltaTime);
-}
-
-void AGameHUD::BindController(ARTSPlayerController* Controller) 
-{
-	if (Controller) PlayerController = Controller;
+	Super::Tick(DeltaTime);
 }
 
 TArray<AActor*>& AGameHUD::GetSelectedActors() 
 {
 	return SelectedActors;
-}
-
-void AGameHUD::ShowBasicButtonsHUD() const
-{
-	if (bIsShowingBasicButtonsHUD) return;
-	BasicButtonsHUD->SetVisibility(ESlateVisibility::Visible);
-	BuildingHUD->SetVisibility(ESlateVisibility::Hidden);
-	ShipHUD->SetVisibility(ESlateVisibility::Hidden);
-}
-
-void AGameHUD::ShowBuildingHUD() const
-{
-	if (bIsShowingBuildingHUD) return;
-	BuildingHUD->SetVisibility(ESlateVisibility::Visible);
-	BasicButtonsHUD->SetVisibility(ESlateVisibility::Hidden);
-	ShipHUD->SetVisibility(ESlateVisibility::Hidden);
-}
-
-void AGameHUD::ShowShipHUD() const
-{
-	if (bIsShowingShipHUD) return;
-	ShipHUD->SetVisibility(ESlateVisibility::Visible);
-	BasicButtonsHUD->SetVisibility(ESlateVisibility::Hidden);
-	BuildingHUD->SetVisibility(ESlateVisibility::Hidden);
-}
-
-void AGameHUD::ShowMiniMapHUD() const
-{
-	if (bIsShowingMiniMapHUD) return;
-	MiniMapHUD->SetVisibility(ESlateVisibility::Visible);
 }
 
 void AGameHUD::OnInputStart() 

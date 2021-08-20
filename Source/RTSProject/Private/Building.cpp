@@ -1,12 +1,12 @@
 #include "Building.h"
 
+#include "FactoriesFunctionLibrary.h"
 #include "FogOfWarInfluencerComponent.h"
 #include "RTSPlayerController.h"
 #include "HealthShieldBarHUD.h"
 #include "HealthShieldComponent.h"
 #include "MiniMapIconComponent.h"
 #include "MiniMapInfluencerComponent.h"
-#include "ShipFactory.h"
 #include "Ship.h"
 
 #include "Components/StaticMeshComponent.h"
@@ -179,8 +179,8 @@ void ABuilding::BuildUnit()
 	// Add height to spawn location
 	const FVector SpawnLocation = SpawnPoint->GetComponentLocation() + FVector(0, 0, 100);
 	// First the ship is created in a place outside the borders
-	AShip* SpawnedShip = ShipFactory::NewShip(GetWorld(), ClassType, PlayerController, SpawnLocation);
-	ShipFactory::AddTurretsToShip(SpawnedShip);
+	AShip* SpawnedShip = UFactoriesFunctionLibrary::NewShip(GetWorld(), ClassType, PlayerController, SpawnLocation);
+	UFactoriesFunctionLibrary::AddTurretsToShip(SpawnedShip);
 	
 	FinishBuildingUnit();
 }
