@@ -86,14 +86,14 @@ int32 UMiniMapWidget::NativePaint(const FPaintArgs& MovieSceneBlends, const FGeo
 	return FMath::Max(LayerId, Context.MaxLayer);
 }
 
-FReply UMiniMapWidget::NativeOnMouseButtonUp(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent)
+FReply UMiniMapWidget::NativeOnMouseButtonDown(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent)
 {
 	FVector2D ClickLocation = MovieSceneBlends.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
 	ClickLocation = ClickLocation / GetCachedGeometry().GetLocalSize();
 	ClickLocation = (ClickLocation - 0.5) * FOWBoundsVolume->GetVolumeWidth();
 	const FVector NewLocation = FVector(ClickLocation, PlayerController->CameraRef->GetActorLocation().Z);
 	PlayerController->CameraRef->SetActorLocation(NewLocation);
-	return Super::NativeOnMouseButtonUp(MovieSceneBlends, InMouseEvent);
+	return Super::NativeOnMouseButtonDown(MovieSceneBlends, InMouseEvent);
 }
 
 void UMiniMapWidget::DrawIcons(const FPaintContext& Context) const
@@ -102,14 +102,24 @@ void UMiniMapWidget::DrawIcons(const FPaintContext& Context) const
 	{
 		const FVector ActorLocation = Icon.Key->GetActorLocation();
 		FVector2D MiniMap = WorldToMiniMap(ActorLocation);
-
 		// Move up and left to center icon
 		MiniMap -= Icon.Value.ImageSize / 2;
 
+		// Get angle to rotate icon
+		const float Rotation = FMath::DegreesToRadians(Icon.Key->GetActorRotation().Yaw);
+		// Set Geometry to draw icon on minimap (includes translation and rotation of icon)
+		FGeometry Geometry = Context.AllottedGeometry.MakeChild(
+			Icon.Value.ImageSize,
+			FSlateLayoutTransform(),
+			FSlateRenderTransform(FQuat2D(Rotation), MiniMap),
+			FVector2D(0.5,0.5)
+		);
+
+		// Draw icon on minimap
 		FSlateDrawElement::MakeBox(
 			Context.OutDrawElements,
 			Context.MaxLayer,
-			Context.AllottedGeometry.ToPaintGeometry(Icon.Value.ImageSize, FSlateLayoutTransform(MiniMap)),
+			Geometry.ToPaintGeometry(),
 			&Icon.Value,
 			ESlateDrawEffect::None,
 			Icon.Value.TintColor.GetSpecifiedColor());
@@ -120,7 +130,10 @@ void UMiniMapWidget::DrawCameraTrapezoid(const FPaintContext& Context) const
 {
 	int32 ViewportWidth;
 	int32 ViewportHeight;
-	if (!PlayerController) return;
+	if (!PlayerController)
+	{
+		return;
+	}
 	PlayerController->GetViewportSize(ViewportWidth, ViewportHeight);
 
 	// Cast four rays.

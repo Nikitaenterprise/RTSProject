@@ -17,6 +17,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
+#include "Components/MiniMapIconComponent.h"
 #include "Components/MiniMapInfluencerComponent.h"
 
 
@@ -56,6 +57,8 @@ AShip::AShip(const FObjectInitializer& OI)
 	FOWInfluencerComponent = CreateDefaultSubobject<UFogOfWarInfluencerComponent>(TEXT("FOWInfluencerComponent"));
 
 	MiniMapInfluencerComponent = CreateDefaultSubobject<UMiniMapInfluencerComponent>(TEXT("MiniMapInfluencerComponent"));
+
+	MiniMapIconComponent = CreateDefaultSubobject<UMiniMapIconComponent>(TEXT("MiniMapIconComponent"));
 }
 
 void AShip::BeginPlay()
@@ -132,6 +135,7 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 
 		FOWInfluencerComponent->Initialize(PlayerController);
 		MiniMapInfluencerComponent->Initialize(PlayerController);
+		MiniMapIconComponent->Initialize(PlayerController);
 	}
 	else
 	{

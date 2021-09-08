@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "Ship.generated.h"
 
+class UMiniMapIconComponent;
 class UFogOfWarInfluencerComponent;
 class UHealthShieldComponent;
 class UShipMovementComponent;
@@ -35,7 +36,7 @@ public:
 	UCapsuleComponent* CapsuleComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UStaticMeshComponent* SelectionCircle = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HUD")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget")
 	UWidgetComponent* HealthShieldBar = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UPawnSensingComponent* PawnSensing = nullptr;
@@ -47,8 +48,10 @@ public:
 	UAttackComponent* AttackComponent = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
 	UFogOfWarInfluencerComponent* FOWInfluencerComponent = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
 	UMiniMapInfluencerComponent* MiniMapInfluencerComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
+	UMiniMapIconComponent* MiniMapIconComponent = nullptr;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
@@ -56,7 +59,7 @@ public:
 	UInputComponent* DebugInputComponent = nullptr;
 	
 	// Widget
-	UPROPERTY(BlueprintReadOnly, Category = "HUD")
+	UPROPERTY(BlueprintReadOnly, Category = "Widget")
 	UHealthShieldBarHUD* HealthShieldBarHUD = nullptr;
 
 	UPROPERTY(BlueprintReadOnly)
