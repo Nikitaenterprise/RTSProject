@@ -60,7 +60,8 @@ public:
 	{
 		uint32 X = floorf(Position.X / static_cast<float>(CellSideLength)) + static_cast<float>(GetVolumeWidthInCells()) / 2.0f;
 		uint32 Y = floorf(Position.Y / static_cast<float>(CellSideLength)) + static_cast<float>(GetVolumeHeightInCells()) / 2.0f;
-		return Grid[X + Y * GetVolumeWidthInCells()];
+		if (X + Y * GetVolumeWidthInCells() < static_cast<uint32>(Grid.Num())) return Grid[X + Y * GetVolumeWidthInCells()];
+		else return Grid[0];
 	}
 
 	/// <summary>

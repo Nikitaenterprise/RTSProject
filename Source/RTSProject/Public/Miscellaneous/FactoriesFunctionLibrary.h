@@ -4,17 +4,13 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "FactoriesFunctionLibrary.generated.h"
 
-class ATurret;
-class ARocket;
-class AAsteroidField;
-class ABuilding;
 class ARTSPlayerController;
 class AShip;
+class ATurret;
+class ARocket;
+class ABuilding;
+class AAsteroidField;
 
-
-/**
- * 
- */
 UCLASS()
 class RTSPROJECT_API UFactoriesFunctionLibrary : public UBlueprintFunctionLibrary
 {
@@ -41,9 +37,5 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContext"))
 	static ARocket* NewRocket(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
 	static ARocket* NewRocket(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
-
-
-private:
-
-	static FActorSpawnParameters GetDefaultSpawnParams();
+	
 };

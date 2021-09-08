@@ -1,10 +1,12 @@
 #include "UI/MiniMapWidget.h"
 
+#include "Actors/Camera.h"
 #include "Actors/FogOfWar.h"
 #include "Volumes/FogOfWarBoundsVolume.h"
 #include "Components/MiniMapIconComponent.h"
 #include "Components/MiniMapInfluencerComponent.h"
 #include "Core/RTSPlayerController.h"
+#include "Kismet/GameplayStatics.h"
 
 void UMiniMapWidget::NativeConstruct()
 {
@@ -31,25 +33,18 @@ void UMiniMapWidget::NativeConstruct()
 	MiniMapMaterialInstance = UMaterialInstanceDynamic::Create(MiniMapMaterial, nullptr);
 	MiniMapMaterialInstance->SetTextureParameterValue(FName("FogOfWarMask"), FOWTexture);
 
-	if (!DefaultIcon)
+	if (!DefaultIconBrush.HasUObject())
 	{
-		UE_LOG(LogTemp, Error, TEXT("DefaultIcon in UMiniMapWidget::NativeConstruct() is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("DefaultIconBrush in UMiniMapWidget::NativeConstruct() has no UTexture*"));
 		return;
 	}
+
+	Clipping = EWidgetClipping::ClipToBounds;
 }
 
 void UMiniMapWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
-
-	TArray<TPair<uint32, uint32>> Actors;
-	for (const auto& Actor : MiniMapInfluencers)
-	{
-		FVector Location = Actor->GetActorLocation();
-		AFogOfWarBoundsVolume::FGridCell<bool> Cell = FOWBoundsVolume->GetGridCellByCoordinate<bool>(FVector2D(Location));
-		Actors.Add(TPair<uint32, uint32> (Cell.Column, Cell.Row));
-		GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::White, FString::Printf(TEXT("%s, X=%s, Y=%s"), *Actor->GetName(), *FString::SanitizeFloat(Cell.Column), *FString::SanitizeFloat(Cell.Row)));
-	}
 
 	if (PlayerController->FogOfWar)
 	{
@@ -66,22 +61,6 @@ void UMiniMapWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 				MiniMapTextureBuffer[Green] = PlayerController->FogOfWar->FOWTextureBuffer[Green];
 				MiniMapTextureBuffer[Red] = PlayerController->FogOfWar->FOWTextureBuffer[Red];
 				MiniMapTextureBuffer[Alpha] = PlayerController->FogOfWar->FOWTextureBuffer[Alpha];
-
-				for (const auto& Data : Actors)
-				{
-					if (Data.Key == TileX && Data.Value == TileY)
-					{
-						MiniMapTextureBuffer[Blue] = 255;
-						/*MiniMapTextureBuffer[(TileX - 1 + (TileY - 1) * PlayerController->FogOfWar->VolumeWidthInCells)*4] = 255;
-						MiniMapTextureBuffer[(TileX - 1 + (TileY + 1) * PlayerController->FogOfWar->VolumeWidthInCells)*4] = 255;
-						MiniMapTextureBuffer[(TileX + 1 + (TileY - 1) * PlayerController->FogOfWar->VolumeWidthInCells)*4] = 255;
-						MiniMapTextureBuffer[(TileX + 1 + (TileY + 1) * PlayerController->FogOfWar->VolumeWidthInCells)*4] = 255;
-						MiniMapTextureBuffer[(TileX + 1 + TileY * PlayerController->FogOfWar->VolumeWidthInCells)*4] = 255;
-						MiniMapTextureBuffer[(TileX - 1 + TileY * PlayerController->FogOfWar->VolumeWidthInCells)*4] = 255;
-						MiniMapTextureBuffer[(TileX + (TileY + 1) * PlayerController->FogOfWar->VolumeWidthInCells)*4] = 255;
-						MiniMapTextureBuffer[(TileX + (TileY - 1) * PlayerController->FogOfWar->VolumeWidthInCells)*4] = 255;*/
-					}
-				}
 			}
 		}
 	}
@@ -93,6 +72,90 @@ void UMiniMapWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	FOWTexture->UpdateTextureRegions(0, 1, MiniMapUpdateTextureRegion, PlayerController->FogOfWar->VolumeWidthInCells * 4, static_cast<uint8>(4), MiniMapTextureBuffer);
 }
 
+int32 UMiniMapWidget::NativePaint(const FPaintArgs& MovieSceneBlends, const FGeometry& AllottedGeometry,
+	const FSlateRect& MyCullingRect, FSlateWindowElementList& OutDrawElements, int32 LayerId,
+	const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const
+{
+	LayerId = Super::NativePaint(MovieSceneBlends, AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, InWidgetStyle, bParentEnabled);
+	FPaintContext Context(AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, InWidgetStyle, bParentEnabled);
+	Context.MaxLayer++;
+
+	DrawIcons(Context);
+	DrawCameraTrapezoid(Context);
+
+	return FMath::Max(LayerId, Context.MaxLayer);
+}
+
+FReply UMiniMapWidget::NativeOnMouseButtonUp(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent)
+{
+	FVector2D ClickLocation = MovieSceneBlends.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
+	ClickLocation = ClickLocation / GetCachedGeometry().GetLocalSize();
+	ClickLocation = (ClickLocation - 0.5) * FOWBoundsVolume->GetVolumeWidth();
+	const FVector NewLocation = FVector(ClickLocation, PlayerController->CameraRef->GetActorLocation().Z);
+	PlayerController->CameraRef->SetActorLocation(NewLocation);
+	return Super::NativeOnMouseButtonUp(MovieSceneBlends, InMouseEvent);
+}
+
+void UMiniMapWidget::DrawIcons(const FPaintContext& Context) const
+{
+	for (const auto& Icon : Icons)
+	{
+		const FVector ActorLocation = Icon.Key->GetActorLocation();
+		FVector2D MiniMap = WorldToMiniMap(ActorLocation);
+
+		// Move up and left to center icon
+		MiniMap -= Icon.Value.ImageSize / 2;
+
+		FSlateDrawElement::MakeBox(
+			Context.OutDrawElements,
+			Context.MaxLayer,
+			Context.AllottedGeometry.ToPaintGeometry(Icon.Value.ImageSize, FSlateLayoutTransform(MiniMap)),
+			&Icon.Value,
+			ESlateDrawEffect::None,
+			Icon.Value.TintColor.GetSpecifiedColor());
+	}
+}
+
+void UMiniMapWidget::DrawCameraTrapezoid(const FPaintContext& Context) const
+{
+	int32 ViewportWidth;
+	int32 ViewportHeight;
+	if (!PlayerController) return;
+	PlayerController->GetViewportSize(ViewportWidth, ViewportHeight);
+
+	// Cast four rays.
+	const FVector2D ViewportTopLeft(0, 0);
+	const FVector2D ViewportTopRight(ViewportWidth, 0);
+	const FVector2D ViewportBottomLeft(0, ViewportHeight);
+	const FVector2D ViewportBottomRight(ViewportWidth, ViewportHeight);
+
+	const FVector WorldTopLeft = ViewportToWorld(ViewportTopLeft);
+	const FVector WorldTopRight = ViewportToWorld(ViewportTopRight);
+	const FVector WorldBottomLeft = ViewportToWorld(ViewportBottomLeft);
+	const FVector WorldBottomRight = ViewportToWorld(ViewportBottomRight);
+
+	// Convert to minimap space.
+	const FVector2D MiniMapTopLeft = WorldToMiniMap(WorldTopLeft);
+	const FVector2D MiniMapTopRight = WorldToMiniMap(WorldTopRight);
+	const FVector2D MiniMapBottomLeft = WorldToMiniMap(WorldBottomLeft);
+	const FVector2D MiniMapBottomRight = WorldToMiniMap(WorldBottomRight);
+
+	// Draw camera trapezoid
+	TArray<FVector2D> Points;
+
+	Points.Add(MiniMapTopLeft);
+	Points.Add(MiniMapTopRight);
+	Points.Add(MiniMapBottomRight);
+	Points.Add(MiniMapBottomLeft);
+	Points.Add(MiniMapTopLeft);
+
+	FSlateDrawElement::MakeLines(
+		Context.OutDrawElements,
+		Context.MaxLayer,
+		Context.AllottedGeometry.ToPaintGeometry(),
+		Points);
+}
+
 void UMiniMapWidget::RegisterActor(AActor* ActorToRegister)
 {
 	if (!ActorToRegister)
@@ -101,21 +164,57 @@ void UMiniMapWidget::RegisterActor(AActor* ActorToRegister)
 		return;
 	}
 
-	UMiniMapInfluencerComponent* Component = Cast<UMiniMapInfluencerComponent>(ActorToRegister->FindComponentByClass(UMiniMapInfluencerComponent::StaticClass()));
-	if (!Component)
+	UMiniMapInfluencerComponent* MiniMapInfluencerComponent = Cast<UMiniMapInfluencerComponent>(ActorToRegister->FindComponentByClass(UMiniMapInfluencerComponent::StaticClass()));
+	if (!MiniMapInfluencerComponent)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Actor %s is unregistered in UMiniMapWidget because he hasn't UMiniMapInfluencerComponent"), *ActorToRegister->GetHumanReadableName());
 		return;
 	}
 	MiniMapInfluencers.AddUnique(ActorToRegister);
 
-	UMiniMapIconComponent* Icon = Cast<UMiniMapIconComponent>(ActorToRegister->FindComponentByClass(UMiniMapIconComponent::StaticClass()));
-	if (!Icon)
+	UMiniMapIconComponent* MiniMapIconComponent = Cast<UMiniMapIconComponent>(ActorToRegister->FindComponentByClass(UMiniMapIconComponent::StaticClass()));
+	if (!MiniMapIconComponent)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Actor %s has no UMiniMapIconComponent. Will set default icon"), *ActorToRegister->GetHumanReadableName());
-		Icon->MiniMapIcon = DefaultIcon;
+		UE_LOG(LogTemp, Error, TEXT("Actor %s has no UMiniMapIconComponent"), *ActorToRegister->GetHumanReadableName());
 		return;
 	}
 
+	/*if (!MiniMapIconComponent->IconBrush.HasUObject())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Actor %s has no Icon texture. Will set to default"), *ActorToRegister->GetHumanReadableName());
+		MiniMapIconComponent->IconBrush = DefaultIconBrush;
+	}*/
+	Icons.AddUnique(TPair<AActor*, FSlateBrush&>(ActorToRegister, MiniMapIconComponent->IconBrush));
+	
 	UE_LOG(LogTemp, Log, TEXT("Actor %s registered in UMiniMapWidget"), *ActorToRegister->GetHumanReadableName());
+}
+
+FVector2D UMiniMapWidget::WorldToMiniMap(const FVector& Location) const
+{
+	// Get relative world position
+	const float RelativeWorldX = Location.X / FOWBoundsVolume->GetVolumeWidth() + 0.5f;
+	const float RelativeWorldY = Location.Y / FOWBoundsVolume->GetVolumeHeight() + 0.5f;
+
+	// Convert to minimap coordinates.
+	const float MiniMapX = RelativeWorldX * GetCachedGeometry().GetLocalSize().X;
+	const float MiniMapY = RelativeWorldY * GetCachedGeometry().GetLocalSize().Y;
+
+	return FVector2D(MiniMapX, MiniMapY);
+}
+
+FVector UMiniMapWidget::ViewportToWorld(const FVector2D& ViewportPosition) const
+{
+	// Get ray
+	FVector WorldOrigin;
+	FVector WorldDirection;
+	if (!UGameplayStatics::DeprojectScreenToWorld(PlayerController, ViewportPosition, WorldOrigin, WorldDirection))
+	{
+		return FVector(0, 0, 0);
+	}
+
+	// Make plane
+	FPlane ZPlane = FPlane(FVector::ZeroVector, FVector::UpVector);
+
+	// Calculate intersection point
+	return FMath::LinePlaneIntersection(WorldOrigin, WorldOrigin + WorldDirection * 1000.0f, ZPlane);
 }

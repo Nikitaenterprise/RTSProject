@@ -15,7 +15,7 @@ class RTSPROJECT_API UMiniMapInfluencerComponent : public UActorComponent
 public:
 
 	UPROPERTY(BlueprintReadOnly)
-	UMiniMapWidget* MiniMapHUD = nullptr;
+	UMiniMapWidget* MiniMapWidget = nullptr;
 
 public:
 

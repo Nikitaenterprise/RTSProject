@@ -33,7 +33,7 @@ void ARTSPlayerController::BeginPlay()
 
 	AGameHUD* TestGameHUD = Cast<AGameHUD>(GetHUD());
 	if (TestGameHUD) GameHUD = TestGameHUD;
-	else UE_LOG(LogTemp, Error, TEXT("GameHUD=nullptr in ARTSPlayerController::BeginPlay()"));
+	else UE_LOG(LogTemp, Error, TEXT("GameHUD is nullptr in ARTSPlayerController::BeginPlay()"));
 
 	// Trying to find AFogOfWar class on level
 	TArray<AActor*> ActorsOfClass;
@@ -60,13 +60,6 @@ void ARTSPlayerController::Tick(float mainDeltaTime)
 
 	if (bLMBPressed) UpdateSelection();
 	else HighlightActorsUnderCursor();
-
-	if (GameHUD)
-	{
-		/*if (IsArrayContainThisTypeActors<AShip>(SelectedActors)) GameHUD->ShowShipHUD();
-		else if (IsArrayContainThisTypeActors<ABuilding>(SelectedActors)) GameHUD->ShowBuildingHUD();
-		else GameHUD->ShowBasicButtonsHUD();	*/
-	}
 }
 
 void ARTSPlayerController::SetupInputComponent()
@@ -119,46 +112,46 @@ void ARTSPlayerController::LMBReleased()
 		if (IsArrayContainThisTypeActors<AShip>(SelectedActors)) bOnlyShips = true;
 		else if (IsArrayContainThisTypeActors<ABuilding>(SelectedActors)) bOnlyBuildings = true;
 	}
-	for (const auto& a : ShouldBeSelected)
+	for (const auto& Actor : ShouldBeSelected)
 	{
-		if (PlayersActors.Contains(a))
+		if (PlayersActors.Contains(Actor))
 		{
 			// If SelectedActors has no actors then add first
 			if (SelectedActors.Num() == 0)
 			{
-				SelectedActors.AddUnique(a);
+				SelectedActors.AddUnique(Actor);
 				continue;
 			}
 			// If SelectedActors has at least one building then add
 			// building but not ship
-			if (!bOnlyShips && Cast<ABuilding>(a))
+			if (!bOnlyShips && Cast<ABuilding>(Actor))
 			{
-				SelectedActors.AddUnique(a);
+				SelectedActors.AddUnique(Actor);
 				bOnlyBuildings = true;
 			}
 			
 			// If SelectedActors has at least one ship then add
 			// ship but not building
-			else if (!bOnlyBuildings && Cast<AShip>(a))
+			else if (!bOnlyBuildings && Cast<AShip>(Actor))
 			{
-				SelectedActors.AddUnique(a);
+				SelectedActors.AddUnique(Actor);
 				bOnlyShips = true;
 			}
 		}
 	}
 	// Set ShouldBeSelected Execute_Highlighted to false
 	// because actors was highlighted while rectangle was drawn
-	for (auto& a : ShouldBeSelected)
+	for (auto& Actor : ShouldBeSelected)
 	{
-		IBaseBehavior* Interface = Cast<IBaseBehavior>(a);
-		if (Interface) Interface->Execute_Highlighted(a, false);
+		IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
+		if (Interface) Interface->Execute_Highlighted(Actor, false);
 	}
 	
 	// Set actors Execute_Selected to true
-	for (auto& a : SelectedActors)
+	for (auto& Actor : SelectedActors)
 	{
-		IBaseBehavior* Interface = Cast<IBaseBehavior>(a);
-		if (Interface) Interface->Execute_Selected(a, true);
+		IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
+		if (Interface) Interface->Execute_Selected(Actor, true);
 	}
 }
 

@@ -43,11 +43,16 @@ AShip* UFactoriesFunctionLibrary::NewShip(UWorld* World, UClass* ClassType, ARTS
 		return nullptr;
 	}
 
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	Params.Instigator = nullptr;
+	Params.Owner = nullptr;
+
 	AShip* SpawnedShip = World->SpawnActor<AShip>(
 		ClassType,
 		FVector(Location.X, Location.Y, 150),
 		Rotation,
-		GetDefaultSpawnParams());
+		Params);
 	if (!SpawnedShip)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn ship"));
@@ -99,9 +104,15 @@ void UFactoriesFunctionLibrary::AddTurretsToShip(AShip* Ship)
 			// Set spawn transform for turret at socket position but with rotation that will align turret up vector with surface normal
 			FTransform SpawnTransform = FTransform(Rotation, SocketTransform.GetTranslation(), SocketTransform.GetScale3D());
 
-			FActorSpawnParameters Params = GetDefaultSpawnParams();
+			FActorSpawnParameters Params;
 			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-			ATurret* SpawnedTurret = Ship->GetWorld()->SpawnActor<ATurret>(TurretClass.Get(), SpawnTransform, Params);
+			Params.Instigator = nullptr;
+			Params.Owner = nullptr;
+
+			ATurret* SpawnedTurret = Ship->GetWorld()->SpawnActor<ATurret>(
+				TurretClass.Get(),
+				SpawnTransform,
+				Params);
 			if (!SpawnedTurret)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn turret"));
@@ -151,11 +162,16 @@ ABuilding* UFactoriesFunctionLibrary::NewBuilding(UWorld* World, UClass* ClassTy
 		return nullptr;
 	}
 
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	Params.Instigator = nullptr;
+	Params.Owner = nullptr;
+
 	ABuilding* SpawnedBuilding = World->SpawnActor<ABuilding>(
 		ClassType,
 		Location,
 		Rotation,
-		GetDefaultSpawnParams());
+		Params);
 	if (!SpawnedBuilding)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn building"));
@@ -198,11 +214,16 @@ AAsteroidField* UFactoriesFunctionLibrary::NewAsteroidField(UWorld* World, UClas
 		return nullptr;
 	}
 
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	Params.Instigator = nullptr;
+	Params.Owner = nullptr;
+
 	AAsteroidField* SpawnedAsteroidField = World->SpawnActor<AAsteroidField>(
 		ClassType,
 		Location, 
 		Rotation,
-		GetDefaultSpawnParams());
+		Params);
 	if (!SpawnedAsteroidField)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn asteroid field"));
@@ -243,11 +264,16 @@ ARocket* UFactoriesFunctionLibrary::NewRocket(UWorld* World, UClass* ClassType, 
 		return nullptr;
 	}
 
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	Params.Instigator = nullptr;
+	Params.Owner = nullptr;
+
 	ARocket* SpawnedRocket = World->SpawnActor<ARocket>(
 		ClassType,
 		Location,
 		Rotation,
-		GetDefaultSpawnParams());
+		Params);
 	if (!SpawnedRocket)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn rocket"));
@@ -257,14 +283,3 @@ ARocket* UFactoriesFunctionLibrary::NewRocket(UWorld* World, UClass* ClassType, 
 	SpawnedRocket->Initialize(Controller, Turret);
 	return SpawnedRocket;
 }
-
-
-FActorSpawnParameters UFactoriesFunctionLibrary::GetDefaultSpawnParams()
-{
-	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-	Params.Instigator = nullptr;
-	Params.Owner = nullptr;
-	return Params;
-}
-

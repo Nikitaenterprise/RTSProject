@@ -13,6 +13,7 @@ UMiniMapInfluencerComponent::UMiniMapInfluencerComponent()
 void UMiniMapInfluencerComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	
 }
 
 void UMiniMapInfluencerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -25,14 +26,14 @@ void UMiniMapInfluencerComponent::Initialize(const ARTSPlayerController* PlayerC
 {
 	if (!PlayerController)
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerController in UFogOfWarInfluencerComponent->Initialize() is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr in UMiniMapInfluencerComponent::Initialize()"));
 		return;
 	}
 	if (!PlayerController->GameHUD->MiniMapWidget) 
 	{
-		UE_LOG(LogTemp, Error, TEXT("MiniMapWidget in UFogOfWarInfluencerComponent->Initialize() is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("MiniMapWidget is nullptr in UMiniMapInfluencerComponent::Initialize()"));
 		return;
 	}
-	MiniMapHUD = PlayerController->GameHUD->MiniMapWidget;
-	MiniMapHUD->RegisterActor(GetOwner());
+	MiniMapWidget = PlayerController->GameHUD->MiniMapWidget;
+	MiniMapWidget->RegisterActor(GetOwner());
 }

@@ -19,13 +19,12 @@ class RTSPROJECT_API AGameHUD : public AHUD
 
 public:
 
-	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
-	TSubclassOf<UMiniMapWidget> MiniMapWidgetClass;
-
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	ARTSPlayerController* PlayerController = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UMiniMapWidget> MiniMapWidgetClass;
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	UMiniMapWidget* MiniMapWidget = nullptr;
 	
 private:

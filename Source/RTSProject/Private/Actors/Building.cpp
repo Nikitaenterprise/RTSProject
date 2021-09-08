@@ -52,7 +52,7 @@ void ABuilding::Initialize(ARTSPlayerController* RTSController)
 		HealthShieldBar->SetVisibility(false);
 		FOWInfluencerComponent->Initialize(PlayerController);
 		MiniMapInfluencerComponent->Initialize(PlayerController);
-		
+		MiniMapIconComponent->Initialize(PlayerController);
 	}
 	else
 	{
