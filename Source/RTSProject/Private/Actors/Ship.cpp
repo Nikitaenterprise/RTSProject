@@ -72,12 +72,12 @@ void AShip::Tick(float DeltaTime)
 	
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
 
-	if (bJustCreated && !PlayerController->bLMBPressed)
+	if (bJustCreated && !bLMBPressed)
 	{
 		PlayerController->CameraRef->bDisableZooming = true;
 		UpdatePositionWhenCreated();
 	}
-	else if (PlayerController->bLMBPressed)
+	else if (bLMBPressed)
 	{
 		PlayerController->CameraRef->bDisableZooming = false;
 		bJustCreated = false;
@@ -121,6 +121,8 @@ void AShip::Initialize(ARTSPlayerController* RTSController)
 			DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Released, this, &AShip::MouseYPositiveEnd);
 			DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
 			DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Released, this, &AShip::MouseYNegativeEnd);
+			DebugInputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &AShip::LMBPressed);
+			DebugInputComponent->BindAction(TEXT("LMB"), IE_Released, this, &AShip::LMBReleased);
 		}
 		else
 		{
@@ -281,4 +283,12 @@ void AShip::MouseYNegativeEnd()
 	bMouseWheelYNegative = false;
 }
 
+void AShip::LMBPressed()
+{
+	bLMBPressed = true;
+}
 
+void AShip::LMBReleased()
+{
+	bLMBPressed = false;
+}

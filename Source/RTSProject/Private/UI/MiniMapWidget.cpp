@@ -93,6 +93,7 @@ FReply UMiniMapWidget::NativeOnMouseButtonDown(const FGeometry& MovieSceneBlends
 	ClickLocation = (ClickLocation - 0.5) * FOWBoundsVolume->GetVolumeWidth();
 	const FVector NewLocation = FVector(ClickLocation, PlayerController->CameraRef->GetActorLocation().Z);
 	PlayerController->CameraRef->SetActorLocation(NewLocation);
+	
 	return Super::NativeOnMouseButtonDown(MovieSceneBlends, InMouseEvent);
 }
 

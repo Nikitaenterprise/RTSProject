@@ -25,7 +25,7 @@ public:
 
 	// Key press
 	bool bShiftPressed = false;
-	
+
 	// Mouse clicks
 	bool bLMBPressed = false;
 	bool bRMBPressed = false;
@@ -50,7 +50,7 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Factory")
 	UFactoryAssets* FactoryAssets = nullptr;
-	
+
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	AGameHUD* GameHUD = nullptr;
 
@@ -59,11 +59,10 @@ public:
 	ARTSPlayerController();
 
 	void TestThis();
-	bool FF() { return true; }
 	virtual void Tick(float mainDeltaTime) override;
 
 	virtual void SetupInputComponent() override; //(class UInputComponent* PlayerInputComponent)
-
+	
 	void ShiftPressed();
 	void ShiftReleased();
 
@@ -74,7 +73,7 @@ public:
 	void RMBReleased();
 
 	void DamagePressed();
-
+	
 	// Units selection
 	void UpdateSelection();
 	void HighlightActorsUnderCursor();
@@ -96,9 +95,9 @@ public:
 
 	
 	// FactoryAssets	
-	UFUNCTION(BlueprintCallable, Category = "Factory")
+	UFUNCTION(BlueprintCallable, Category = "Getters")
 	UFactoryAssets* GetFactoryAssets() const { return FactoryAssets; }
-	UFUNCTION(BlueprintCallable, Category = "FogOfWar")
+	UFUNCTION(BlueprintCallable, Category = "Getters")
 	AFogOfWar* GetFOWManager() const { return FogOfWar; }
 	
 protected:

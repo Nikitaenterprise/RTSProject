@@ -63,12 +63,16 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
+	UPROPERTY(BlueprintReadOnly, Category = "Input")
+	UInputComponent* DebugInputComponent = nullptr;
+
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	UHealthShieldBarHUD* HealthShieldBarHUD = nullptr;
 	
 	bool bIsSelected = false;
 	bool bIsHighlighted = false;
 	bool bJustCreated = false;
+	bool bLMBPressed = false;
 
 	FVector LocationToSpawnOutsideTheBorders = FVector(0, 0, -10000);
 
@@ -115,6 +119,10 @@ private:
 	void BuildUnit();
 	UFUNCTION(BlueprintCallable, Category = "Building")
 	void FinishBuildingUnit();
+
+
+	void LMBPressed();
+	void LMBReleased();
 
 protected:
 

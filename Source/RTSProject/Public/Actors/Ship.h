@@ -92,6 +92,8 @@ public:
 	bool bMouseWheelYPositive = false;
 	bool bMouseWheelYNegative = false;
 
+	bool bLMBPressed = false;
+
 	// Turrets
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Turret")
 	bool bHasWorkingTurrets = false;
@@ -134,6 +136,9 @@ public:
 	void MouseYPositiveEnd();
 	void MouseYNegativeStart();
 	void MouseYNegativeEnd();
+
+	void LMBPressed();
+	void LMBReleased();
 
 protected:
 	

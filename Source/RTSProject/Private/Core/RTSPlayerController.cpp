@@ -58,20 +58,20 @@ void ARTSPlayerController::Tick(float mainDeltaTime)
 {
 	Super::Tick(mainDeltaTime);
 
-	if (bLMBPressed) UpdateSelection();
-	else HighlightActorsUnderCursor();
+	//if (bLMBPressed) UpdateSelection();
+	//else HighlightActorsUnderCursor();
 }
 
 void ARTSPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 	
-	InputComponent->BindAction(TEXT("Shift"), IE_Pressed, this, &ARTSPlayerController::ShiftPressed);
-	InputComponent->BindAction(TEXT("Shift"), IE_Released, this, &ARTSPlayerController::ShiftReleased);
+	//InputComponent->BindAction(TEXT("Shift"), IE_Pressed, this, &ARTSPlayerController::ShiftPressed);
+	//InputComponent->BindAction(TEXT("Shift"), IE_Released, this, &ARTSPlayerController::ShiftReleased);
 	
 	bShowMouseCursor = true;
-	InputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &ARTSPlayerController::LMBPressed);
-	InputComponent->BindAction(TEXT("LMB"), IE_Released, this, &ARTSPlayerController::LMBReleased);
+	//InputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &ARTSPlayerController::LMBPressed);
+	//InputComponent->BindAction(TEXT("LMB"), IE_Released, this, &ARTSPlayerController::LMBReleased);
 	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ARTSPlayerController::RMBPressed);
 	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ARTSPlayerController::RMBReleased);
 
@@ -90,18 +90,20 @@ void ARTSPlayerController::ShiftReleased()
 
 void ARTSPlayerController::LMBPressed()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Cyan, TEXT("LMBPressed"));
 	bLMBPressed = true;
 	// If shift pressed then new selected units will add to already selected
 	// thus SelectedActors shouldn't be emptied 
 	if (!bShiftPressed)	SelectedActors.Empty();
 	ShouldBeSelected.Empty();
-	GameHUD->OnInputStart();
+	//GameHUD->OnInputStart();
 }
 
 void ARTSPlayerController::LMBReleased()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Cyan, TEXT("LMBReleased"));
 	bLMBPressed = false;
-	GameHUD->OnInputRelease();
+	//GameHUD->OnInputRelease();
 	// Adding new actors (ShouldBeSelected) to selection pool (SelectedActors)
 	if (ShouldBeSelected.Num() == 0) return;
 	bool bOnlyBuildings = false, bOnlyShips = false;
@@ -176,6 +178,7 @@ void ARTSPlayerController::DamagePressed()
 
 void ARTSPlayerController::UpdateSelection()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 0.1, FColor::Cyan, TEXT("UpdateSelection"));
 	// All actors should be deselected unless shift is pressed
 	// in this case SelectedActors won't be deselected
 	for (auto& a : PlayersActors)
@@ -187,7 +190,7 @@ void ARTSPlayerController::UpdateSelection()
 		}
 	}
 
-	GameHUD->OnInputHold();
+	//GameHUD->OnInputHold();
 
 	// Select actors which came from GameHUD selection rectangle
 	for (auto& a : ShouldBeSelected)

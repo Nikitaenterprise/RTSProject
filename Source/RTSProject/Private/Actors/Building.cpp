@@ -8,10 +8,13 @@
 #include "Components/MiniMapIconComponent.h"
 #include "Components/MiniMapInfluencerComponent.h"
 #include "Actors/Ship.h"
+#include "UI/GameHUD.h"
+#include "UI/SelectionRectangleWidget.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "UI/SelectionRectangleWidget.h"
 
 ABuilding::ABuilding()
 {
@@ -58,8 +61,29 @@ void ABuilding::Initialize(ARTSPlayerController* RTSController)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerController in AShip->Init() is null"));
 	}
+	DebugInputComponent = PlayerController->InputComponent;
+	if (DebugInputComponent)
+	{
+		DebugInputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &ABuilding::LMBPressed);
+		DebugInputComponent->BindAction(TEXT("LMB"), IE_Released, this, &ABuilding::LMBReleased);
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Initialize() is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("InputComponent in AShip->Initialize() is nullptr"));
+	}
 	SpawnPoint->SetRelativeLocation(FVector(150, 0, 0));
 	SpawnPoint->SetVisibility(false);
+}
+
+void ABuilding::LMBPressed()
+{
+	bLMBPressed = true;
+}
+
+void ABuilding::LMBReleased()
+{
+	bLMBPressed = false;
 }
 
 void ABuilding::Tick(float DeltaTime)
@@ -68,13 +92,15 @@ void ABuilding::Tick(float DeltaTime)
 
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
 
-	if (bJustCreated && !PlayerController->bLMBPressed)
+	if (bJustCreated && !bLMBPressed)
 	{
+		if (PlayerController->GameHUD) PlayerController->GameHUD->LockSelectionRectangleWidget();
 		UpdatePositionWhenCreated();
 	}
-	else if (PlayerController->bLMBPressed)
+	else if (bLMBPressed)
 	{
 		bJustCreated = false;
+		if (PlayerController->GameHUD) PlayerController->GameHUD->UnlockSelectionRectangleWidget();
 	}
 	if (ConstructionState == EConstructionState::RequestedConstruction) StartBuildingUnit();
 	
