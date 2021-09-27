@@ -9,7 +9,9 @@
 #include "GameFramework/HUD.h"
 
 #include "DrawDebugHelpers.h"
+#include "Actors/Building.h"
 #include "Actors/Camera.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 
 #include "SelectionRectangleWidget.generated.h"
 
@@ -57,6 +59,7 @@ public:
 		bool bParentEnabled) const override;
 	
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
 	virtual FReply NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
@@ -89,6 +92,13 @@ bool USelectionRectangleWidget::GetActorsInSelectionRectangle(const FVector2D& F
 		return false;
 	}
 
+	if (!PlayerController)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("TestPlayerController is nullptr in USelectionRectangleWidget::GetActorsInSelectionRectangle"));
+		UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in USelectionRectangleWidget::GetActorsInSelectionRectangle"));
+		return false;
+	}
+
 	//Run Inner Function, output to Base AActor Array
 	TArray<AActor*> OutActorsBaseArray;
 	// Because this is a HUD function it is likely to get called each tick,
@@ -116,8 +126,6 @@ bool USelectionRectangleWidget::GetActorsInSelectionRectangle(const FVector2D& F
 		FVector(-1.f, -1.f, 1.f),
 		FVector(-1.f, -1.f, -1.f) };
 
-	//~~~
-
 	//For Each Actor of the Class Filter Type
 	for (TActorIterator<AActor> Itr(GetWorld(), T::StaticClass()); Itr; ++Itr)
 	{
@@ -142,33 +150,19 @@ bool USelectionRectangleWidget::GetActorsInSelectionRectangle(const FVector2D& F
 
 		//Extents
 		const FVector BoxExtents = EachActorBounds.GetExtent();
-
 		
 		// Build 2D bounding box of actor in screen space
 		FBox2D ActorBox2D(ForceInit);
 		for (uint8 BoundsPointItr = 0; BoundsPointItr < 8; BoundsPointItr++)
 		{
 			// Project vert into screen space.
-			if (PlayerController)
-			{
-				FVector2D ScreenPos;
-				PlayerController->ProjectWorldLocationToScreen(BoxCenter + (BoundsPointMapping[BoundsPointItr] * BoxExtents), ScreenPos, false);
-
-				// Add to 2D bounding box
-				ActorBox2D += ScreenPos;
-			}
-			else
-			{
-				 // Version with canvas
-				 const FVector ProjectedWorldLocation = PlayerController->GetHUD()->Project(BoxCenter + (BoundsPointMapping[BoundsPointItr] * BoxExtents));
-
-				// Add to 2D bounding box
-				ActorBox2D += FVector2D(ProjectedWorldLocation.X, ProjectedWorldLocation.Y);
-				UE_LOG(LogTemp, Warning, TEXT("PlayerController is nullptr in GetActorsInSelectionRectangle and original ActorBox2D calculation is used"));
-				GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("PlayerController is nullptr in GetActorsInSelectionRectangle and original ActorBox2D calculation is used"));
-			}
+			FVector2D ScreenPos;
+			// There was a bug in selection rectangle because of projecting coordinates from world to screen not relative to widget
+			// PlayerController->ProjectWorldLocationToScreen(BoxCenter + (BoundsPointMapping[BoundsPointItr] * BoxExtents), ScreenPos, false);
+			UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(PlayerController, BoxCenter + (BoundsPointMapping[BoundsPointItr] * BoxExtents), ScreenPos, false);
+			// Add to 2D bounding box
+			ActorBox2D += ScreenPos;
 		}
-
 		//Selection Box must fully enclose the Projected Actor Bounds
 		if (bActorMustBeFullyEnclosed)
 		{

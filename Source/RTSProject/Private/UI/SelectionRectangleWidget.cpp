@@ -2,6 +2,7 @@
 
 #include "Actors/Building.h"
 #include "Core/RTSPlayerController.h"
+#include "UI/GameHUD.h"
 
 void USelectionRectangleWidget::NativeConstruct()
 {
@@ -10,6 +11,9 @@ void USelectionRectangleWidget::NativeConstruct()
 	ARTSPlayerController* TestPlayerController = Cast<ARTSPlayerController>(GetOwningPlayer());
 	if (TestPlayerController) PlayerController = TestPlayerController;
 	else UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in USelectionRectangleWidget::NativeConstruct()"));
+
+	// For NativeOnKeyDown event to work properly the flag IsFocusable should be true in Widget->Designer->Interaction
+	bIsFocusable = true;
 }
 
 void USelectionRectangleWidget::NativeTick(const FGeometry& MovieSceneBlends, float InDeltaTime)
@@ -34,7 +38,7 @@ int32 USelectionRectangleWidget::NativePaint(const FPaintArgs& MovieSceneBlends,
 	
 	if (bIsDrawingSelectionRectangle) 
 	{
-		DrawMarquee(Context);
+		DrawMarquee(Context);		
 	}
 
 	return FMath::Max(LayerId, Context.MaxLayer);
@@ -60,10 +64,6 @@ FReply USelectionRectangleWidget::NativeOnMouseButtonDown(const FGeometry& Movie
 		StartClick = MovieSceneBlends.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
 		HoldingLocation = StartClick;
 
-		FString str = "";
-		str += FString("NativeOnMouseButtonDown ") + StartClick.ToString();
-		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::White, *str);
-
 		// If shift pressed then new selected units will be added to already selected
 		// thus SelectedActors shouldn't be emptied 
 		if (!bIsLeftShiftPressed) SelectedActors.Empty();
@@ -78,8 +78,15 @@ FReply USelectionRectangleWidget::NativeOnMouseButtonDown(const FGeometry& Movie
 	return FReply::Unhandled();
 }
 
+void USelectionRectangleWidget::NativeOnDragDetected(const FGeometry& MovieSceneBlends,
+	const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
+{
+	Super::NativeOnDragDetected(MovieSceneBlends, InMouseEvent, OutOperation);
+	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Green, TEXT("Hello"));
+}
+
 FReply USelectionRectangleWidget::NativeOnMouseMove(const FGeometry& MovieSceneBlends,
-	const FPointerEvent& InMouseEvent)
+                                                    const FPointerEvent& InMouseEvent)
 {
 	auto Reply = Super::NativeOnMouseMove(MovieSceneBlends, InMouseEvent);
 	if (Reply.IsEventHandled())
@@ -90,16 +97,6 @@ FReply USelectionRectangleWidget::NativeOnMouseMove(const FGeometry& MovieSceneB
 	if (bIsLeftMouseButtonDown)
 	{
 		HoldingLocation = MovieSceneBlends.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
-
-		FString str = "";
-		str += "NativeOnMouseMove\nStartClick " + StartClick.ToString() + " HoldingLocation " + HoldingLocation.ToString();
-		GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::White, *str);
-
-		/*for (auto& a : SelectedActors)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 0.015, FColor::White, FString::Printf(TEXT("%s"), *a->GetName()));
-		}*/
-
 		return FReply::Handled();
 	}
 	return FReply::Unhandled();
@@ -111,8 +108,8 @@ FReply USelectionRectangleWidget::NativeOnMouseButtonUp(const FGeometry& MovieSc
 	// At the beginning there was a bug which was as follows:
 	// 1. First click on widget fired only NativeOnMouseButtonDown but not NativeOnMouseButtonUp
 	// 2. Only on second click NativeOnMouseButtonDown and NativeOnMouseButtonUp fired in turns
-	// The solution was to set ProjectSettings->Input->ViewportProperties->DefaultViewportCaptureMode variable
-	// to CaptureDuringMouseDown from CapturePermanentlyIncludingInitialMouseDown 
+	// The solution was to set variable ProjectSettings->Input->ViewportProperties->DefaultViewportCaptureMode 
+	// from CapturePermanentlyIncludingInitialMouseDown to CaptureDuringMouseDown  
 	// https://answers.unrealengine.com/questions/748898/onclicked-event-only-fires-when-double-clicked-1.html
 
 	auto Reply = Super::NativeOnMouseButtonUp(MovieSceneBlends, InMouseEvent);
@@ -123,7 +120,7 @@ FReply USelectionRectangleWidget::NativeOnMouseButtonUp(const FGeometry& MovieSc
 
 	if (bIsDrawingSelectionRectangle)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Cyan, TEXT("NativeOnMouseButtonUp"));
+		//GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Cyan, TEXT("NativeOnMouseButtonUp"));
 		bIsDrawingSelectionRectangle = false;
 		bIsLeftMouseButtonDown = false;
 
@@ -199,6 +196,7 @@ FReply USelectionRectangleWidget::NativeOnMouseButtonUp(const FGeometry& MovieSc
 
 FReply USelectionRectangleWidget::NativeOnKeyDown(const FGeometry& MovieSceneBlends, const FKeyEvent& InKeyEvent)
 {
+	// For this event to work properly the flag IsFocusable should be true in Widget->Designer->Interaction
 	auto Reply = Super::NativeOnKeyDown(MovieSceneBlends, InKeyEvent);
 	if (InKeyEvent.GetKey() == EKeys::LeftShift)
 	{
@@ -219,7 +217,12 @@ FReply USelectionRectangleWidget::NativeOnKeyUp(const FGeometry& MovieSceneBlend
 
 void USelectionRectangleWidget::UpdateSelection()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 0.1, FColor::Cyan, TEXT("UpdateSelection"));
+	if (!PlayerController)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("TestPlayerController is nullptr in USelectionRectangleWidget::UpdateSelection"));
+		UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in USelectionRectangleWidget::UpdateSelection"));
+		return;
+	}
 
 	// All actors should be deselected unless shift is pressed
 	// in this case SelectedActors won't be deselected
