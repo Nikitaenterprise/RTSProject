@@ -43,8 +43,13 @@ private:
 
 	bool bIsSelectionShouldBeBlocked = false;
 	bool bIsDrawingSelectionRectangle = false;
-	bool bIsLeftMouseButtonDown = false;
+	bool bIsLMBPressed = false;
 	bool bIsLeftShiftPressed = false;
+
+	//FTimerHandle TimerHandle;
+	float StartClickTime = 0;
+	float HoldTime = 1;
+	
 
 public:
 
@@ -59,14 +64,16 @@ public:
 		bool bParentEnabled) const override;
 	
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
-	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
 	virtual FReply NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 	virtual FReply NativeOnKeyUp(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
+	void StartRectangleSelection(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent);
+	void EndRectangleSelection(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent);
+	void ClearSelection();
 	void UpdateSelection();
-	void HighlightActorsUnderCursor();
+	void HighlightActorsUnderCursor(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent);
 
 	void DrawMarquee(const FPaintContext& Context) const;
 	TArray<AActor*>& GetSelectedActors();

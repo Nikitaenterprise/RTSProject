@@ -9,9 +9,14 @@ void AGameHUD::BeginPlay()
 	Super::BeginPlay();
 	
 	ARTSPlayerController* TestPlayerController = Cast<ARTSPlayerController>(GetOwningPlayerController());
-	if (TestPlayerController) PlayerController = TestPlayerController;
-	else UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in AGameHUD::BeginPlay()"));
-
+	if (TestPlayerController)
+	{
+		PlayerController = TestPlayerController;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in AGameHUD::BeginPlay()"));
+	}
 	//if (SetupWidget<UMiniMapHUD>(MiniMapHUD, MiniMapHUDClass))
 	//{
 	//	MiniMapHUD->Initialize(PlayerController);

@@ -52,12 +52,14 @@ void ARTSPlayerController::BeginPlay()
 		FogOfWar = GetWorld()->SpawnActor<AFogOfWar>(SpawnClass, FVector(0, 0, 0), FRotator(0, 0, 0), Params);
 	}
 	FogOfWar->Initialize(this);
+
+	const FInputModeGameAndUI InputMode;
+	SetInputMode(InputMode);
 }
 
 void ARTSPlayerController::Tick(float mainDeltaTime)
 {
 	Super::Tick(mainDeltaTime);
-
 	//if (bLMBPressed) UpdateSelection();
 	//else HighlightActorsUnderCursor();
 }

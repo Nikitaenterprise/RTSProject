@@ -19,6 +19,7 @@
 #include "DrawDebugHelpers.h"
 #include "Components/MiniMapIconComponent.h"
 #include "Components/MiniMapInfluencerComponent.h"
+#include "UI/GameHUD.h"
 
 
 AShip::AShip(const FObjectInitializer& OI)
@@ -75,11 +76,13 @@ void AShip::Tick(float DeltaTime)
 	if (bJustCreated && !bLMBPressed)
 	{
 		PlayerController->CameraRef->bDisableZooming = true;
+		if (PlayerController->GameHUD) PlayerController->GameHUD->LockSelectionRectangleWidget();
 		UpdatePositionWhenCreated();
 	}
 	else if (bLMBPressed)
 	{
 		PlayerController->CameraRef->bDisableZooming = false;
+		if (PlayerController->GameHUD) PlayerController->GameHUD->UnlockSelectionRectangleWidget();
 		bJustCreated = false;
 	}
 

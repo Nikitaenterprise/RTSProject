@@ -9,22 +9,49 @@ void USelectionRectangleWidget::NativeConstruct()
 	Super::NativeConstruct();
 
 	ARTSPlayerController* TestPlayerController = Cast<ARTSPlayerController>(GetOwningPlayer());
-	if (TestPlayerController) PlayerController = TestPlayerController;
-	else UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in USelectionRectangleWidget::NativeConstruct()"));
+	if (TestPlayerController)
+	{
+		PlayerController = TestPlayerController;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in USelectionRectangleWidget::NativeConstruct()"));
+	}
 
 	// For NativeOnKeyDown event to work properly the flag IsFocusable should be true in Widget->Designer->Interaction
 	bIsFocusable = true;
+
+	Visibility = ESlateVisibility::Visible;
+
+	
 }
 
 void USelectionRectangleWidget::NativeTick(const FGeometry& MovieSceneBlends, float InDeltaTime)
 {
-	if (bIsDrawingSelectionRectangle)
+	GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::White, FString::Printf(TEXT("%s"), *FString::SanitizeFloat(PlayerController->GetInputKeyTimeDown(EKeys::LeftMouseButton))));
+	GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::White, FString::Printf(TEXT("%s"), *FString::SanitizeFloat(PlayerController->GetInputKeyTimeDown(EKeys::RightMouseButton))));
+	GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::White, FString::Printf(TEXT("bIsLMBPressed = %s"), bIsLMBPressed ? *FString("true"): *FString("false")));
+	GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::White, FString::Printf(TEXT("bIsDrawingSelectionRectangle = %s"), bIsDrawingSelectionRectangle ? *FString("true"): *FString("false")));
+
+
+	if (bIsLMBPressed)
 	{
-		UpdateSelection();
-		//SelectedActors.Empty();
-		GetActorsInSelectionRectangle<AActor>(StartClick, HoldingLocation, ShouldBeSelected, false);
+		const float CurrentTime = GetWorld()->GetTimeSeconds() - StartClickTime;
+		if (CurrentTime < HoldTime)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::White, TEXT("Just click"));
+			ClearSelection();
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::White, TEXT("Just drawing"));
+			bIsDrawingSelectionRectangle = true;
+			ClearSelection();
+			UpdateSelection();
+			GetActorsInSelectionRectangle<AActor>(StartClick, HoldingLocation, ShouldBeSelected, false);
+		}
 	}
-	else HighlightActorsUnderCursor();
+
 	Super::NativeTick(MovieSceneBlends, InDeltaTime);
 }
 
@@ -47,64 +74,55 @@ int32 USelectionRectangleWidget::NativePaint(const FPaintArgs& MovieSceneBlends,
 FReply USelectionRectangleWidget::NativeOnMouseButtonDown(const FGeometry& MovieSceneBlends,
 	const FPointerEvent& InMouseEvent)
 {
+	
+	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Blue, TEXT("USelectionRectangleWidget::NativeOnMouseButtonDown"));
 	auto Reply = Super::NativeOnMouseButtonDown(MovieSceneBlends, InMouseEvent);
 	if (Reply.IsEventHandled())
 	{
 		return Reply;
 	}
-
+	
 	if (bIsSelectionShouldBeBlocked)
 	{
 		return FReply::Unhandled();
 	}
-
+	
 	// If only one button is pressed and it's a LMB
 	if (InMouseEvent.GetPressedButtons().Num() == 1 && InMouseEvent.GetPressedButtons().Contains(EKeys::LeftMouseButton))
 	{
-		StartClick = MovieSceneBlends.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
-		HoldingLocation = StartClick;
-
-		// If shift pressed then new selected units will be added to already selected
-		// thus SelectedActors shouldn't be emptied 
-		if (!bIsLeftShiftPressed) SelectedActors.Empty();
-		ShouldBeSelected.Empty();
-
-		bIsDrawingSelectionRectangle = true;
-		bIsLeftMouseButtonDown = true;
-
+		StartRectangleSelection(MovieSceneBlends, InMouseEvent);
 		return FReply::Handled();
 	}
+
 	
 	return FReply::Unhandled();
 }
 
-void USelectionRectangleWidget::NativeOnDragDetected(const FGeometry& MovieSceneBlends,
-	const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
+FReply USelectionRectangleWidget::NativeOnMouseMove(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent)
 {
-	Super::NativeOnDragDetected(MovieSceneBlends, InMouseEvent, OutOperation);
-	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Green, TEXT("Hello"));
-}
-
-FReply USelectionRectangleWidget::NativeOnMouseMove(const FGeometry& MovieSceneBlends,
-                                                    const FPointerEvent& InMouseEvent)
-{
+	GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::Blue, TEXT("USelectionRectangleWidget::NativeOnMouseMove"));
 	auto Reply = Super::NativeOnMouseMove(MovieSceneBlends, InMouseEvent);
 	if (Reply.IsEventHandled())
 	{
 		return Reply;
 	}
 
-	if (bIsLeftMouseButtonDown)
+	if (bIsDrawingSelectionRectangle)
 	{
 		HoldingLocation = MovieSceneBlends.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
-		return FReply::Handled();
+		//return FReply::Handled();
 	}
+	else
+	{
+		HighlightActorsUnderCursor(MovieSceneBlends, InMouseEvent);
+	}
+
 	return FReply::Unhandled();
 }
 
-FReply USelectionRectangleWidget::NativeOnMouseButtonUp(const FGeometry& MovieSceneBlends,
-	const FPointerEvent& InMouseEvent)
+FReply USelectionRectangleWidget::NativeOnMouseButtonUp(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Blue, TEXT("USelectionRectangleWidget::NativeOnMouseButtonUp"));
 	// At the beginning there was a bug which was as follows:
 	// 1. First click on widget fired only NativeOnMouseButtonDown but not NativeOnMouseButtonUp
 	// 2. Only on second click NativeOnMouseButtonDown and NativeOnMouseButtonUp fired in turns
@@ -120,84 +138,24 @@ FReply USelectionRectangleWidget::NativeOnMouseButtonUp(const FGeometry& MovieSc
 
 	if (bIsDrawingSelectionRectangle)
 	{
-		//GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Cyan, TEXT("NativeOnMouseButtonUp"));
-		bIsDrawingSelectionRectangle = false;
-		bIsLeftMouseButtonDown = false;
-
-		if (!PlayerController)
-		{
-			UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr in USelectionRectangleWidget::NativeOnMouseButtonUp"));
-			GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("PlayerController is nullptr in USelectionRectangleWidget::NativeOnMouseButtonUp"));
-			return FReply::Unhandled();
-		}
-
-		// Adding new actors (ShouldBeSelected) to selection pool (SelectedActors)
-		if (ShouldBeSelected.Num() == 0)
-		{
-			return FReply::Unhandled();
-		}
-		bool bOnlyBuildings = false, bOnlyShips = false;
-
-		// Pre check fo actors in SelectedActors if shift is pressed
-		// e.d. buildings or ships are already in SelectedActors
-		if (SelectedActors.Num() != 0)
-		{
-			if (PlayerController->IsArrayContainThisTypeActors<AShip>(SelectedActors))
-			{
-				bOnlyShips = true;
-			}
-			else if (PlayerController->IsArrayContainThisTypeActors<ABuilding>(SelectedActors))
-			{
-				bOnlyBuildings = true;
-			}
-		}
-		for (const auto& Actor : ShouldBeSelected)
-		{
-			if (PlayerController->PlayersActors.Contains(Actor))
-			{
-				// If SelectedActors has no actors then add first
-				if (SelectedActors.Num() == 0)
-				{
-					SelectedActors.AddUnique(Actor);
-					continue;
-				}
-				// If SelectedActors has at least one building then add
-				// building but not ship
-				if (!bOnlyShips && Cast<ABuilding>(Actor))
-				{
-					SelectedActors.AddUnique(Actor);
-					bOnlyBuildings = true;
-				}
-				// If SelectedActors has at least one ship then add
-				// ship but not building
-				else if (!bOnlyBuildings && Cast<AShip>(Actor))
-				{
-					SelectedActors.AddUnique(Actor);
-					bOnlyShips = true;
-				}
-			}
-		}
-		// Set ShouldBeSelected Execute_Highlighted to false
-		// because actors was highlighted while rectangle was drawn
-		for (auto& Actor : ShouldBeSelected)
-		{
-			IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
-			if (Interface) Interface->Execute_Highlighted(Actor, false);
-		}
-		// Set actors Execute_Selected to true
-		for (auto& Actor : SelectedActors)
-		{
-			IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
-			if (Interface) Interface->Execute_Selected(Actor, true);
-		}
+		EndRectangleSelection(MovieSceneBlends, InMouseEvent);
 	}
-	return FReply::Unhandled();
+
+	bIsDrawingSelectionRectangle = false;
+	bIsLMBPressed = false;
+	StartClickTime = 0;
+	return FReply::Handled();
 }
 
 FReply USelectionRectangleWidget::NativeOnKeyDown(const FGeometry& MovieSceneBlends, const FKeyEvent& InKeyEvent)
 {
 	// For this event to work properly the flag IsFocusable should be true in Widget->Designer->Interaction
 	auto Reply = Super::NativeOnKeyDown(MovieSceneBlends, InKeyEvent);
+	if (Reply.IsEventHandled())
+	{
+		return Reply;
+	}
+
 	if (InKeyEvent.GetKey() == EKeys::LeftShift)
 	{
 		bIsLeftShiftPressed = true;
@@ -208,6 +166,11 @@ FReply USelectionRectangleWidget::NativeOnKeyDown(const FGeometry& MovieSceneBle
 FReply USelectionRectangleWidget::NativeOnKeyUp(const FGeometry& MovieSceneBlends, const FKeyEvent& InKeyEvent)
 {
 	auto Reply = Super::NativeOnKeyUp(MovieSceneBlends, InKeyEvent);
+	if (Reply.IsEventHandled())
+	{
+		return Reply;
+	}
+
 	if (InKeyEvent.GetKey() == EKeys::LeftShift)
 	{
 		bIsLeftShiftPressed = false;
@@ -215,12 +178,104 @@ FReply USelectionRectangleWidget::NativeOnKeyUp(const FGeometry& MovieSceneBlend
 	return FReply::Unhandled();
 }
 
-void USelectionRectangleWidget::UpdateSelection()
+void USelectionRectangleWidget::StartRectangleSelection(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Blue, TEXT("USelectionRectangleWidget::StartRectangleSelection"));
+	StartClickTime = GetWorld()->GetTimeSeconds();
+
+	StartClick = MovieSceneBlends.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
+	HoldingLocation = StartClick;
+
+	// If shift pressed then new selected units will be added to already selected
+	// thus SelectedActors shouldn't be emptied 
+	if (!bIsLeftShiftPressed)
+	{
+		SelectedActors.Empty();
+		PlayerController->SelectedActors.Empty();
+	}
+	ShouldBeSelected.Empty();
+
+	bIsLMBPressed = true;
+}
+
+void USelectionRectangleWidget::EndRectangleSelection(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent)
 {
 	if (!PlayerController)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("TestPlayerController is nullptr in USelectionRectangleWidget::UpdateSelection"));
-		UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in USelectionRectangleWidget::UpdateSelection"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr in USelectionRectangleWidget::NativeOnMouseButtonUp"));
+		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("PlayerController is nullptr in USelectionRectangleWidget::NativeOnMouseButtonUp"));
+		return;
+	}
+
+	// Adding new actors (ShouldBeSelected) to selection pool (SelectedActors)
+	if (ShouldBeSelected.Num() == 0)
+	{
+		return;
+	}
+	bool bOnlyBuildings = false, bOnlyShips = false;
+
+	// Pre check fo actors in SelectedActors if shift is pressed
+	// e.d. buildings or ships are already in SelectedActors
+	if (SelectedActors.Num() != 0)
+	{
+		if (PlayerController->IsArrayContainThisTypeActors<AShip>(SelectedActors))
+		{
+			bOnlyShips = true;
+		}
+		else if (PlayerController->IsArrayContainThisTypeActors<ABuilding>(SelectedActors))
+		{
+			bOnlyBuildings = true;
+		}
+	}
+	for (const auto& Actor : ShouldBeSelected)
+	{
+		if (PlayerController->PlayersActors.Contains(Actor))
+		{
+			// If SelectedActors has no actors then add first
+			if (SelectedActors.Num() == 0)
+			{
+				SelectedActors.AddUnique(Actor);
+				continue;
+			}
+			// If SelectedActors has at least one building then add
+			// building but not ship
+			if (!bOnlyShips && Cast<ABuilding>(Actor))
+			{
+				SelectedActors.AddUnique(Actor);
+				bOnlyBuildings = true;
+			}
+			// If SelectedActors has at least one ship then add
+			// ship but not building
+			else if (!bOnlyBuildings && Cast<AShip>(Actor))
+			{
+				SelectedActors.AddUnique(Actor);
+				bOnlyShips = true;
+			}
+		}
+	}
+	// Set ShouldBeSelected Execute_Highlighted to false
+	// because actors was highlighted while rectangle was drawn
+	for (auto& Actor : ShouldBeSelected)
+	{
+		IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
+		if (Interface) Interface->Execute_Highlighted(Actor, false);
+	}
+	// Set actors Execute_Selected to true
+	for (auto& Actor : SelectedActors)
+	{
+		IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
+		if (Interface) Interface->Execute_Selected(Actor, true);
+	}
+
+	PlayerController->SelectedActors = SelectedActors;
+}
+
+void USelectionRectangleWidget::ClearSelection()
+{
+	if (!PlayerController)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("TestPlayerController is nullptr in USelectionRectangleWidget::ClearSelection"));
+		UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in USelectionRectangleWidget::ClearSelection"));
 		return;
 	}
 
@@ -234,8 +289,18 @@ void USelectionRectangleWidget::UpdateSelection()
 			if (Interface) Interface->Execute_Selected(Actor, false);
 		}
 	}
+}
 
-	// Select actors which came from GameHUD selection rectangle
+void USelectionRectangleWidget::UpdateSelection()
+{
+	if (!PlayerController)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("TestPlayerController is nullptr in USelectionRectangleWidget::UpdateSelection"));
+		UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in USelectionRectangleWidget::UpdateSelection"));
+		return;
+	}
+
+	// Select actors which came from selection rectangle
 	for (auto& Actor : ShouldBeSelected)
 	{
 		IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
@@ -243,14 +308,15 @@ void USelectionRectangleWidget::UpdateSelection()
 	}
 }
 
-void USelectionRectangleWidget::HighlightActorsUnderCursor()
+void USelectionRectangleWidget::HighlightActorsUnderCursor(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent)
 {
 	// If HighlightedActor is in SelectedActors then
 	// it shouldn't be highlighted
-	for (auto& a : SelectedActors)
+	if (SelectedActors.Contains(HighlightedActor))
 	{
-		if (SelectedActors.Contains(HighlightedActor)) return;
+		return;
 	}
+
 	// Dehighlight unit
 	IBaseBehavior* Interface = Cast<IBaseBehavior>(HighlightedActor);
 	if (Interface) Interface->Execute_Highlighted(HighlightedActor, false);
