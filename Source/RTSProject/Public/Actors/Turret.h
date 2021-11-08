@@ -70,7 +70,6 @@ public:
 
 	ATurret();
 	virtual void BeginPlay() override;
-	void Initialize(ARTSPlayerController* RTSController);
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 

@@ -32,38 +32,29 @@ ATurret::ATurret()
 void ATurret::BeginPlay()
 {
 	Super::BeginPlay();
-	FiredRockets.Reserve(20);
-}
 
-void ATurret::Initialize(ARTSPlayerController* RTSController)
-{
-	if (RTSController)
+	AShip* TestOwner = Cast<AShip>(GetOwner());
+	if (!IsValid(TestOwner))
 	{
-		PlayerController = RTSController;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerController in ATurret::Initialize is nullptr"));
-	}
-
-	AShip* TestShip = Cast<AShip>(GetOwner());
-	if (TestShip)
-	{
-		OwnerShip = TestShip;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Ship in ATurret::Initialize is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("TestOwner is nullptr in ATurret::BeginPlay()"));
 		return;
 	}
-	
+	OwnerShip = TestOwner;
+
+	if (!IsValid(OwnerShip->PlayerController))
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr in ATurret::BeginPlay()"));
+		return;
+	}
+	PlayerController = OwnerShip->PlayerController;
+
 	// Decide on which side the turret is
 	const FVector ShipForward = OwnerShip->GetActorForwardVector();
 	const FVector FromCenterOfShipToTurret = GetActorLocation() - OwnerShip->GetActorLocation();
 	const bool bClockwise = AnglesFunctions::FindRotationDirectionBetweenVectorsOn2D(ShipForward, FromCenterOfShipToTurret);
 	if (bClockwise) OnWhichSide = ESide::Right;
 	if (!bClockwise) OnWhichSide = ESide::Left;
-	
+
 	SetFacingLeftRight();
 
 	OwnerShip->bHasWorkingTurrets = true;
@@ -73,7 +64,7 @@ void ATurret::Initialize(ARTSPlayerController* RTSController)
 	{
 		if (PlayerController->GetFactoryAssets())
 		{
-			if(PlayerController->GetFactoryAssets()->GetRocketClass(0))
+			if (PlayerController->GetFactoryAssets()->GetRocketClass(0))
 			{
 				RocketClass = PlayerController->GetFactoryAssets()->GetRocketClass(0);
 			}
@@ -87,6 +78,9 @@ void ATurret::Initialize(ARTSPlayerController* RTSController)
 			UE_LOG(LogTemp, Error, TEXT("FactoryAssets in PlayerController is nullptr"));
 		}
 	}
+	OwnerShip->Turrets.AddUnique(this);
+
+	FiredRockets.Reserve(20);
 }
 
 void ATurret::Tick(float DeltaTime)

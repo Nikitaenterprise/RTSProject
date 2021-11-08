@@ -111,7 +111,6 @@ void UFactoriesFunctionLibrary::AddTurretsToShip(AShip* Ship)
 
 			FActorSpawnParameters Params;
 			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-			Params.Instigator = nullptr;
 			Params.Owner = Ship;
 
 			ATurret* SpawnedTurret = Ship->GetWorld()->SpawnActor<ATurret>(
@@ -130,8 +129,6 @@ void UFactoriesFunctionLibrary::AddTurretsToShip(AShip* Ship)
 				EAttachmentRule::KeepRelative,
 				true);
 			SpawnedTurret->AttachToComponent(StaticMesh, AttachmentRules, Socket);
-			SpawnedTurret->Initialize(Ship->PlayerController);
-			Ship->Turrets.AddUnique(SpawnedTurret);
 		}
 		Ship->bHasWorkingTurrets = true;
 	}
@@ -169,7 +166,6 @@ ABuilding* UFactoriesFunctionLibrary::NewBuilding(UWorld* World, UClass* ClassTy
 
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-	Params.Instigator = nullptr;
 	Params.Owner = Controller;
 
 	ABuilding* SpawnedBuilding = World->SpawnActor<ABuilding>(

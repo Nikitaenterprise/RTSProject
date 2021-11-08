@@ -33,11 +33,13 @@ void ARocket::BeginPlay()
 	}
 	OwnerTurret = TestOwner;
 
-
 	// Binding Destroy() function that will destroy rocket
 	// when timer hits MaxLifeTime
 	FTimerDelegate TimerDelegate;
-	TimerDelegate.BindUFunction(this, FName("Destroy"), false, false);
+	TimerDelegate.BindLambda([this]()
+		{
+			this->Destroy();
+		});
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, MaxLifeTime, false);
 }
 

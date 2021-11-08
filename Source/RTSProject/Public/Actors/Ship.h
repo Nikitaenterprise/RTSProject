@@ -108,9 +108,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
-	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
-	//bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
-	
 	// Interfaces
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Selected(bool _bIsSelected);
