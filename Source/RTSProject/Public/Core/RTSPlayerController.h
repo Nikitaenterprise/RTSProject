@@ -35,16 +35,30 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Camera")
 	ACamera* CameraRef = nullptr;
+
+	// True if FogOfWar was placed on level in editor
+	// Checked in GameMode class
+	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
+	bool bIsFOWPlacedOnLevel = false;
+	// True if FogOfWarBoundsVolume was placed on level in editor
+	// Checked in GameMode class
+	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
+	// Pointer to FogOfWar class
+	bool bIsFOWBoundsVolumePlacedOnLevel = false;
 	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
 	AFogOfWar* FogOfWar = nullptr;
 
 	// Units selection
+	//Array of actors that should appear in SelectedActors array
 	UPROPERTY(BlueprintReadOnly, Category = "Selection")
 	TArray<AActor*> ShouldBeSelected;
+	// Array of currently selected actors for this controller
 	UPROPERTY(BlueprintReadOnly, Category = "Selection")
 	TArray<AActor*> SelectedActors;
+	// Array of all created and owned by this controller actors
 	UPROPERTY(BlueprintReadOnly, Category = "Selection")
 	TArray<AActor*> PlayersActors;
+	// Currently highlighted actor
 	UPROPERTY(BlueprintReadOnly, Category = "Selection")
 	AActor* HighlightedActor = nullptr;
 
@@ -57,12 +71,15 @@ public:
 public:
 
 	ARTSPlayerController();
-
-	void TestThis();
+	virtual void PreInitializeComponents() override;
+	virtual void BeginPlay() override;
 	virtual void Tick(float mainDeltaTime) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	virtual void SetupInputComponent() override; //(class UInputComponent* PlayerInputComponent)
 	
+	void TestThis();
+
 	void ShiftPressed();
 	void ShiftReleased();
 
@@ -100,9 +117,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Getters")
 	AFogOfWar* GetFOWManager() const { return FogOfWar; }
 	
-protected:
-
-	virtual void BeginPlay() override;
 };
 
 template <class ActorType>

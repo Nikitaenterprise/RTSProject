@@ -69,11 +69,11 @@ private:
 public:	
 
 	ATurret();
-
+	virtual void BeginPlay() override;
+	void Initialize(ARTSPlayerController* RTSController);
 	virtual void Tick(float DeltaTime) override;
-	void Initialize(ARTSPlayerController* RTSController, AShip* Ship);
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
-	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 	UFUNCTION(BlueprintCallable)
 	void RequestAttack(const AActor* _ActorToAttack);
 	UFUNCTION(BlueprintCallable)
@@ -86,9 +86,5 @@ public:
 	void SetFacingOnActor(const AActor* ActorToSetFacingTo);
 	UFUNCTION(BlueprintCallable)
 	void CheckAngle();
-
-protected:
-	
-	virtual void BeginPlay() override;
 	
 };

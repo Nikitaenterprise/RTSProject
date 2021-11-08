@@ -7,7 +7,7 @@
 void AGameHUD::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	ARTSPlayerController* TestPlayerController = Cast<ARTSPlayerController>(GetOwningPlayerController());
 	if (TestPlayerController)
 	{
@@ -36,7 +36,7 @@ void AGameHUD::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AGameHUD::LockSelectionRectangleWidget() const
+void AGameHUD::LockSelectionRectangle() const
 {
 	if (SelectionRectangleWidget)
 	{
@@ -44,7 +44,7 @@ void AGameHUD::LockSelectionRectangleWidget() const
 	}
 }
 
-void AGameHUD::UnlockSelectionRectangleWidget() const
+void AGameHUD::UnlockSelectionRectangle() const
 {
 	if (SelectionRectangleWidget)
 	{

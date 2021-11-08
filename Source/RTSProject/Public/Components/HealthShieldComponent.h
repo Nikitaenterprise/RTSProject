@@ -33,22 +33,24 @@ private:
 public:
 	
 	UHealthShieldComponent();
-
+	virtual void InitializeComponent() override;
+	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
-	void DamageToHealth(int damage);
+	void DamageToHealth(int Damage);
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
-	void DamageToShield(int damage);
+	void DamageToShield(int Damage);
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
-	void TakeDamage(int damage);
+	void TakeDamage(int Damage);
 
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
-	void HealHealth(int amount);
+	void HealHealth(int Amount);
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
-	void HealShield(int amount);
+	void HealShield(int Amount);
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
-	void Heal(int amount);
+	void Heal(int Amount);
 
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
 	float GetHealthPercent();
@@ -65,7 +67,4 @@ private:
 
 	inline void RecalculatePercents();
 
-protected:
-	
-	virtual void BeginPlay() override;
 };

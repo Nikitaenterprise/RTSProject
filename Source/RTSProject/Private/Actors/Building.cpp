@@ -43,37 +43,60 @@ ABuilding::ABuilding()
 void ABuilding::BeginPlay()
 {
 	Super::BeginPlay();
-}
 
-void ABuilding::Initialize(ARTSPlayerController* RTSController)
-{
-	if (RTSController)
+	ARTSPlayerController* TestController = Cast<ARTSPlayerController>(GetOwner());
+	if (!IsValid(TestController))
 	{
-		PlayerController = RTSController;
-		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
-		HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
-		HealthShieldBar->SetVisibility(false);
-		FOWInfluencerComponent->Initialize(PlayerController);
-		MiniMapInfluencerComponent->Initialize(PlayerController);
-		MiniMapIconComponent->Initialize(PlayerController);
+		UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr in ABuilding::BeginPlay()"));
+		return;
 	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerController in AShip->Init() is null"));
-	}
+	PlayerController = TestController;
+
+	HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
+	HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
+	HealthShieldBar->SetVisibility(false);
+
 	DebugInputComponent = PlayerController->InputComponent;
-	if (DebugInputComponent)
+	if (!IsValid(DebugInputComponent))
 	{
-		DebugInputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &ABuilding::LMBPressed);
-		DebugInputComponent->BindAction(TEXT("LMB"), IE_Released, this, &ABuilding::LMBReleased);
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent is nullptr in AShip::Initialize()"));
+		UE_LOG(LogTemp, Error, TEXT("InputComponent is nullptr in AShip::Initialize()"));
 	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Initialize() is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("InputComponent in AShip->Initialize() is nullptr"));
-	}
+	DebugInputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &ABuilding::LMBPressed);
+	DebugInputComponent->BindAction(TEXT("LMB"), IE_Released, this, &ABuilding::LMBReleased);
+
 	SpawnPoint->SetRelativeLocation(FVector(150, 0, 0));
 	SpawnPoint->SetVisibility(false);
+}
+
+void ABuilding::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (HealthShieldComponent->IsDead())
+	{
+		Destroy();
+	}
+
+	if (bJustCreated && !bLMBPressed)
+	{
+		if (PlayerController->GameHUD) PlayerController->GameHUD->LockSelectionRectangle();
+		UpdatePositionWhenCreated();
+	}
+	else if (bLMBPressed)
+	{
+		bJustCreated = false;
+		if (PlayerController->GameHUD) PlayerController->GameHUD->UnlockSelectionRectangle();
+	}
+	if (ConstructionState == EConstructionState::RequestedConstruction) StartBuildingUnit();
+
+}
+
+void ABuilding::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	PlayerController->PlayersActors.Remove(this);
+	//SpawnEmitterAtLocation()
+	Super::EndPlay(EndPlayReason);
 }
 
 void ABuilding::LMBPressed()
@@ -86,38 +109,10 @@ void ABuilding::LMBReleased()
 	bLMBPressed = false;
 }
 
-void ABuilding::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if (HealthShieldComponent->IsDead()) Destroy(false, true);
-
-	if (bJustCreated && !bLMBPressed)
-	{
-		if (PlayerController->GameHUD) PlayerController->GameHUD->LockSelectionRectangleWidget();
-		UpdatePositionWhenCreated();
-	}
-	else if (bLMBPressed)
-	{
-		bJustCreated = false;
-		if (PlayerController->GameHUD) PlayerController->GameHUD->UnlockSelectionRectangleWidget();
-	}
-	if (ConstructionState == EConstructionState::RequestedConstruction) StartBuildingUnit();
-	
-}
-
-bool ABuilding::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
-{
-	PlayerController->PlayersActors.Remove(this);
-	//SpawnEmitterAtLocation()
-	return Super::Destroy(bNetForce, bShouldModifyLevel);
-}
-
 void ABuilding::SetSpawnPointLocation(const FVector& Location) const
 {
 	SpawnPoint->SetWorldLocation(Location);
 }
-
 
 void ABuilding::Selected_Implementation(bool _bIsSelected)
 {
@@ -206,8 +201,10 @@ void ABuilding::BuildUnit()
 	const FVector SpawnLocation = SpawnPoint->GetComponentLocation() + FVector(0, 0, 100);
 	// First the ship is created in a place outside the borders
 	AShip* SpawnedShip = UFactoriesFunctionLibrary::NewShip(GetWorld(), ClassType, PlayerController, SpawnLocation);
-	UFactoriesFunctionLibrary::AddTurretsToShip(SpawnedShip);
-	
+	if (IsValid(SpawnedShip))
+	{
+		UFactoriesFunctionLibrary::AddTurretsToShip(SpawnedShip);
+	}
 	FinishBuildingUnit();
 }
 

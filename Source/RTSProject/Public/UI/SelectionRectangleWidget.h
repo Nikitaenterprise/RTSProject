@@ -53,6 +53,21 @@ private:
 
 public:
 
+	/// <summary>
+	/// Get function that returns array of selected actors from USelectionRectangleWidget
+	/// </summary>
+	///	<returns>Array of pointers to selected actors</returns>
+	UFUNCTION(BlueprintCallable)
+	TArray<AActor*>& GetSelectedActors();
+	/// <summary>
+	/// Function that updates array of selected actors in ARTSPlayerController.
+	///	The data is taken from USelectionRectangleWidget
+	/// </summary>
+	UFUNCTION(BlueprintCallable)
+	void UpdatePlayerControllerSelectedActors();
+
+private:
+
 	virtual void NativeConstruct() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	virtual int32 NativePaint(const FPaintArgs& Args, 
@@ -73,10 +88,10 @@ public:
 	void EndRectangleSelection(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent);
 	void ClearSelection();
 	void UpdateSelection();
-	void HighlightActorsUnderCursor(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent);
+	void SelectActorUnderCursor();
+	void HighlightActorsUnderCursor();
 
 	void DrawMarquee(const FPaintContext& Context) const;
-	TArray<AActor*>& GetSelectedActors();
 
 private:
 

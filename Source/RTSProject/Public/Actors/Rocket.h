@@ -8,7 +8,6 @@
 #include "Rocket.generated.h"
 
 class UStaticMeshComponent;
-class ARTSPlayerController;
 class ATurret;
 
 UCLASS()
@@ -21,8 +20,6 @@ public:
 	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
-	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	ATurret* OwnerTurret = nullptr;
 
@@ -38,11 +35,9 @@ public:
 public:
 	
 	ARocket();
-
+	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-	void Initialize(ARTSPlayerController* RTSController, ATurret* Turret);
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
-	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void DealDamage(AActor* actor);
@@ -64,8 +59,4 @@ public:
 	virtual void OnOverlapEnd_Implementation(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
 												class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
 	
-
-protected:
-	
-	virtual void BeginPlay() override;
 };

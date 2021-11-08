@@ -13,15 +13,24 @@ void UMiniMapWidget::NativeConstruct()
 	Super::NativeConstruct();
 
 	ARTSPlayerController* TestPlayerController = Cast<ARTSPlayerController>(GetOwningPlayer());
-	if (TestPlayerController) PlayerController = TestPlayerController;
-	else UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in UMiniMapWidget::NativeConstruct()"));
-
-	if (PlayerController->FogOfWar->FOWBoundsVolume) FOWBoundsVolume = PlayerController->FogOfWar->FOWBoundsVolume;
-	else
+	if (!IsValid(TestPlayerController))
 	{
-		UE_LOG(LogTemp, Error, TEXT("FOWBoundsVolume in UMiniMapWidget::NativeConstruct() is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in UMiniMapWidget::NativeConstruct()"));
 		return;
 	}
+	PlayerController = TestPlayerController;
+
+	if (!IsValid(PlayerController->FogOfWar))
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerController->FogOfWar is nullptr in UMiniMapWidget::NativeConstruct()"));
+		return;
+	}
+	if (!IsValid(PlayerController->FogOfWar->FOWBoundsVolume))
+	{
+		UE_LOG(LogTemp, Error, TEXT("FOWBoundsVolume is nullptr in UMiniMapWidget::NativeConstruct()"));
+		return;
+	}
+	FOWBoundsVolume = PlayerController->FogOfWar->FOWBoundsVolume;
 
 	FOWTexture = UTexture2D::CreateTransient(PlayerController->FogOfWar->VolumeWidthInCells, PlayerController->FogOfWar->VolumeHeightInCells);
 	FOWTexture->CompressionSettings = TextureCompressionSettings::TC_VectorDisplacementmap;
@@ -35,7 +44,7 @@ void UMiniMapWidget::NativeConstruct()
 
 	if (!DefaultIconBrush.HasUObject())
 	{
-		UE_LOG(LogTemp, Error, TEXT("DefaultIconBrush in UMiniMapWidget::NativeConstruct() has no UTexture*"));
+		UE_LOG(LogTemp, Error, TEXT("DefaultIconBrush has no UTexture* in UMiniMapWidget::NativeConstruct()"));
 		return;
 	}
 
@@ -46,7 +55,9 @@ void UMiniMapWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	if (PlayerController->FogOfWar)
+	CleanUpArrays();
+
+	if (IsValid(PlayerController->FogOfWar))
 	{
 		for (uint32 TileY = 0; TileY < PlayerController->FogOfWar->VolumeHeightInCells; TileY++)
 		{
@@ -66,9 +77,8 @@ void UMiniMapWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerController->FogOfWar in UMiniMapWidget::NativeTick() is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerController->FogOfWar is nullptr in UMiniMapWidget::NativeTick()"));
 	}
-
 	FOWTexture->UpdateTextureRegions(0, 1, MiniMapUpdateTextureRegion, PlayerController->FogOfWar->VolumeWidthInCells * 4, static_cast<uint8>(4), MiniMapTextureBuffer);
 }
 
@@ -88,13 +98,43 @@ int32 UMiniMapWidget::NativePaint(const FPaintArgs& MovieSceneBlends, const FGeo
 
 FReply UMiniMapWidget::NativeOnMouseButtonDown(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent)
 {
-	FVector2D ClickLocation = MovieSceneBlends.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
+	GEngine->AddOnScreenDebugMessage(-1, 2, FColor::White, TEXT("UMiniMapWidget::NativeOnMouseButtonDown"));
+	// If only one button is pressed and it's a LMB
+	if (InMouseEvent.GetPressedButtons().Num() == 1 && InMouseEvent.GetPressedButtons().Contains(EKeys::LeftMouseButton))
+	{
+		bLMBPressed = true;
+	}
+	/*FVector2D ClickLocation = MovieSceneBlends.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
 	ClickLocation = ClickLocation / GetCachedGeometry().GetLocalSize();
 	ClickLocation = (ClickLocation - 0.5) * FOWBoundsVolume->GetVolumeWidth();
 	const FVector NewLocation = FVector(ClickLocation, PlayerController->CameraRef->GetActorLocation().Z);
-	PlayerController->CameraRef->SetActorLocation(NewLocation);
-	
+	PlayerController->CameraRef->SetActorLocation(NewLocation);*/
+	return FReply::Handled();
 	return Super::NativeOnMouseButtonDown(MovieSceneBlends, InMouseEvent);
+}
+
+FReply UMiniMapWidget::NativeOnMouseMove(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent)
+{
+	if (bLMBPressed)
+	{
+		FVector2D HoldLocation = MovieSceneBlends.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
+		HoldLocation = HoldLocation / GetCachedGeometry().GetLocalSize();
+		HoldLocation = (HoldLocation - 0.5) * FOWBoundsVolume->GetVolumeWidth();
+		const FVector NewLocation = FVector(HoldLocation, PlayerController->CameraRef->GetActorLocation().Z);
+		PlayerController->CameraRef->SetActorLocation(NewLocation);
+	}
+	return Super::NativeOnMouseMove(MovieSceneBlends, InMouseEvent);
+}
+
+FReply UMiniMapWidget::NativeOnMouseButtonUp(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2, FColor::White, TEXT("UMiniMapWidget::NativeOnMouseButtonUp"));
+	if (bLMBPressed)
+	{
+		bLMBPressed = false;
+	}
+	return FReply::Handled();
+	return Super::NativeOnMouseButtonUp(MovieSceneBlends, InMouseEvent);
 }
 
 void UMiniMapWidget::DrawIcons(const FPaintContext& Context) const
@@ -181,7 +221,7 @@ void UMiniMapWidget::RegisterActor(AActor* ActorToRegister)
 	UMiniMapInfluencerComponent* MiniMapInfluencerComponent = Cast<UMiniMapInfluencerComponent>(ActorToRegister->FindComponentByClass(UMiniMapInfluencerComponent::StaticClass()));
 	if (!MiniMapInfluencerComponent)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Actor %s is unregistered in UMiniMapWidget because he hasn't UMiniMapInfluencerComponent"), *ActorToRegister->GetHumanReadableName());
+		UE_LOG(LogTemp, Error, TEXT("Actor %s is unregistered in UMiniMapWidget because it hasn't UMiniMapInfluencerComponent"), *ActorToRegister->GetHumanReadableName());
 		return;
 	}
 	MiniMapInfluencers.AddUnique(ActorToRegister);
@@ -201,6 +241,38 @@ void UMiniMapWidget::RegisterActor(AActor* ActorToRegister)
 	Icons.AddUnique(TPair<AActor*, FSlateBrush&>(ActorToRegister, MiniMapIconComponent->IconBrush));
 	
 	UE_LOG(LogTemp, Log, TEXT("Actor %s registered in UMiniMapWidget"), *ActorToRegister->GetHumanReadableName());
+}
+
+void UMiniMapWidget::UnRegisterActor(AActor* ActorToUnregister)
+{
+	if (!ActorToUnregister)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Actor is nullptr in UMiniMapWidget::UnRegisterActor"));
+		return;
+	}
+
+	int32 IndexToDelete = MiniMapInfluencers.Find(ActorToUnregister);
+	if (IndexToDelete == -1)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No such actor in MiniMapInfluencers array in UMiniMapWidget::UnRegisterActor"));
+		return;
+	}
+	MiniMapInfluencers.RemoveAt(IndexToDelete);
+
+	for (int32 Index = 0; Index < Icons.Num(); Index++)
+	{
+		if (Icons[Index].Key == ActorToUnregister)
+		{
+			IndexToDelete = Index;
+		}
+	}
+	if (IndexToDelete == -1)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No such actor in Icons array in UMiniMapWidget::UnRegisterActor"));
+		return;
+	}
+	Icons.RemoveAt(IndexToDelete);
+	UE_LOG(LogTemp, Log, TEXT("Actor %s unregistered from UMiniMapWidget"), *ActorToUnregister->GetHumanReadableName());
 }
 
 FVector2D UMiniMapWidget::WorldToMiniMap(const FVector& Location) const
@@ -231,4 +303,35 @@ FVector UMiniMapWidget::ViewportToWorld(const FVector2D& ViewportPosition) const
 
 	// Calculate intersection point
 	return FMath::LinePlaneIntersection(WorldOrigin, WorldOrigin + WorldDirection * 1000.0f, ZPlane);
+}
+
+void UMiniMapWidget::CleanUpArrays()
+{
+	int32 DeleteIndex = -1;
+	for (int32 Index = 0; Index < Icons.Num(); Index++)
+	{
+		// Check if actor is alive
+		if (!IsValid(Icons[Index].Key))
+		{
+			DeleteIndex = Index;
+		}
+	}
+	if (Icons.IsValidIndex(DeleteIndex))
+	{
+		Icons.RemoveAt(DeleteIndex);
+	}
+
+	DeleteIndex = -1;
+	for (int32 Index = 0; Index < MiniMapInfluencers.Num(); Index++)
+	{
+		// Check if actor is alive
+		if (!IsValid(MiniMapInfluencers[Index]))
+		{
+			DeleteIndex = Index;
+		}
+	}
+	if (MiniMapInfluencers.IsValidIndex(DeleteIndex))
+	{
+		MiniMapInfluencers.RemoveAt(DeleteIndex);
+	}
 }

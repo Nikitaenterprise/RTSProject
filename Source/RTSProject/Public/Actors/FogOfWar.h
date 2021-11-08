@@ -52,28 +52,30 @@ public:
 	uint32 TextureBufferSize = 0;
 	float VolumeHeight = 0;
 	float VolumeWidth = 0;
+
 public:	
 
-	AFogOfWar();
-	virtual void Tick(float DeltaTime) override;
-	void Initialize(ARTSPlayerController* Controller);
 	UFUNCTION(BlueprintCallable)
 	void RegisterActor(AActor* ActorToRegister);
 	UFUNCTION(BlueprintCallable)
-	void UnRegisterActor(AActor* ActorToRegister);
+	void UnRegisterActor(AActor* ActorToUnregister);
+
+	void Initialize(ARTSPlayerController* Controller);
+
+private:
+
+	AFogOfWar();
+	virtual void PreInitializeComponents() override;
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 	UFUNCTION(BlueprintCallable)
 	TArray<AActor*> GetRegisteredActors() const;
 	
 	EFOWState GetActorVisionData(uint32 X, uint32 Y);
 
 	void UpdateTextureRegions(UTexture2D* Texture,	int32 MipIndex, uint32 NumRegions, FUpdateTextureRegion2D* Regions, uint32 SrcPitch, uint32 SrcBpp, uint8* SrcData, bool bFreeData);
+	void CleanUpArrays();
 
-protected:
-
-	virtual void BeginPlay() override;
-
-private:
-
-	
-	
 };

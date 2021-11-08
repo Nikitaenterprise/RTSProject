@@ -20,11 +20,9 @@ public:
 public:
 
 	UMiniMapInfluencerComponent();
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	void Initialize(const ARTSPlayerController* PlayerController);
-
-protected:
-
+	virtual void InitializeComponent() override;
 	virtual void BeginPlay() override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 };

@@ -1,7 +1,35 @@
 #include "Volumes/FogOfWarBoundsVolume.h"
+#include "Actors/FogOfWar.h"
+
+AFogOfWarBoundsVolume::AFogOfWarBoundsVolume()
+{
+}
+
+void AFogOfWarBoundsVolume::PreInitializeComponents()
+{
+	Super::PreInitializeComponents();
+}
+
+void AFogOfWarBoundsVolume::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void AFogOfWarBoundsVolume::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+}
 
 void AFogOfWarBoundsVolume::Initialize()
 {
+	AFogOfWar* TestFogOfWar = Cast<AFogOfWar>(GetOwner());
+	if (!IsValid(TestFogOfWar))
+	{
+		UE_LOG(LogTemp, Error, TEXT("AFogOfWar is nullptr in AFogOfWarBoundsVolume::Initialize()"));
+		return;
+	}
+	FOW = TestFogOfWar;
+
 	// Check if DesiredCellSizeLength is power of 2 and if so then set CellSideLength to it
 	if ((DesiredCellSizeLength > 0) && ((DesiredCellSizeLength & (DesiredCellSizeLength - 1)) == 0)) CellSideLength = DesiredCellSizeLength;
 	PaveVolumeWithGrid();

@@ -62,27 +62,65 @@ AShip::AShip(const FObjectInitializer& OI)
 	MiniMapIconComponent = CreateDefaultSubobject<UMiniMapIconComponent>(TEXT("MiniMapIconComponent"));
 }
 
+void AShip::PreInitializeComponents()
+{
+	Super::PreInitializeComponents();
+	ARTSPlayerController* TestController = Cast<ARTSPlayerController>(GetOwner());
+	if (!IsValid(TestController))
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr in AShip::BeginPlay()"));
+		return;
+	}
+	PlayerController = TestController;
+}
+
 void AShip::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	DebugInputComponent = PlayerController->InputComponent;
+	if (!IsValid(DebugInputComponent))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Initialize() is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("InputComponent in AShip->Initialize() is nullptr"));
+		return;
+	}
+	DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Pressed, this, &AShip::MouseYPositiveStart);
+	DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Released, this, &AShip::MouseYPositiveEnd);
+	DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
+	DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Released, this, &AShip::MouseYNegativeEnd);
+	DebugInputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &AShip::LMBPressed);
+	DebugInputComponent->BindAction(TEXT("LMB"), IE_Released, this, &AShip::LMBReleased);
+
+	HealthShieldBar->InitWidget();
+	HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
+	if (!IsValid(HealthShieldBarHUD))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("HealthShieldBarHUD in AShip->Initialize() is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("HealthShieldBarHUD in AShip->Initialize() is nullptr"));
+		return;
+	}
+	HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
+	HealthShieldBar->SetVisibility(false);
+	SelectionCircle->SetVisibility(false);
 }
 
 void AShip::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	if (HealthShieldComponent->IsDead()) Destroy(false, true);
 
 	if (bJustCreated && !bLMBPressed)
 	{
 		PlayerController->CameraRef->bDisableZooming = true;
-		if (PlayerController->GameHUD) PlayerController->GameHUD->LockSelectionRectangleWidget();
+		if (PlayerController->GameHUD) PlayerController->GameHUD->LockSelectionRectangle();
 		UpdatePositionWhenCreated();
 	}
 	else if (bLMBPressed)
 	{
 		PlayerController->CameraRef->bDisableZooming = false;
-		if (PlayerController->GameHUD) PlayerController->GameHUD->UnlockSelectionRectangleWidget();
+		if (PlayerController->GameHUD) PlayerController->GameHUD->UnlockSelectionRectangle();
 		bJustCreated = false;
 	}
 
@@ -90,75 +128,12 @@ void AShip::Tick(float DeltaTime)
 	//if (bIsMoving && UKismetMathLibrary::NearlyEqual_FloatFloat(PastTime, DrawNavLineOncePerThisSeconds)) DrawNavLine();
 }
 
-void AShip::Initialize(ARTSPlayerController* RTSController)
-{
-	if (RTSController)
-	{
-		PlayerController = RTSController;
-
-		if(MovementComponent)
-		{
-			MovementComponent->PlayerController = RTSController;
-			MovementComponent->Owner = this;
-			MovementComponent->Initialize();	
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Initialize() is nullptr"));
-			UE_LOG(LogTemp, Error, TEXT("MovementComponent in AShip->Initialize() is nullptr"));
-		}
-		if(AttackComponent)
-		{
-			AttackComponent->PlayerController = RTSController;
-			AttackComponent->Owner = this;
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("AttackComponent in AShip->Initialize() is nullptr"));
-			UE_LOG(LogTemp, Error, TEXT("AttackComponent in AShip->Initialize() is nullptr"));
-		}
-		DebugInputComponent = PlayerController->InputComponent;
-		if (DebugInputComponent)
-		{
-			DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Pressed, this, &AShip::MouseYPositiveStart);
-			DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Released, this, &AShip::MouseYPositiveEnd);
-			DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
-			DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Released, this, &AShip::MouseYNegativeEnd);
-			DebugInputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &AShip::LMBPressed);
-			DebugInputComponent->BindAction(TEXT("LMB"), IE_Released, this, &AShip::LMBReleased);
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Initialize() is nullptr"));
-			UE_LOG(LogTemp, Error, TEXT("InputComponent in AShip->Initialize() is nullptr"));
-		}
-		
-		HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
-		HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
-		HealthShieldBar->SetVisibility(false);
-		SelectionCircle->SetVisibility(false);
-
-		FOWInfluencerComponent->Initialize(PlayerController);
-		MiniMapInfluencerComponent->Initialize(PlayerController);
-		MiniMapIconComponent->Initialize(PlayerController);
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerController in AShip->Initialize() is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("PlayerController in AShip->Initialize() is nullptr"));
-	}
-	
-}
-
-bool AShip::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
+void AShip::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	PlayerController->PlayersActors.Remove(this);
 	PlayerController->SelectedActors.Remove(this);
-	if (bHasWorkingTurrets)
-	{
-		for (auto& Turret : Turrets) Turret->Destroy();
-	}
-	return Super::Destroy(bNetForce, bShouldModifyLevel);
+	Turrets.Empty();
+	Super::EndPlay(EndPlayReason);
 }
 
 void AShip::Selected_Implementation(bool _bIsSelected)

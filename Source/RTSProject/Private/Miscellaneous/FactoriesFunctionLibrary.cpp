@@ -45,22 +45,18 @@ AShip* UFactoriesFunctionLibrary::NewShip(UWorld* World, UClass* ClassType, ARTS
 
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-	Params.Instigator = nullptr;
-	Params.Owner = nullptr;
-
-	AShip* SpawnedShip = World->SpawnActor<AShip>(
-		ClassType,
-		FVector(Location.X, Location.Y, 150),
-		Rotation,
-		Params);
-	if (!SpawnedShip)
+	Params.Owner = Controller;
+	//Some shit happens here. Before calling SpawnActor the Controller is ARTSPlayerController type. After calling SpawnActor
+	// the Controller becomes RTSAIController
+	// APawn::PossessedBy changes the ownership when setting up AIController
+	AShip* SpawnedShip = World->SpawnActor<AShip>(ClassType, FVector(Location.X, Location.Y, 150), Rotation, Params);
+	if (!IsValid(SpawnedShip))
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn ship"));
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn ship"));
 		return nullptr;
 	}
 	Controller->PlayersActors.AddUnique(SpawnedShip);
-	SpawnedShip->Initialize(Controller);
 	SpawnedShip->bJustCreated = true;
 
 	return SpawnedShip;
@@ -69,8 +65,17 @@ AShip* UFactoriesFunctionLibrary::NewShip(UWorld* World, UClass* ClassType, ARTS
 
 void UFactoriesFunctionLibrary::AddTurretsToShip(AShip* Ship)
 {
-	if (!Ship) return;
-	if (Ship->bHasWorkingTurrets) return;
+	if (!IsValid(Ship) || Ship->bHasWorkingTurrets)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Ship is not valid in UFactoriesFunctionLibrary::AddTurretsToShip()"));
+		return;
+	}
+	if(!IsValid(Ship->PlayerController))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Ship->PlayerController is not valid in UFactoriesFunctionLibrary::AddTurretsToShip()"));
+		return;
+	}
+	
 	const TSubclassOf<ATurret> TurretClass = Ship->PlayerController->GetFactoryAssets()->GetTurretClass(0);
 	if (TurretClass)
 	{
@@ -107,7 +112,7 @@ void UFactoriesFunctionLibrary::AddTurretsToShip(AShip* Ship)
 			FActorSpawnParameters Params;
 			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 			Params.Instigator = nullptr;
-			Params.Owner = nullptr;
+			Params.Owner = Ship;
 
 			ATurret* SpawnedTurret = Ship->GetWorld()->SpawnActor<ATurret>(
 				TurretClass.Get(),
@@ -125,7 +130,7 @@ void UFactoriesFunctionLibrary::AddTurretsToShip(AShip* Ship)
 				EAttachmentRule::KeepRelative,
 				true);
 			SpawnedTurret->AttachToComponent(StaticMesh, AttachmentRules, Socket);
-			SpawnedTurret->Initialize(Ship->PlayerController, Ship);
+			SpawnedTurret->Initialize(Ship->PlayerController);
 			Ship->Turrets.AddUnique(SpawnedTurret);
 		}
 		Ship->bHasWorkingTurrets = true;
@@ -165,7 +170,7 @@ ABuilding* UFactoriesFunctionLibrary::NewBuilding(UWorld* World, UClass* ClassTy
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 	Params.Instigator = nullptr;
-	Params.Owner = nullptr;
+	Params.Owner = Controller;
 
 	ABuilding* SpawnedBuilding = World->SpawnActor<ABuilding>(
 		ClassType,
@@ -178,8 +183,7 @@ ABuilding* UFactoriesFunctionLibrary::NewBuilding(UWorld* World, UClass* ClassTy
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn ship"));
 		return nullptr;
 	}
-
-	SpawnedBuilding->Initialize(Controller);
+	
 	SpawnedBuilding->bJustCreated = true;
 	Controller->PlayersActors.AddUnique(SpawnedBuilding);
 
@@ -217,7 +221,7 @@ AAsteroidField* UFactoriesFunctionLibrary::NewAsteroidField(UWorld* World, UClas
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 	Params.Instigator = nullptr;
-	Params.Owner = nullptr;
+	Params.Owner = Controller;
 
 	AAsteroidField* SpawnedAsteroidField = World->SpawnActor<AAsteroidField>(
 		ClassType,
@@ -230,8 +234,7 @@ AAsteroidField* UFactoriesFunctionLibrary::NewAsteroidField(UWorld* World, UClas
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn asteroid field"));
 		return nullptr;
 	}
-
-	SpawnedAsteroidField->PlayerController = Controller;
+	
 	SpawnedAsteroidField->AddRandomNumberOfAsteroidsToField();
 	return SpawnedAsteroidField;
 }
@@ -267,7 +270,7 @@ ARocket* UFactoriesFunctionLibrary::NewRocket(UWorld* World, UClass* ClassType, 
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	Params.Instigator = nullptr;
-	Params.Owner = nullptr;
+	Params.Owner = Turret;
 
 	ARocket* SpawnedRocket = World->SpawnActor<ARocket>(
 		ClassType,
@@ -280,6 +283,5 @@ ARocket* UFactoriesFunctionLibrary::NewRocket(UWorld* World, UClass* ClassType, 
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn rocket"));
 		return nullptr;
 	}
-	SpawnedRocket->Initialize(Controller, Turret);
 	return SpawnedRocket;
 }

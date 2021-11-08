@@ -103,15 +103,15 @@ public:
 public:
 
 	AShip(const FObjectInitializer& ObjectInitializer);
-
+	virtual void PreInitializeComponents() override;
+	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
-	void Initialize(ARTSPlayerController* RTSController);
-
+	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
+	//bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
+	
 	// Interfaces
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
-	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
-	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Selected(bool _bIsSelected);
 	virtual void Selected_Implementation(bool _bIsSelected) override;
@@ -139,9 +139,6 @@ public:
 
 	void LMBPressed();
 	void LMBReleased();
-
-protected:
 	
-	virtual void BeginPlay() override;
 
 };

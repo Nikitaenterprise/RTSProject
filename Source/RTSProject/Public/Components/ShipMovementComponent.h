@@ -173,8 +173,10 @@ private:
 public:
 	
 	UShipMovementComponent(const FObjectInitializer& ObjectInitializer);
-	void Initialize();
+	virtual void InitializeComponent() override;
+	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	virtual void AddInputVector(FVector WorldVector, bool bForce = false) override;
 	virtual FVector ConsumeInputVector() override;

@@ -18,31 +18,25 @@ AAsteroidField::AAsteroidField()
 void AAsteroidField::BeginPlay()
 {
 	Super::BeginPlay();
-	//PlayerController = Cast<ARTSPlayerController>(GetWorld()->GetFirstPlayerController());
-	
 
-	/*FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-	Params.Instigator = NULL;
-	Params.Owner = NULL;
-	FRotator Rotation(0, 0, 0);
-	FVector Location(
-		UKismetMathLibrary::RandomIntegerInRange(-1000, 1000),
-		UKismetMathLibrary::RandomIntegerInRange(-1000, 1000),
-		150);
-	FVector Scale(1, 1, 1);
-	FTransform Transform(Rotation, Location, Scale);
-	AAsteroidField* SpawnedAsteroidField = GetWorld()->SpawnActor<AAsteroidField>(AAsteroidField::StaticClass(), Transform, GetDefaultSpawnParams());
-	if (IsValid(SpawnedAsteroidField)) return SpawnedAsteroidField;*/
+	ARTSPlayerController* TestController = Cast<ARTSPlayerController>(GetOwner());
+	if (!IsValid(TestController))
+	{
+		UE_LOG(LogTemp, Error, TEXT("ARTSPlayerController is nullptr in AAsteroidField::BeginPlay()"));
+		return;
+	}
+	PlayerController = TestController;
 }
 
 void AAsteroidField::Tick(float MainDeltaTime)
 {
 	Super::Tick(MainDeltaTime);
-	DeltaTime = MainDeltaTime;
-	PastTime += MainDeltaTime;
 }
 
+void AAsteroidField::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+}
 
 void AAsteroidField::RemoveRandomAsteroidFromField()
 {
@@ -71,8 +65,8 @@ int AAsteroidField::RecalculateNumberOfAsteroidsInField()
 
 void AAsteroidField::AddRandomNumberOfAsteroidsToField(int MinValue, int MaxValue)
 {
-	int _NumberOfAsteroids = UKismetMathLibrary::RandomIntegerInRange(MinValue, MaxValue);
-	for (int i = 0; i < _NumberOfAsteroids; ++i)
+	const int NumberOfAsteroidsToAdd = UKismetMathLibrary::RandomIntegerInRange(MinValue, MaxValue);
+	for (int i = 0; i < NumberOfAsteroidsToAdd; ++i)
 	{
 		AddAsteroidToField();
 	}
@@ -102,14 +96,13 @@ void AAsteroidField::AddAsteroidToField()
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 	Params.Instigator = nullptr;
-	Params.Owner = nullptr;
+	Params.Owner = this;
 	
 	const TSubclassOf<AAsteroidResource> AsteroidResourceClass = PlayerController->GetFactoryAssets()->GetAsteroidResourceClass(0);
 	AAsteroidResource* SpawnedAsteroid = GetWorld()->SpawnActor<AAsteroidResource>(AsteroidResourceClass.Get(), Transform, Params);
 	if (SpawnedAsteroid)
 	{
 		Asteroids.AddUnique(SpawnedAsteroid);
-		SpawnedAsteroid->Owner = this;
 		NumberOfAsteroids++;
 	}
 	else GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn asteroid"));

@@ -24,24 +24,21 @@ ARocket::ARocket()
 void ARocket::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	ATurret* TestOwner = Cast<ATurret>(GetOwner());
+	if (!IsValid(TestOwner))
+	{
+		UE_LOG(LogTemp, Error, TEXT("TestOwner is nullptr in ARocket::BeginPlay()"));
+		return;
+	}
+	OwnerTurret = TestOwner;
+
+
 	// Binding Destroy() function that will destroy rocket
 	// when timer hits MaxLifeTime
 	FTimerDelegate TimerDelegate;
 	TimerDelegate.BindUFunction(this, FName("Destroy"), false, false);
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, MaxLifeTime, false);
-}
-
-void ARocket::Initialize(ARTSPlayerController* RTSController, ATurret* Turret)
-{
-	if (RTSController)
-	{
-		PlayerController = RTSController;
-	}
-	if (Turret)
-	{
-		OwnerTurret = Turret;
-	}
 }
 
 void ARocket::Tick(float DeltaTime)
@@ -52,9 +49,9 @@ void ARocket::Tick(float DeltaTime)
 	SetActorLocation(dR + GetActorLocation(), false, nullptr, ETeleportType::None);
 }
 
-bool ARocket::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
+void ARocket::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	return Super::Destroy(bNetForce, bShouldModifyLevel);
+	Super::EndPlay(EndPlayReason);
 }
 
 void ARocket::DealDamage_Implementation(AActor* actor)
@@ -68,10 +65,16 @@ void ARocket::OnOverlapBegin_Implementation(class UPrimitiveComponent* Overlappe
 											const FHitResult& SweepResult)
 {	
 	AShip* Ship = Cast<AShip>(OtherActor);
-	if (!Ship) return;
-	if (OwnerTurret->OwnerShip == Ship) return;
+	if (!Ship)
+	{
+		return;
+	}
+	if (OwnerTurret->OwnerShip == Ship)
+	{
+		return;
+	}
 	DamageDealer::DealDamage(this, Ship);
-	Destroy(false, false);
+	Destroy();
 }
 
 void ARocket::OnOverlapEnd_Implementation(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,

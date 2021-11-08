@@ -86,14 +86,11 @@ private:
 public:	
 
 	ABuilding();
-
+	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-	void Initialize(ARTSPlayerController* RTSController);
-	
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 	void SetSpawnPointLocation(const FVector& Location = FVector(0, 0, 0)) const;
-	
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
-	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = false);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Selected(bool _bIsSelected);
@@ -124,7 +121,4 @@ private:
 	void LMBPressed();
 	void LMBReleased();
 
-protected:
-
-	virtual void BeginPlay() override;
 };

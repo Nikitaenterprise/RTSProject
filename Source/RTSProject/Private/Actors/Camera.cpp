@@ -73,6 +73,49 @@ void ACamera::Initialize(ARTSPlayerController* RTSController)
 void ACamera::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (!IsValid(PlayerController))
+	{
+		ARTSPlayerController* TestController = Cast<ARTSPlayerController>(GetOwner());
+		if (!IsValid(TestController))
+		{
+			UE_LOG(LogTemp, Error, TEXT("ARTSPlayerController is nullptr in ACamera::BeginPlay()"));
+			return;
+		}
+		PlayerController = TestController;
+	}
+	InputComponent = PlayerController->InputComponent;
+
+	if (IsValid(InputComponent))
+	{
+		// Movement
+		InputComponent->BindAxis(TEXT("MoveForward"), this, &ACamera::MoveForward);
+		InputComponent->BindAxis(TEXT("MoveRight"), this, &ACamera::MoveRight);
+		InputComponent->BindAction(TEXT("Shift"), IE_Pressed, this, &ACamera::MovementIncrease);
+		InputComponent->BindAction(TEXT("Shift"), IE_Released, this, &ACamera::ResetMovementModifier);
+		InputComponent->BindAction(TEXT("Alt"), IE_Pressed, this, &ACamera::MovementDecrease);
+		InputComponent->BindAction(TEXT("Alt"), IE_Released, this, &ACamera::ResetMovementModifier);
+		// Edge scrolling
+		InputComponent->BindAxis(TEXT("MouseX"), this, &ACamera::EdgeScrollingX);
+		InputComponent->BindAxis(TEXT("MouseY"), this, &ACamera::EdgeScrollingY);
+		// Zoom
+		InputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Pressed, this, &ACamera::MouseWheelYPositiveStart);
+		InputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &ACamera::MouseWheelYNegativeStart);
+		InputComponent->BindAction(TEXT("ZoomReset"), IE_Pressed, this, &ACamera::ZoomReset);
+		// Pan rotation
+		InputComponent->BindAction(TEXT("MMB"), IE_Pressed, this, &ACamera::DisableCameraMovement);
+		InputComponent->BindAction(TEXT("MMB"), IE_Released, this, &ACamera::EnableCameraMovement);
+		InputComponent->BindAction(TEXT("PanReset"), IE_Pressed, this, &ACamera::PanReset);
+		InputComponent->BindAxis(TEXT("MouseX"), this, &ACamera::RotatePanX);
+		InputComponent->BindAxis(TEXT("MouseY"), this, &ACamera::RotatePanY);
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent is nullptr in ACamera::BeginPlay()"));
+		UE_LOG(LogTemp, Error, TEXT("InputComponent is nullptr in ACamera::BeginPlay()"));
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("Success of ACamera::BeginPlay()"));
 }
 
 void ACamera::Tick(float DeltaTime)

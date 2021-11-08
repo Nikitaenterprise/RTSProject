@@ -7,33 +7,50 @@
 UMiniMapInfluencerComponent::UMiniMapInfluencerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	bWantsInitializeComponent = true;
+}
 
+void UMiniMapInfluencerComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+	
+	ARTSPlayerController* TestController = Cast<ARTSPlayerController>(GetOwner()->GetOwner());
+	if (!IsValid(TestController))
+	{
+		UE_LOG(LogTemp, Error, TEXT("TestController is nullptr in UMiniMapInfluencerComponent::InitializeComponent()"));
+		return;
+	}
+	if (!TestController->GameHUD)
+	{
+		UE_LOG(LogTemp, Error, TEXT("TestController->GameHUD is nullptr in UMiniMapInfluencerComponent::InitializeComponent()"));
+		return;
+	}
+	if (!TestController->GameHUD->MiniMapWidget)
+	{
+		UE_LOG(LogTemp, Error, TEXT("TestController->GameHUD->MiniMapWidget is nullptr in UMiniMapInfluencerComponent::InitializeComponent()"));
+		return;
+	}
+	MiniMapWidget = TestController->GameHUD->MiniMapWidget;
+	MiniMapWidget->RegisterActor(GetOwner());
 }
 
 void UMiniMapInfluencerComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void UMiniMapInfluencerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
 }
 
-void UMiniMapInfluencerComponent::Initialize(const ARTSPlayerController* PlayerController)
+void UMiniMapInfluencerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (!PlayerController)
+	if(IsValid(MiniMapWidget))
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr in UMiniMapInfluencerComponent::Initialize()"));
-		return;
+		MiniMapWidget->UnRegisterActor(GetOwner());
 	}
-	if (!PlayerController->GameHUD->MiniMapWidget) 
-	{
-		UE_LOG(LogTemp, Error, TEXT("MiniMapWidget is nullptr in UMiniMapInfluencerComponent::Initialize()"));
-		return;
-	}
-	MiniMapWidget = PlayerController->GameHUD->MiniMapWidget;
-	MiniMapWidget->RegisterActor(GetOwner());
+	Super::EndPlay(EndPlayReason);
 }
+
+

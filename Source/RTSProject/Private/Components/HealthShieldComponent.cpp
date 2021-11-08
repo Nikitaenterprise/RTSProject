@@ -4,61 +4,76 @@
 UHealthShieldComponent::UHealthShieldComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	
+	bWantsInitializeComponent = true;
+}
+
+void UHealthShieldComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+
+	Health = StartingHealth;
+	Shield = StartingShield;
+
+	AActor* TestOwner = Cast<AActor>(GetOwner());
+	if (!IsValid(TestOwner))
+	{
+		UE_LOG(LogTemp, Error, TEXT("TestOwner is nullptr in UHealthShieldComponent::InitializeComponent()"));
+		return;
+	}
+	Owner = TestOwner;
+	RecalculatePercents();
 }
 
 void UHealthShieldComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	Health = StartingHealth;
-	Shield = StartingShield;
-	Owner = GetOwner();
-	RecalculatePercents();
 }
 
 void UHealthShieldComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-
 }
 
-void UHealthShieldComponent::DamageToHealth(int damage)
+void UHealthShieldComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Health = FMath::Clamp<int>(Health - damage, 0, MaxHealth);
+	Super::EndPlay(EndPlayReason);
+}
+
+void UHealthShieldComponent::DamageToHealth(int Damage)
+{
+	Health = FMath::Clamp<int>(Health - Damage, 0, MaxHealth);
 	RecalculatePercents();
 }
 
-void UHealthShieldComponent::DamageToShield(int damage)
+void UHealthShieldComponent::DamageToShield(int Damage)
 {
-	Shield = FMath::Clamp<int>(Shield - damage, 0, MaxShield);
+	Shield = FMath::Clamp<int>(Shield - Damage, 0, MaxShield);
 	RecalculatePercents();
 }
 
-void UHealthShieldComponent::TakeDamage(int damage)
+void UHealthShieldComponent::TakeDamage(int Damage)
 {
-	if (Shield > 0) DamageToShield(damage);
-	else DamageToHealth(damage);
+	if (Shield > 0) DamageToShield(Damage);
+	else DamageToHealth(Damage);
 	RecalculatePercents();
 }
 
-void UHealthShieldComponent::HealHealth(int amount)
+void UHealthShieldComponent::HealHealth(int Amount)
 {
-	Health = FMath::Clamp<int>(Health + amount, 0, MaxHealth);
+	Health = FMath::Clamp<int>(Health + Amount, 0, MaxHealth);
 	RecalculatePercents();
 }
 
-void UHealthShieldComponent::HealShield(int amount)
+void UHealthShieldComponent::HealShield(int Amount)
 {
-	Shield = FMath::Clamp<int>(Shield + amount, 0, MaxShield);
+	Shield = FMath::Clamp<int>(Shield + Amount, 0, MaxShield);
 	RecalculatePercents();
 }
 
-void UHealthShieldComponent::Heal(int amount)
+void UHealthShieldComponent::Heal(int Amount)
 {
-	if (Shield < Health) HealShield(amount);
-	else HealHealth(amount);
+	if (Shield < Health) HealShield(Amount);
+	else HealHealth(Amount);
 }
 
 float UHealthShieldComponent::GetHealthPercent()

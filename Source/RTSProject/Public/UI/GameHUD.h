@@ -43,8 +43,8 @@ public:
 	virtual void DrawHUD() override;
 	virtual void Tick(float DeltaTime) override;
 
-	void LockSelectionRectangleWidget() const;
-	void UnlockSelectionRectangleWidget() const;
+	void LockSelectionRectangle() const;
+	void UnlockSelectionRectangle() const;
 
 	template<class T>
 	bool SetupWidget(T*& WidgetReference, TSubclassOf<T>& WidgetTemplate);

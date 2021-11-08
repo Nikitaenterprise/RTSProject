@@ -4,9 +4,7 @@
 #include "GameFramework/MovementComponent.h"
 #include "TurretMovementComponent.generated.h"
 
-/**
- * 
- */
+
 UCLASS()
 class RTSPROJECT_API UTurretMovementComponent : public UMovementComponent
 {
@@ -14,6 +12,7 @@ class RTSPROJECT_API UTurretMovementComponent : public UMovementComponent
 
 public:
 	UTurretMovementComponent(const FObjectInitializer& ObjectInitializer);
-	void Initialize();
+	virtual void InitializeComponent() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };

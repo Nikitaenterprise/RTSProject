@@ -25,18 +25,36 @@ UShipMovementComponent::UShipMovementComponent(const FObjectInitializer& ObjectI
 	NavAgentProps.bCanSwim = false;
 	NavAgentProps.bCanFly = false;
 	bUseAccelerationForPaths = true;
+	bWantsInitializeComponent = true;
 }
 
-void UShipMovementComponent::Initialize()
+void UShipMovementComponent::InitializeComponent()
 {
-	RTSAIController = Cast<ARTSAIController>(Owner->GetController());
-	if(!RTSAIController)
+	Super::InitializeComponent();
+
+	AShip* TestOwner = Cast<AShip>(GetOwner());
+	if (!IsValid(TestOwner))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0, FColor::Red, TEXT("RTSAIController in ShipMovement is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("RTSAIController in ShipMovement is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("AShip is nullptr in UShipMovementComponent::InitializeComponent()"));
+		return;
 	}
+	Owner = TestOwner;
+
+	ARTSPlayerController* TestController = Owner->PlayerController;
+	if (!IsValid(TestController))
+	{
+		UE_LOG(LogTemp, Error, TEXT("ARTSPlayerController is nullptr in UShipMovementComponent::InitializeComponent()"));
+		return;
+	}
+	PlayerController = TestController;
+
 	// Ship shouldn't move
 	PointMoveTo = Owner->GetActorLocation();
+}
+
+void UShipMovementComponent::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -106,6 +124,11 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	 
 	FHitResult Hit;
 	SafeMoveUpdatedComponent(ConsumeInputVector(), Rotator, true, Hit);
+}
+
+void UShipMovementComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
 }
 
 void UShipMovementComponent::AddInputVector(FVector WorldVector, bool bForce)

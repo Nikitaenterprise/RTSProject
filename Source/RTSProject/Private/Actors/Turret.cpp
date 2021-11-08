@@ -33,10 +33,9 @@ void ATurret::BeginPlay()
 {
 	Super::BeginPlay();
 	FiredRockets.Reserve(20);
-	
 }
 
-void ATurret::Initialize(ARTSPlayerController* RTSController, AShip* Ship)
+void ATurret::Initialize(ARTSPlayerController* RTSController)
 {
 	if (RTSController)
 	{
@@ -44,15 +43,18 @@ void ATurret::Initialize(ARTSPlayerController* RTSController, AShip* Ship)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerController in Turret->Initialize() is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerController in ATurret::Initialize is nullptr"));
 	}
-	if (Ship)
+
+	AShip* TestShip = Cast<AShip>(GetOwner());
+	if (TestShip)
 	{
-		OwnerShip = Ship;
+		OwnerShip = TestShip;
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("Ship in Turret->Initialize() is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Ship in ATurret::Initialize is nullptr"));
+		return;
 	}
 	
 	// Decide on which side the turret is
@@ -91,7 +93,11 @@ void ATurret::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (HealthShieldComponent->IsDead()) Destroy(false, true);
+	if (HealthShieldComponent->IsDead() || !IsValid(OwnerShip))
+	{
+		Destroy();
+		return;
+	}
 
 	if (OwnerShip->bIsSelected && !bIsOrderedToAttack)
 	{
@@ -115,20 +121,28 @@ void ATurret::Tick(float DeltaTime)
 	//SetActorRotation(NewRotation, ETeleportType::None);
 }
 
-
-bool ATurret::Destroy_Implementation(bool bNetForce, bool bShouldModifyLevel)
+void ATurret::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	OwnerShip->Turrets.Remove(this);
-	// If ship has no working turrets then set bool variable to false
-	if (OwnerShip->Turrets.Num() == 0) OwnerShip->bHasWorkingTurrets = false;
-	//SpawnEmitterAtLocation()
-	return Super::Destroy(bNetForce, bShouldModifyLevel);
+	if (IsValid(OwnerShip))
+	{
+		OwnerShip->Turrets.Remove(this);
+		// If ship has no working turrets then set bool variable to false
+		if (OwnerShip->Turrets.Num() == 0)
+		{
+			OwnerShip->bHasWorkingTurrets = false;
+		}
+		//SpawnEmitterAtLocation()
+	}
+	Super::EndPlay(EndPlayReason);
 }
 
 
 void ATurret::RequestAttack(const AActor* _ActorToAttack)
 {
-	if (!IsValid(_ActorToAttack)) return;
+	if (!IsValid(_ActorToAttack))
+	{
+		return;
+	}
 	ActorToAttack = _ActorToAttack;
 	bIsOrderedToAttack = true;
 

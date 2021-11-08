@@ -7,6 +7,28 @@
 UMiniMapIconComponent::UMiniMapIconComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	bWantsInitializeComponent = true;
+}
+
+void UMiniMapIconComponent::InitializeComponent()
+{
+	ARTSPlayerController* TestController = Cast<ARTSPlayerController>(GetOwner()->GetOwner());
+	if (!IsValid(TestController))
+	{
+		UE_LOG(LogTemp, Error, TEXT("TestController is nullptr in UMiniMapIconComponent::InitializeComponent()"));
+		return;
+	}
+	if (!TestController->FogOfWar)
+	{
+		UE_LOG(LogTemp, Error, TEXT("TestController->FogOfWar is nullptr in UMiniMapIconComponent::InitializeComponent()"));
+		return;
+	}
+	if (!TestController->FogOfWar->FOWBoundsVolume)
+	{
+		UE_LOG(LogTemp, Error, TEXT("TestController->FogOfWar->FOWBoundsVolume in UMiniMapIconComponent::InitializeComponent() is nullptr"));
+		return;
+	}
+	FOWBoundsVolume = TestController->FogOfWar->FOWBoundsVolume;
 }
 
 void UMiniMapIconComponent::BeginPlay()
@@ -20,24 +42,7 @@ void UMiniMapIconComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 
 }
 
-void UMiniMapIconComponent::Initialize(const ARTSPlayerController* PlayerController)
+void UMiniMapIconComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (!PlayerController)
-	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerController in UMiniMapIconComponent::Initialize() is nullptr"));
-		return;
-	}
-	if (!PlayerController->FogOfWar)
-	{
-		UE_LOG(LogTemp, Error, TEXT("FogOfWar in UMiniMapIconComponent::Initialize() is nullptr"));
-		return;
-	}
-	if(!PlayerController->FogOfWar->FOWBoundsVolume)
-	{
-		UE_LOG(LogTemp, Error, TEXT("FOWBoundsVolume in UMiniMapIconComponent::Initialize() is nullptr"));
-		return;
-	}
-	
-
-	FOWBoundsVolume = PlayerController->FogOfWar->FOWBoundsVolume;
+	Super::EndPlay(EndPlayReason);
 }

@@ -46,7 +46,10 @@ private:
 
 public:
 
-	//AFogOfWarBoundsVolume();
+	AFogOfWarBoundsVolume();
+	virtual void PreInitializeComponents() override;
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	void Initialize();
 	
 	FORCEINLINE float GetVolumeHeight() const { return GetBrushComponent()->CalcBounds(GetBrushComponent()->GetComponentTransform()).BoxExtent.Y * 2 * GetActorScale().Y; }

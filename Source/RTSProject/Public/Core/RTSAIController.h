@@ -12,5 +12,5 @@ class RTSPROJECT_API ARTSAIController : public AAIController
 
 public:
 	
-	//TArray<FVector>	SearchPath(const FVector& _Location);
+	
 };

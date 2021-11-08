@@ -23,14 +23,15 @@ public:
 	bool bCanAttack = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCanBeAttacked = false;
-	
-public:	
+
+public:
+
+private:	
 	
 	UAttackComponent();
-	
+	virtual void InitializeComponent() override;
+	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-protected:
-
-	virtual void BeginPlay() override;	
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
 };

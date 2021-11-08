@@ -24,15 +24,14 @@ public:
 	int NumberOfAsteroids = 0;
 	int TotalResource = 0;
 	TArray<AAsteroidResource*> Asteroids;
-
-	float DeltaTime = 0;
-	float PastTime = 0;
-
+	
 public:	
 	
 	AAsteroidField();
 	AAsteroidField(FTransform Transform);
+	virtual void BeginPlay() override;
 	virtual void Tick(float MainDeltaTime) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 	int RecalculateNumberOfAsteroidsInField();
 	void AddRandomNumberOfAsteroidsToField(int MinValue = 5, int MaxValue = 20);
@@ -41,6 +40,4 @@ public:
 	void RemoveRandomAsteroidFromField();
 	void RemoveAsteroidFromField(AAsteroidResource* Asteroid);
 	
-protected:
-	virtual void BeginPlay() override;
 };
