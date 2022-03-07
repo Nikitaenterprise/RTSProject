@@ -33,14 +33,9 @@ void AAsteroidField::Tick(float MainDeltaTime)
 	Super::Tick(MainDeltaTime);
 }
 
-void AAsteroidField::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	Super::EndPlay(EndPlayReason);
-}
-
 void AAsteroidField::RemoveRandomAsteroidFromField()
 {
-	int Index = UKismetMathLibrary::RandomIntegerInRange(0, RecalculateNumberOfAsteroidsInField());
+	int Index = UKismetMathLibrary::RandomIntegerInRange(0, GetNumberOfAsteroidsInField());
 	RemoveAsteroidFromField(Asteroids[Index]);
 }
 
@@ -55,9 +50,9 @@ void AAsteroidField::RemoveAsteroidFromField(AAsteroidResource* Asteroid)
 	Asteroids.Shrink();
 }
 
-int AAsteroidField::RecalculateNumberOfAsteroidsInField()
+int32 AAsteroidField::GetNumberOfAsteroidsInField()
 {
-	int Size = Asteroids.Num();
+	int32 Size = Asteroids.Num();
 	if (Size == NumberOfAsteroids) return NumberOfAsteroids;
 	NumberOfAsteroids = Size;
 	return NumberOfAsteroids;
@@ -100,10 +95,15 @@ void AAsteroidField::AddAsteroidToField()
 	
 	const TSubclassOf<AAsteroidResource> AsteroidResourceClass = PlayerController->GetFactoryAssets()->GetAsteroidResourceClass(0);
 	AAsteroidResource* SpawnedAsteroid = GetWorld()->SpawnActor<AAsteroidResource>(AsteroidResourceClass.Get(), Transform, Params);
-	if (SpawnedAsteroid)
+	AddAsteroidToField(SpawnedAsteroid);
+}
+
+void AAsteroidField::AddAsteroidToField(AAsteroidResource* AsteroidToAdd)
+{
+	if (AsteroidToAdd)
 	{
-		Asteroids.AddUnique(SpawnedAsteroid);
+		Asteroids.AddUnique(AsteroidToAdd);
 		NumberOfAsteroids++;
 	}
-	else GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn asteroid"));
+	else GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to add asteroid to field"));
 }

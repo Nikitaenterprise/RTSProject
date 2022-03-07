@@ -6,20 +6,27 @@
 #include "Kismet/KismetMathLibrary.h"
 
 
-void AAsteroidResource::Tick(float MainDeltaTime)
+void AAsteroidResource::Tick(float DeltaSeconds)
 {
-	Super::Tick(MainDeltaTime);
+	Super::Tick(DeltaSeconds);
 
 	if (ResourceAmount <= 0)
 	{
-		Owner->Asteroids.Remove(this);
-		Owner->NumberOfAsteroids--;
-		Destroy(false, true);
+		IsEmpty();
 	}
 	// Rotate asteroid
-	FRotator Rotation = StaticMesh->GetComponentRotation();
-	SetActorRotation(FRotator(Rotation.Pitch, Rotation.Yaw + (Omega * DeltaTime), Rotation.Roll), ETeleportType::None);
+	const FRotator Rotation = StaticMesh->GetComponentRotation();
+	SetActorRotation(FRotator(Rotation.Pitch, Rotation.Yaw + (Omega * DeltaSeconds), Rotation.Roll), ETeleportType::None);
 
+}
+
+void AAsteroidResource::IsEmpty()
+{
+	const auto AsteroidField = Cast<AAsteroidField>(GetOwner());
+	if (AsteroidField)
+	{
+		AsteroidField->RemoveAsteroidFromField(this);
+	}
 }
 
 void AAsteroidResource::BeginPlay()
@@ -28,5 +35,5 @@ void AAsteroidResource::BeginPlay()
 
 	// Set rotation speed
 	Omega = UKismetMathLibrary::RandomFloatInRange(10, 50);
-	if (UKismetMathLibrary::RandomBool()) Omega *= -1;
+	Omega = UKismetMathLibrary::RandomBool() ? -Omega : Omega;
 }

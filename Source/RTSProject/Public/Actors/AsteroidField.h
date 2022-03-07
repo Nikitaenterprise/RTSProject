@@ -21,6 +21,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
 
+private:
+	
 	int NumberOfAsteroids = 0;
 	int TotalResource = 0;
 	TArray<AAsteroidResource*> Asteroids;
@@ -31,12 +33,11 @@ public:
 	AAsteroidField(FTransform Transform);
 	virtual void BeginPlay() override;
 	virtual void Tick(float MainDeltaTime) override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
-	int RecalculateNumberOfAsteroidsInField();
+	int32 GetNumberOfAsteroidsInField();
 	void AddRandomNumberOfAsteroidsToField(int MinValue = 5, int MaxValue = 20);
 	void AddAsteroidToField();
-
+	void AddAsteroidToField(AAsteroidResource* AsteroidToAdd);
 	void RemoveRandomAsteroidFromField();
 	void RemoveAsteroidFromField(AAsteroidResource* Asteroid);
 	

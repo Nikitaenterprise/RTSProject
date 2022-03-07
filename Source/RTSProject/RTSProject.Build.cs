@@ -8,11 +8,10 @@ public class RTSProject : ModuleRules
 	{
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         MinFilesUsingPrecompiledHeaderOverride = 1;
-        bFasterWithoutUnity = true;
-
+       
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "UMG", "Slate", "SlateCore", "AIModule", "NavigationSystem" });
 		PublicDependencyModuleNames.AddRange(new string[] { "RHI", "RenderCore" });
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayAbilities", "GameplayTags", "GameplayTasks" });
 
 		// Uncomment if you are using Slate UI
 		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

@@ -7,10 +7,10 @@ bool UsefulFunctions::GetVertices(const UStaticMeshComponent* StaticMeshComponen
 {
 	if (!StaticMeshComponent) return false;
 	if (!StaticMeshComponent->GetStaticMesh()) return false;
-	if (!StaticMeshComponent->GetStaticMesh()->RenderData) return false;
-	if (StaticMeshComponent->GetStaticMesh()->RenderData->LODResources.Num() > 0)
+	if (!StaticMeshComponent->GetStaticMesh()->GetRenderData()) return false;
+	if (StaticMeshComponent->GetStaticMesh()->GetRenderData()->LODResources.Num() > 0)
 	{
-		FPositionVertexBuffer* VertexBuffer = &StaticMeshComponent->GetStaticMesh()->RenderData->LODResources[0].VertexBuffers.PositionVertexBuffer;
+		FPositionVertexBuffer* VertexBuffer = &StaticMeshComponent->GetStaticMesh()->GetRenderData()->LODResources[0].VertexBuffers.PositionVertexBuffer;
 
 		if (VertexBuffer)
 		{

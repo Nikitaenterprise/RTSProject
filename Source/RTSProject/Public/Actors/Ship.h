@@ -1,9 +1,8 @@
 #pragma once
 
 #include "Interfaces/BaseBehavior.h"
-
 #include "CoreMinimal.h"
-
+#include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
 #include "Ship.generated.h"
 
@@ -20,9 +19,10 @@ class UUserWidget;
 class UHealthShieldBarHUD;
 class UAttackComponent;
 class UMiniMapInfluencerComponent;
+class UAbilitySystemComponent;
 
 UCLASS()
-class RTSPROJECT_API AShip : public APawn, public IBaseBehavior
+class RTSPROJECT_API AShip : public APawn, public IBaseBehavior, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -52,6 +52,8 @@ public:
 	UMiniMapInfluencerComponent* MiniMapInfluencerComponent = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
 	UMiniMapIconComponent* MiniMapIconComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
@@ -115,6 +117,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Highlighted(bool _bIsHighlighted);
 	virtual void Highlighted_Implementation(bool _bIsHighlighted) override;
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 
 	// Moving
 	UFUNCTION(BlueprintCallable, Category = "Moving")

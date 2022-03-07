@@ -23,12 +23,14 @@ void AResource::BeginPlay()
 	}
 }
 
-void AResource::Tick(float mainDeltaTime)
+void AResource::Tick(float DeltaSeconds)
 {
-	Super::Tick(mainDeltaTime);
-	DeltaTime = mainDeltaTime;
-	PastTime += mainDeltaTime;
+	Super::Tick(DeltaSeconds);
+}
 
-
+void AResource::BeginDestroy()
+{
+	Super::BeginDestroy();
+	
 }
 

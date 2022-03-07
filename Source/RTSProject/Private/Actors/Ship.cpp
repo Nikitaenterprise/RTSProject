@@ -8,7 +8,7 @@
 #include "Actors/Camera.h"
 #include "Components/FogOfWarInfluencerComponent.h"
 #include "Components/HealthShieldComponent.h"
-
+#include "AbilitySystemComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
@@ -60,6 +60,8 @@ AShip::AShip(const FObjectInitializer& OI)
 	MiniMapInfluencerComponent = CreateDefaultSubobject<UMiniMapInfluencerComponent>(TEXT("MiniMapInfluencerComponent"));
 
 	MiniMapIconComponent = CreateDefaultSubobject<UMiniMapIconComponent>(TEXT("MiniMapIconComponent"));
+
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 }
 
 void AShip::PreInitializeComponents()

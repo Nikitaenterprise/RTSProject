@@ -13,17 +13,14 @@ class RTSPROJECT_API AResource : public AActor
 	
 public:	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
-	UStaticMeshComponent* StaticMesh = NULL;
+	UStaticMeshComponent* StaticMesh = nullptr;
 
 	int ResourceAmount = 100;
-
-	float DeltaTime = 0;
-	float PastTime = 0;
-
+	
 public:
 	AResource();
-	virtual void Tick(float mainDeltaTime) override;
-	
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void BeginDestroy() override;
 protected:
 	virtual void BeginPlay() override;
 
