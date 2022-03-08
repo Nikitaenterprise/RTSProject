@@ -1,7 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
-
 /**
  * Class with useful static functions
  */

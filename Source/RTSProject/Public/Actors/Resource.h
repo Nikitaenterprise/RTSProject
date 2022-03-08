@@ -1,27 +1,41 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Resource.generated.h"
 
 class UStaticMeshComponent;
+class UResourceSourceAttributeSet;
+
+UENUM()
+enum class EResourceType : uint8
+{
+	Asteroid UMETA(DisplayName = "Asteroid"),
+	None UMETA(DisplayName = "None"),
+	
+	Num // Total
+};
 
 UCLASS()
 class RTSPROJECT_API AResource : public AActor
 {
 	GENERATED_BODY()
+public:
 	
-public:	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	UResourceSourceAttributeSet* ResourceSourceAttributeSet = nullptr;
 
-	int ResourceAmount = 100;
-	
-public:
-	AResource();
-	virtual void Tick(float DeltaSeconds) override;
-	virtual void BeginDestroy() override;
 protected:
-	virtual void BeginPlay() override;
+	
+	EResourceType ResourceType;
 
+public:
+
+	AResource();
+	float Consume(float Amount);
+
+protected:
+
+	virtual void BeginPlay() override;
 };

@@ -2,8 +2,6 @@
 
 #include "Interfaces/Shootable.h"
 #include "Interfaces/BaseBehavior.h"
-
-#include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Rocket.generated.h"
 

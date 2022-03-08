@@ -15,8 +15,8 @@
 #include "Components/InputComponent.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
+#include "GAS/ShipAttributeSet.h"
 #include "Components/MiniMapIconComponent.h"
 #include "Components/MiniMapInfluencerComponent.h"
 #include "UI/GameHUD.h"
@@ -62,6 +62,8 @@ AShip::AShip(const FObjectInitializer& OI)
 	MiniMapIconComponent = CreateDefaultSubobject<UMiniMapIconComponent>(TEXT("MiniMapIconComponent"));
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+
+	ShipAttributeSet = CreateDefaultSubobject<UShipAttributeSet>(TEXT("ShipAttributeSet"));
 }
 
 void AShip::PreInitializeComponents()

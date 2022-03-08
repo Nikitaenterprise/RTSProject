@@ -1,7 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "Components/BrushComponent.h"
 #include "GameFramework/Volume.h"
 #include "FogOfWarBoundsVolume.generated.h"

@@ -2,6 +2,7 @@
 
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "GAS/ResourceSourceAttributeSet.h"
 
 AResource::AResource()
 {
@@ -9,6 +10,24 @@ AResource::AResource()
 
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMesh->SetupAttachment(GetRootComponent());
+	ResourceSourceAttributeSet = CreateDefaultSubobject<UResourceSourceAttributeSet>(TEXT("ResourceSourceAttributeSet"));
+
+	ResourceType = EResourceType::None;
+}
+
+float AResource::Consume(float Amount)
+{
+	auto CurrentCapacity = ResourceSourceAttributeSet->GetResourceCapacity();
+	if (Amount < CurrentCapacity)
+	{
+		ResourceSourceAttributeSet->SetResourceCapacity(CurrentCapacity-Amount);
+		return Amount;
+	}
+	else
+	{
+		MarkPendingKill();
+		return CurrentCapacity;
+	}
 }
 
 void AResource::BeginPlay()
@@ -19,18 +38,7 @@ void AResource::BeginPlay()
 	int SquaredSizeOfMesh = UKismetMathLibrary::VSizeSquared(GetActorScale3D());
 	if (UKismetMathLibrary::Round(SquaredSizeOfMesh) != 0)
 	{
-		ResourceAmount = UKismetMathLibrary::FTrunc(SquaredSizeOfMesh * ResourceAmount);
+		auto NewAmount = UKismetMathLibrary::FTrunc(SquaredSizeOfMesh * ResourceSourceAttributeSet->GetInitResourceCapacity());
+		ResourceSourceAttributeSet->SetResourceCapacity(NewAmount);
 	}
 }
-
-void AResource::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-}
-
-void AResource::BeginDestroy()
-{
-	Super::BeginDestroy();
-	
-}
-

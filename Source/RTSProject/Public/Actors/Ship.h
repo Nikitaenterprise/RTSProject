@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Interfaces/BaseBehavior.h"
-#include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "AttributeSet.h"
 #include "GameFramework/Character.h"
 #include "Ship.generated.h"
 
@@ -20,6 +20,7 @@ class UHealthShieldBarHUD;
 class UAttackComponent;
 class UMiniMapInfluencerComponent;
 class UAbilitySystemComponent;
+class UShipAttributeSet;
 
 UCLASS()
 class RTSPROJECT_API AShip : public APawn, public IBaseBehavior, public IAbilitySystemInterface
@@ -54,6 +55,10 @@ public:
 	UMiniMapIconComponent* MiniMapIconComponent = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
 	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	UShipAttributeSet* ShipAttributeSet = nullptr;
+	UPROPERTY(EditAnywhere, Category = "GAS")
+	TArray<UAttributeSet*> AdditionalAttributeSets;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;

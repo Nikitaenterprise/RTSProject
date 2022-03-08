@@ -1,9 +1,7 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "AttackComponent.generated.h"
-
 
 class ARTSPlayerController;
 

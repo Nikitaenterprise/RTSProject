@@ -1,9 +1,6 @@
 #pragma once
 
 #include "Interfaces/BaseBehavior.h"
-
-#include "CoreMinimal.h"
-
 #include "GameFramework/Actor.h"
 #include "Building.generated.h"
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "AIController.h"
 #include "RTSAIController.generated.h"
 

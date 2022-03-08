@@ -1,16 +1,20 @@
 #include "Actors/AsteroidResource.h"
-
 #include "Actors/AsteroidField.h"
-
 #include "Components/StaticMeshComponent.h"
+#include "GAS/ResourceSourceAttributeSet.h"
 #include "Kismet/KismetMathLibrary.h"
 
+
+AAsteroidResource::AAsteroidResource()
+{
+	ResourceType = EResourceType::Asteroid;
+}
 
 void AAsteroidResource::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (ResourceAmount <= 0)
+	if (ResourceSourceAttributeSet->GetResourceCapacity() <= 0)
 	{
 		IsEmpty();
 	}

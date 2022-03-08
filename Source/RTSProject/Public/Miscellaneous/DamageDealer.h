@@ -1,7 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
-
 class AShip;
 class ATurret;
 class ARocket;

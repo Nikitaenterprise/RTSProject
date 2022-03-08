@@ -1,7 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "EngineUtils.h"
 #include "Actors/Ship.h"
 #include "GameFramework/HUD.h"

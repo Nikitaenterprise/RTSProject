@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "ShipMovementComponent.generated.h"
 

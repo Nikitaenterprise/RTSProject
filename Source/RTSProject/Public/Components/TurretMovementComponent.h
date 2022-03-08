@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "GameFramework/MovementComponent.h"
 #include "TurretMovementComponent.generated.h"
 

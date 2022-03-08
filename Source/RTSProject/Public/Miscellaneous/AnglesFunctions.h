@@ -1,7 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
-
 class RTSPROJECT_API AnglesFunctions
 {
 public:
