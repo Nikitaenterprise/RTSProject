@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Interfaces/Shootable.h"
-#include "Interfaces/BaseBehavior.h"
 #include "GameFramework/Actor.h"
 #include "Rocket.generated.h"
 
@@ -9,7 +8,7 @@ class UStaticMeshComponent;
 class ATurret;
 
 UCLASS()
-class RTSPROJECT_API ARocket : public AActor, public IShootable, public IBaseBehavior
+class RTSPROJECT_API ARocket : public AActor, public IShootable
 {
 	GENERATED_BODY()
 	
@@ -49,12 +48,12 @@ public:
 	virtual void OnOverlapBegin_Implementation(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
 												class UPrimitiveComponent* OtherComp,
 												int32 OtherBodyIndex, bool bFromSweep,
-												const FHitResult& SweepResult) override;
+												const FHitResult& SweepResult);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
 							class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	virtual void OnOverlapEnd_Implementation(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
-												class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
+												class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	
 };

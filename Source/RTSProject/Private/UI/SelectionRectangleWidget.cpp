@@ -244,13 +244,13 @@ void USelectionRectangleWidget::EndRectangleSelection(const FGeometry& MovieScen
 	// because actors was highlighted while rectangle was drawn
 	for (auto& Actor : ShouldBeSelected)
 	{
-		IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
+		auto Interface = Cast<ISelectable>(Actor);
 		if (Interface) Interface->Execute_Highlighted(Actor, false);
 	}
 	// Set actors Execute_Selected to true
 	for (auto& Actor : SelectedActors)
 	{
-		IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
+		auto Interface = Cast<ISelectable>(Actor);
 		if (Interface) Interface->Execute_Selected(Actor, true);
 	}
 
@@ -272,7 +272,7 @@ void USelectionRectangleWidget::ClearSelection()
 	{
 		if (!SelectedActors.Contains(Actor))
 		{
-			IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
+			auto Interface = Cast<ISelectable>(Actor);
 			if (Interface) Interface->Execute_Selected(Actor, false);
 		}
 	}
@@ -292,7 +292,7 @@ void USelectionRectangleWidget::UpdateSelection()
 	// Select actors which came from selection rectangle
 	for (auto& Actor : ShouldBeSelected)
 	{
-		IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
+		auto Interface = Cast<ISelectable>(Actor);
 		if (Interface) Interface->Execute_Highlighted(Actor, true);
 	}
 }
@@ -315,7 +315,7 @@ void USelectionRectangleWidget::SelectActorUnderCursor()
 		{
 			ShouldBeSelected.AddUnique(Actor);
 			SelectedActors.AddUnique(Actor);
-			IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
+			auto Interface = Cast<ISelectable>(Actor);
 			if (Interface) Interface->Execute_Highlighted(Actor, true);
 			UpdatePlayerControllerSelectedActors();
 		}
@@ -332,7 +332,7 @@ void USelectionRectangleWidget::HighlightActorsUnderCursor()
 	}
 
 	// Dehighlight unit
-	IBaseBehavior* Interface = Cast<IBaseBehavior>(HighlightedActor);
+	auto Interface = Cast<ISelectable>(HighlightedActor);
 	if (Interface) Interface->Execute_Highlighted(HighlightedActor, false);
 
 	if (!PlayerController)
@@ -348,7 +348,7 @@ void USelectionRectangleWidget::HighlightActorsUnderCursor()
 	{
 		HighlightedActor = Hit.GetActor();
 		// Highlight unit
-		Interface = Cast<IBaseBehavior>(HighlightedActor);
+		Interface = Cast<ISelectable>(HighlightedActor);
 		if (Interface) Interface->Execute_Highlighted(HighlightedActor, true);
 	}
 }

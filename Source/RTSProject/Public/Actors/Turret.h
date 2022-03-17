@@ -19,7 +19,7 @@ enum class ESide
 };
 
 UCLASS()
-class RTSPROJECT_API ATurret : public AActor, public IBaseBehavior
+class RTSPROJECT_API ATurret : public AActor
 {
 	GENERATED_BODY()
 	

@@ -3,16 +3,29 @@
 #include "Core/RTSPlayerController.h"
 #include "Actors/AsteroidResource.h"
 #include "Core/FactoryAssets.h"
-
+#include "Actors/ResourceManager.h"
+#include "Kismet/GameplayStatics.h"
 #include "Components/BoxComponent.h"
+#include "Components/WidgetComponent.h"
+#include "UI/BasicValueViewer.h"
+#include "GAS/ResourceSourceAttributeSet.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Miscellaneous/FactoriesFunctionLibrary.h"
 
 AAsteroidField::AAsteroidField()
 {
- 	PrimaryActorTick.bCanEverTick = true;
+ 	PrimaryActorTick.bCanEverTick = false;
 
+	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
+	RootComponent = SceneComponent;
 	BoxCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCollision"));
 	BoxCollision->SetupAttachment(GetRootComponent());
+	BoxCollision->SetSimulatePhysics(false);
+	WidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("WidgetComponent"));
+	WidgetComponent->SetupAttachment(GetRootComponent());
+	WidgetComponent->SetGeometryMode(EWidgetGeometryMode::Plane);
+	WidgetComponent->SetTwoSided(false);
+	WidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
 }
 
 void AAsteroidField::BeginPlay()
@@ -26,36 +39,70 @@ void AAsteroidField::BeginPlay()
 		return;
 	}
 	PlayerController = TestController;
+	
+	WidgetComponent->InitWidget();
+	WidgetComponent->SetVisibility(false);
 }
 
-void AAsteroidField::Tick(float MainDeltaTime)
+void AAsteroidField::Selected_Implementation(bool bIsSelected)
 {
-	Super::Tick(MainDeltaTime);
+}
+
+void AAsteroidField::Highlighted_Implementation(bool bIsHighlighted)
+{
+	if (WidgetComponent)
+	{
+		if (bIsHighlighted)
+		{
+			const auto BasicValueViewerWidget = Cast<UBasicValueViewer>(WidgetComponent->GetWidget());
+			if (BasicValueViewerWidget)
+			{
+				BasicValueViewerWidget->SetValue(ResourceSourceAttributeSet->GetResourceCapacity());
+			}
+			WidgetComponent->SetVisibility(true);
+		}
+		else
+		{
+			WidgetComponent->SetVisibility(false);
+		}
+	}
 }
 
 void AAsteroidField::RemoveRandomAsteroidFromField()
 {
-	int Index = UKismetMathLibrary::RandomIntegerInRange(0, GetNumberOfAsteroidsInField());
+	const int32 Index = UKismetMathLibrary::RandomIntegerInRange(0, GetNumberOfAsteroidsInField());
+	const auto Asteroid = Asteroids[Index];
+	const auto AsteroidCapacity = Asteroid->GetResourceSourceAttributeSet()->GetResourceCapacity();
+	const auto FieldCapacity = GetResourceSourceAttributeSet()->GetResourceCapacity();
+	CalculateResource([&]()->float
+	{
+		return FieldCapacity - AsteroidCapacity;
+	});
 	RemoveAsteroidFromField(Asteroids[Index]);
 }
-
 
 void AAsteroidField::RemoveAsteroidFromField(AAsteroidResource* Asteroid)
 {
 	Asteroids.Remove(Asteroid);
-	NumberOfAsteroids--;
-	Asteroid->Destroy(false, true);
 
 	// Possible slow speed operation
 	Asteroids.Shrink();
+	const auto AsteroidCapacity = Asteroid->GetResourceSourceAttributeSet()->GetResourceCapacity();
+	const auto FieldCapacity = GetResourceSourceAttributeSet()->GetResourceCapacity();
+	CalculateResource([&]()->float
+	{
+		return FieldCapacity - AsteroidCapacity;
+	});
+}
+
+float AAsteroidField::InitialCapacity()
+{
+	return 1;
 }
 
 int32 AAsteroidField::GetNumberOfAsteroidsInField()
 {
-	int32 Size = Asteroids.Num();
-	if (Size == NumberOfAsteroids) return NumberOfAsteroids;
-	NumberOfAsteroids = Size;
-	return NumberOfAsteroids;
+	return Asteroids.Num();
 }
 
 void AAsteroidField::AddRandomNumberOfAsteroidsToField(int MinValue, int MaxValue)
@@ -63,11 +110,11 @@ void AAsteroidField::AddRandomNumberOfAsteroidsToField(int MinValue, int MaxValu
 	const int NumberOfAsteroidsToAdd = UKismetMathLibrary::RandomIntegerInRange(MinValue, MaxValue);
 	for (int i = 0; i < NumberOfAsteroidsToAdd; ++i)
 	{
-		AddAsteroidToField();
+		CreateAsteroidAndAddItToField();
 	}
 }
 
-void AAsteroidField::AddAsteroidToField()
+void AAsteroidField::CreateAsteroidAndAddItToField()
 {
 	FVector BoxExtent = BoxCollision->GetScaledBoxExtent();
 	// Displace asteroid inside box on random dx, dy, dz
@@ -94,16 +141,35 @@ void AAsteroidField::AddAsteroidToField()
 	Params.Owner = this;
 	
 	const TSubclassOf<AAsteroidResource> AsteroidResourceClass = PlayerController->GetFactoryAssets()->GetAsteroidResourceClass(0);
-	AAsteroidResource* SpawnedAsteroid = GetWorld()->SpawnActor<AAsteroidResource>(AsteroidResourceClass.Get(), Transform, Params);
+	AAsteroidResource* SpawnedAsteroid = UFactoriesFunctionLibrary::NewAsteroid(GetWorld(), AsteroidResourceClass, this, Transform);
+	if (!SpawnedAsteroid)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn asteroid"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn asteroid"));
+		return;
+	}
+	if (ResourceManager)
+	{
+		ResourceManager->AddResource(SpawnedAsteroid);
+	}
 	AddAsteroidToField(SpawnedAsteroid);
 }
 
 void AAsteroidField::AddAsteroidToField(AAsteroidResource* AsteroidToAdd)
 {
-	if (AsteroidToAdd)
+	if (!AsteroidToAdd)
 	{
-		Asteroids.AddUnique(AsteroidToAdd);
-		NumberOfAsteroids++;
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to add asteroid to field"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to add asteroid to field"));
+		return;
 	}
-	else GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to add asteroid to field"));
+	Asteroids.AddUnique(AsteroidToAdd);
+	AsteroidToAdd->SetIsInAsteroidField(true);
+	
+	const auto AsteroidCapacity = AsteroidToAdd->GetResourceSourceAttributeSet()->GetResourceCapacity();
+	const auto FieldCapacity = GetResourceSourceAttributeSet()->GetResourceCapacity();
+	CalculateResource([&]()->float
+	{
+		return FieldCapacity + AsteroidCapacity;
+	});
 }

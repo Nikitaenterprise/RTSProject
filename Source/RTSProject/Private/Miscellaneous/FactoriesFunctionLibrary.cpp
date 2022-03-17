@@ -9,21 +9,24 @@
 
 #include "Chaos/AABB.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/GameplayStatics.h"
 #include "Components/StaticMeshComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Actors/AsteroidResource.h"
+#include "Actors/ResourceManager.h"
 #include "Actors/Rocket.h"
 
 
 AShip* UFactoriesFunctionLibrary::NewShip(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location, const FRotator& Rotation)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
-	if (World) return NewShip(World, ClassType, Controller, Location, Rotation);
-	else
+	if (!World)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn ship, GetWorldFromContextObject() returns nullptr"));
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn ship, GetWorldFromContextObject() returns nullptr"));
 		return nullptr;
 	}
+	return NewShip(World, ClassType, Controller, Location, Rotation);
 }
 
 
@@ -138,13 +141,13 @@ void UFactoriesFunctionLibrary::AddTurretsToShip(AShip* Ship)
 ABuilding* UFactoriesFunctionLibrary::NewBuilding(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location, const FRotator& Rotation)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
-	if (World) return NewBuilding(World, ClassType, Controller, Location, Rotation);
-	else
+	if (!World)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn building, GetWorldFromContextObject() returns nullptr"));
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn building, GetWorldFromContextObject() returns nullptr"));
 		return nullptr;
 	}
+	return NewBuilding(World, ClassType, Controller, Location, Rotation);
 }
 
 
@@ -186,36 +189,72 @@ ABuilding* UFactoriesFunctionLibrary::NewBuilding(UWorld* World, UClass* ClassTy
 	return SpawnedBuilding;
 }
 
+AAsteroidResource* UFactoriesFunctionLibrary::NewAsteroid(const UObject* WorldContext, UClass* ClassType, AActor* Owner, const FTransform& Transform)
+{
+	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
+	if (!World)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn asteroid, GetWorldFromContextObject() returns nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn asteroid, GetWorldFromContextObject() returns nullptr"));
+		return nullptr;
+	}
+	return NewAsteroid(World, ClassType, Owner, Transform);
+}
+
+AAsteroidResource* UFactoriesFunctionLibrary::NewAsteroid(UWorld* World, UClass* ClassType, AActor* Owner, const FTransform& Transform)
+{
+	if (!ClassType)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn asteroid, UClass is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn asteroid, UClass is nullptr"));
+		return nullptr;
+	}
+
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	Params.Instigator = nullptr;
+	Params.Owner = Owner;
+
+	AAsteroidResource* SpawnedAsteroid = World->SpawnActor<AAsteroidResource>(ClassType, Transform, Params);
+	if (!SpawnedAsteroid)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn asteroid"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn asteroid"));
+		return nullptr;
+	}
+	return SpawnedAsteroid;
+}
+
 AAsteroidField* UFactoriesFunctionLibrary::NewAsteroidField(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location, const FRotator& Rotation)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
-	if (World) return NewAsteroidField(World, ClassType, Controller, Location, Rotation);
-	else
+	if (!World)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn asteroid field, GetWorldFromContextObject() returns nullptr"));
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn asteroid field, GetWorldFromContextObject() returns nullptr"));
 		return nullptr;
 	}
+	return NewAsteroidField(World, ClassType, Controller, Location, Rotation);
 }
 
 AAsteroidField* UFactoriesFunctionLibrary::NewAsteroidField(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location, const FRotator& Rotation)
 {
 	if (!Controller)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn building, ARTSPlayerController is nullptr"));
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn asteroid field, ARTSPlayerController is nullptr"));
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn asteroid field, ARTSPlayerController is nullptr"));
 		return nullptr;
 	}
 
 	if (!ClassType)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn ship, UClass is nullptr"));
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn asteroid field, UClass is nullptr"));
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn asteroid field, UClass is nullptr"));
 		return nullptr;
 	}
 
 	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	Params.Instigator = nullptr;
 	Params.Owner = Controller;
 
@@ -232,33 +271,38 @@ AAsteroidField* UFactoriesFunctionLibrary::NewAsteroidField(UWorld* World, UClas
 	}
 	
 	SpawnedAsteroidField->AddRandomNumberOfAsteroidsToField();
+	const auto ResourceManager = Cast<AResourceManager>(UGameplayStatics::GetActorOfClass(World, AResourceManager::StaticClass()));
+	if (ResourceManager)
+	{
+		ResourceManager->AddAsteroidField(SpawnedAsteroidField);
+	}
 	return SpawnedAsteroidField;
 }
 
 ARocket* UFactoriesFunctionLibrary::NewRocket(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location, const FRotator& Rotation)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
-	if (World) return NewRocket(World, ClassType, Controller, Turret, Location, Rotation);
-	else
+	if (!World)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn rocket, GetWorldFromContextObject() returns nullptr"));
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn rocket, GetWorldFromContextObject() returns nullptr"));
 		return nullptr;
 	}
+	return NewRocket(World, ClassType, Controller, Turret, Location, Rotation);
 }
 
 ARocket* UFactoriesFunctionLibrary::NewRocket(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location, const FRotator& Rotation)
 {
 	if (!Controller)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn building, ARTSPlayerController is nullptr"));
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn rocket, ARTSPlayerController is nullptr"));
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn rocket, ARTSPlayerController is nullptr"));
 		return nullptr;
 	}
 
 	if (!ClassType)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn ship, UClass is nullptr"));
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn rocket, UClass is nullptr"));
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn rocket, UClass is nullptr"));
 		return nullptr;
 	}

@@ -231,7 +231,7 @@ void ARTSPlayerController::UpdateSelection()
 	{
 		if (!SelectedActors.Contains(a))
 		{
-			IBaseBehavior* Interface = Cast<IBaseBehavior>(a);
+			auto Interface = Cast<ISelectable>(a);
 			if (Interface) Interface->Execute_Selected(a, false);
 		}
 	}
@@ -241,7 +241,7 @@ void ARTSPlayerController::UpdateSelection()
 	// Select actors which came from GameHUD selection rectangle
 	for (auto& a : ShouldBeSelected)
 	{
-		IBaseBehavior* Interface = Cast<IBaseBehavior>(a);
+		auto Interface = Cast<ISelectable>(a);
 		if (Interface) Interface->Execute_Highlighted(a, true);
 	}
 }
@@ -255,7 +255,7 @@ void ARTSPlayerController::HighlightActorsUnderCursor()
 		if (SelectedActors.Contains(HighlightedActor)) return;
 	}
 	// Dehighlight unit
-	IBaseBehavior* Interface = Cast<IBaseBehavior>(HighlightedActor);
+	auto Interface = Cast<ISelectable>(HighlightedActor);
 	if (Interface) Interface->Execute_Highlighted(HighlightedActor, false);
 
 	FHitResult Hit;
@@ -264,7 +264,7 @@ void ARTSPlayerController::HighlightActorsUnderCursor()
 	{
 		HighlightedActor = Hit.GetActor();
 		// Highlight unit
-		Interface = Cast<IBaseBehavior>(HighlightedActor);
+		Interface = Cast<ISelectable>(HighlightedActor);
 		if (Interface) Interface->Execute_Highlighted(HighlightedActor, true);
 	}
 }

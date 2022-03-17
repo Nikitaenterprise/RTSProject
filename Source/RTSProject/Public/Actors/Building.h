@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Interfaces/BaseBehavior.h"
 #include "GameFramework/Actor.h"
+#include "Interfaces/Selectable.h"
 #include "Building.generated.h"
 
 class UMiniMapIconComponent;
@@ -35,7 +35,7 @@ enum class EConstructionState
 //};
 
 UCLASS()
-class RTSPROJECT_API ABuilding : public AActor, public IBaseBehavior
+class RTSPROJECT_API ABuilding : public AActor, public ISelectable
 {
 	GENERATED_BODY()
 	
@@ -78,7 +78,6 @@ private:
 	EConstructionState ConstructionState = EConstructionState::NotConstructing;
 	TArray<TSubclassOf<AActor>> BuildingQueue;
 	FTimerHandle TimerHandle;
-	
 	
 public:	
 

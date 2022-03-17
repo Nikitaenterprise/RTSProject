@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Interfaces/BaseBehavior.h"
 #include "AbilitySystemInterface.h"
 #include "AttributeSet.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/Selectable.h"
 #include "Ship.generated.h"
 
 class UMiniMapIconComponent;
@@ -23,7 +23,7 @@ class UAbilitySystemComponent;
 class UShipAttributeSet;
 
 UCLASS()
-class RTSPROJECT_API AShip : public APawn, public IBaseBehavior, public IAbilitySystemInterface
+class RTSPROJECT_API AShip : public APawn, public ISelectable, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 

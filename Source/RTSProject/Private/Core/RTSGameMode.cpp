@@ -2,6 +2,7 @@
 
 #include "Core/RTSPlayerController.h"
 #include "Actors/FogOfWar.h"
+#include "Actors/ResourceManager.h"
 #include "Volumes/FogOfWarBoundsVolume.h"
 #include "UI/GameHUD.h"
 
@@ -71,5 +72,6 @@ void ARTSGameMode::StartPlay()
     }
     //TestFogOfWarBoundsVolume->DispatchBeginPlay();
 
+	GetWorld()->SpawnActor<AResourceManager>(FActorSpawnParameters());
 	Super::StartPlay();
 }

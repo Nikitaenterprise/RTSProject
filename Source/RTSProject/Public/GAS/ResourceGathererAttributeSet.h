@@ -15,18 +15,18 @@ class RTSPROJECT_API UResourceGathererAttributeSet : public UAttributeSet
 	GENERATED_BODY()
 public:
 
-	ATTRIBUTE_ACCESSORS(UResourceGathererAttributeSet, ResourceStorage)
-	ATTRIBUTE_ACCESSORS(UResourceGathererAttributeSet, ResourceStorageCapacity)
+	ATTRIBUTE_ACCESSORS(UResourceGathererAttributeSet, CargoStorage)
+	ATTRIBUTE_ACCESSORS(UResourceGathererAttributeSet, CargoStorageLimit)
 	ATTRIBUTE_ACCESSORS(UResourceGathererAttributeSet, ResourceGatheringSpeed)
 	
 protected:
 
 	// Current amount in storage
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData ResourceStorage = 100.0f;
+	FGameplayAttributeData CargoStorage = 100.0f;
 	// Max storage capacity
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData ResourceStorageCapacity = 100.0f;
+	FGameplayAttributeData CargoStorageLimit = 100.0f;
 	// How much resource is gathered per cycle (tick, timer, etc.)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FGameplayAttributeData ResourceGatheringSpeed = 100.0f;

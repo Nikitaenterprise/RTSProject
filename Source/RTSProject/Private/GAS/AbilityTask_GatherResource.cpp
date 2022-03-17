@@ -1,9 +1,15 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#include "GAS/AbilityTask_GatherResource.h"
+﻿#include "GAS/AbilityTask_GatherResource.h"
 #include "Actors/Ship.h"
 #include "TimerManager.h"
 #include "GAS/ResourceGathererAttributeSet.h"
+#include "GAS/ResourceSourceAttributeSet.h"
+
+UAbilityTask_GatherResource* UAbilityTask_GatherResource::GatherResource(UGameplayAbility* OwningAbility, AResource* ResourceToGather)
+{
+	auto AbilityTask = NewAbilityTask<UAbilityTask_GatherResource>(OwningAbility);
+	AbilityTask->ResourceToGather = ResourceToGather;
+	return AbilityTask;
+}
 
 void UAbilityTask_GatherResource::Activate()
 {
@@ -15,8 +21,8 @@ void UAbilityTask_GatherResource::Activate()
 	{
 		for (const auto Attribute : Actor->AdditionalAttributeSets)
 		{
-			ResourceGatherAttribute = Cast<UResourceGathererAttributeSet>(Attribute);
-			if (ResourceGatherAttribute)
+			ResourceGatherAttributeSet = Cast<UResourceGathererAttributeSet>(Attribute);
+			if (ResourceGatherAttributeSet)
 			{
 				HasGatherAttribute = true;
 				break;
@@ -33,13 +39,6 @@ void UAbilityTask_GatherResource::Activate()
 	GetWorld()->GetTimerManager().SetTimer(ResourceGatherTimerHandle, TimerDelegate, 1.0, false, false);
 }
 
-UAbilityTask_GatherResource* UAbilityTask_GatherResource::GatherResource(UGameplayAbility* OwningAbility, AResource* ResourceToGather)
-{
-	auto AbilityTask = NewAbilityTask<UAbilityTask_GatherResource>(OwningAbility);
-	AbilityTask->ResourceToGather = ResourceToGather;
-	return AbilityTask;
-}
-
 void UAbilityTask_GatherResource::OnDestroy(bool AbilityEnded)
 {
 	GetWorld()->GetTimerManager().ClearTimer(ResourceGatherTimerHandle);
@@ -50,22 +49,56 @@ void UAbilityTask_GatherResource::Gather()
 {
 	if (!ResourceToGather)
 	{
-		OnResourceGathered.Broadcast();
+		OnResourceConsumed.Broadcast();
 		EndTask();
 	}
-	auto Actor = Cast<AShip>(GetOwnerActor());
-	if (!Actor || !ResourceGatherAttribute)
+	const auto Ship = Cast<AShip>(GetOwnerActor());
+	if (!Ship || !ResourceGatherAttributeSet)
 	{
 		EndTask();
 		return;
 	}
+	
+	UGameplayEffect* ToGathererResourceEffect = NewObject<UGameplayEffect>();
+	UGameplayEffect* ToSourceResourceEffect = NewObject<UGameplayEffect>();
+	ToGathererResourceEffect->DurationPolicy = EGameplayEffectDurationType::Instant;
+	ToSourceResourceEffect->DurationPolicy = EGameplayEffectDurationType::Instant;
+	FGameplayModifierInfo ToGathererGameplayModifierInfo;
+	FGameplayModifierInfo ToSourceGameplayModifierInfo;
+	ToGathererGameplayModifierInfo.Attribute = ResourceGatherAttributeSet->GetCargoStorageAttribute();
+	ToGathererGameplayModifierInfo.ModifierOp = EGameplayModOp::Override;
+	ToSourceGameplayModifierInfo.Attribute = ResourceToGather->GetResourceSourceAttributeSet()->GetResourceCapacityAttribute();
+	ToSourceGameplayModifierInfo.ModifierOp = EGameplayModOp::Override;
 
-	auto Consumed = ResourceToGather->Consume(ResourceGatherAttribute->GetResourceGatheringSpeed());
-	auto NewStorage = Consumed + ResourceGatherAttribute->GetResourceStorage();
-	if (NewStorage > ResourceGatherAttribute->GetResourceStorageCapacity())
+	auto CurrentResourceCapacity = ResourceToGather->GetResourceSourceAttributeSet()->GetResourceCapacity();
+	auto CurrentStorageCapacity = ResourceGatherAttributeSet->GetCargoStorage();
+	auto TryGatherAmount = ResourceGatherAttributeSet->GetResourceGatheringSpeed();
+	bool bIsCargoFull = false;
+	bool bIsSourceEmpty = false;
+	if (CurrentStorageCapacity + TryGatherAmount > ResourceGatherAttributeSet->GetCargoStorageLimit())
 	{
-		Consumed -= NewStorage - ResourceGatherAttribute->GetResourceStorageCapacity();
+		TryGatherAmount -= CurrentStorageCapacity + TryGatherAmount + ResourceGatherAttributeSet->GetCargoStorageLimit();
+		bIsCargoFull = true;
 	}
-	ResourceGatherAttribute->SetResourceStorage(Consumed);
+	ToGathererGameplayModifierInfo.ModifierMagnitude = FScalableFloat(CurrentStorageCapacity + TryGatherAmount);
+	if (CurrentResourceCapacity - TryGatherAmount <=0 )
+	{
+		bIsSourceEmpty = true;
+	}
+	ToSourceGameplayModifierInfo.ModifierMagnitude = FScalableFloat(CurrentResourceCapacity - TryGatherAmount);
+	
+	ToGathererResourceEffect->Modifiers.Add(ToGathererGameplayModifierInfo);
+	ToSourceResourceEffect->Modifiers.Add(ToSourceGameplayModifierInfo);
+	AbilitySystemComponent->ApplyGameplayEffectToSelf(ToGathererResourceEffect, 0, AbilitySystemComponent->MakeEffectContext());
+	ResourceToGather->GetAbilitySystemComponent()->ApplyGameplayEffectToSelf(ToSourceResourceEffect, 0, ResourceToGather->GetAbilitySystemComponent()->MakeEffectContext());
+	if (bIsCargoFull)
+	{
+		OnCargoFull.Broadcast();
+		EndTask();
+	}
+	if (bIsSourceEmpty)
+	{
+		OnResourceConsumed.Broadcast();
+	}
 }
 

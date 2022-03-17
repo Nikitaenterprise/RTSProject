@@ -3,7 +3,6 @@
 #include "UObject/Interface.h"
 #include "Shootable.generated.h"
 
-// This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UShootable : public UInterface
 {

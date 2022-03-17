@@ -1,43 +1,58 @@
 #pragma once
 
-#include "GameFramework/Actor.h"
+#include "Actors/Resource.h"
+#include "Interfaces/Selectable.h"
 #include "AsteroidField.generated.h"
 
 class AAsteroidResource;
 class ARTSPlayerController;
 class UBoxComponent;
+class UWidgetComponent;
 
 UCLASS()
-class RTSPROJECT_API AAsteroidField : public AActor
+class RTSPROJECT_API AAsteroidField : public AResource, public ISelectable
 {
 	GENERATED_BODY()
+protected:
 
-	//friend class AsteroidFieldFactory;
-public:
-
+	UPROPERTY(EditAnywhere, Category = "Base")
+	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UBoxComponent* BoxCollision = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
-
-private:
-	
-	int NumberOfAsteroids = 0;
-	int TotalResource = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
+	UWidgetComponent* WidgetComponent = nullptr;
 	TArray<AAsteroidResource*> Asteroids;
 	
 public:	
 	
 	AAsteroidField();
-	AAsteroidField(FTransform Transform);
 	virtual void BeginPlay() override;
-	virtual void Tick(float MainDeltaTime) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
+	void Selected(bool bIsSelected);
+	virtual void Selected_Implementation(bool bIsSelected) override;
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
+	void Highlighted(bool bIsHighlighted);
+	virtual void Highlighted_Implementation(bool bIsHighlighted) override;
 	
+	UFUNCTION(BlueprintCallable)
 	int32 GetNumberOfAsteroidsInField();
+	UFUNCTION(BlueprintCallable)
 	void AddRandomNumberOfAsteroidsToField(int MinValue = 5, int MaxValue = 20);
-	void AddAsteroidToField();
+	UFUNCTION(BlueprintCallable)
+	void CreateAsteroidAndAddItToField();
+	UFUNCTION(BlueprintCallable)
 	void AddAsteroidToField(AAsteroidResource* AsteroidToAdd);
+	UFUNCTION(BlueprintCallable)
 	void RemoveRandomAsteroidFromField();
+	UFUNCTION(BlueprintCallable)
 	void RemoveAsteroidFromField(AAsteroidResource* Asteroid);
-	
+	UFUNCTION(BlueprintCallable)
+	TArray<AAsteroidResource*>& GetAsteroids() { return Asteroids; }
+
+protected:
+
+	virtual float InitialCapacity() override;
 };

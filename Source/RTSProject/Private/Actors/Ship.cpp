@@ -64,11 +64,11 @@ AShip::AShip(const FObjectInitializer& OI)
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 
 	ShipAttributeSet = CreateDefaultSubobject<UShipAttributeSet>(TEXT("ShipAttributeSet"));
+	
 }
 
 void AShip::PreInitializeComponents()
 {
-	Super::PreInitializeComponents();
 	ARTSPlayerController* TestController = Cast<ARTSPlayerController>(GetOwner());
 	if (!IsValid(TestController))
 	{
@@ -76,11 +76,14 @@ void AShip::PreInitializeComponents()
 		return;
 	}
 	PlayerController = TestController;
+	Super::PreInitializeComponents();
 }
 
 void AShip::BeginPlay()
 {
 	Super::BeginPlay();
+
+	AbilitySystemComponent->AddSet<UShipAttributeSet>();
 	
 	DebugInputComponent = PlayerController->InputComponent;
 	if (!IsValid(DebugInputComponent))

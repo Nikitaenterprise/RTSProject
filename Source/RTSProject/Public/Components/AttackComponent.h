@@ -6,7 +6,7 @@
 class ARTSPlayerController;
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class RTSPROJECT_API UAttackComponent : public UActorComponent
 {
 	GENERATED_BODY()
