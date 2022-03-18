@@ -3,13 +3,13 @@
 #include <functional>
 #include "Kismet/GameplayStatics.h"
 #include "Actors/ResourceManager.h"
-#include "Components/StaticMeshComponent.h"
 #include "GAS/ResourceSourceAttributeSet.h"
 
 AResource::AResource()
 {
  	PrimaryActorTick.bCanEverTick = true;
-	
+	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
+	RootComponent = SceneComponent;
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	ResourceType = EResourceType::None;
 }
@@ -25,15 +25,16 @@ void AResource::BeginPlay()
 		return;
 	}
 	ResourceManager = TestResourceManager;
+	ResourceManager->AddResource(this);
 	
 	//AbilitySystemComponent->AddSet<UResourceSourceAttributeSet>();
 	ResourceSourceAttributeSet = NewObject<UResourceSourceAttributeSet>(this);
 	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(ResourceSourceAttributeSet);
 	
-	CalculateResource(std::bind(&ThisClass::InitialCapacity, this));
+	CalculateResource(std::bind(&ThisClass::SetupInitialCapacity, this));
 	
 	// Bind resource capacity check
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+	ResourceCapacityDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		ResourceSourceAttributeSet->GetResourceCapacityAttribute()).AddUObject(this, &ThisClass::CheckCapacity);
 }
 
@@ -41,14 +42,14 @@ void AResource::CheckCapacity(const FOnAttributeChangeData& Data)
 {
 	if (Data.NewValue <= 0)
 	{
+		ResourceManager->RemoveResource(this);
 		Destroy();
 	}
 }
 
-float AResource::InitialCapacity()
+float AResource::SetupInitialCapacity()
 {
-	UE_LOG(LogTemp, Warning, TEXT("GetInitialCapacity() from base class was used"));
-	return 0;
+	return InitialCapacity;
 }
 
 void AResource::CalculateResource(TFunction<float()> Func)

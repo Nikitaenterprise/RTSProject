@@ -14,9 +14,7 @@ class RTSPROJECT_API AAsteroidField : public AResource, public ISelectable
 {
 	GENERATED_BODY()
 protected:
-
-	UPROPERTY(EditAnywhere, Category = "Base")
-	USceneComponent* SceneComponent = nullptr;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UBoxComponent* BoxCollision = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
@@ -54,5 +52,5 @@ public:
 
 protected:
 
-	virtual float InitialCapacity() override;
+	virtual float SetupInitialCapacity() override;
 };

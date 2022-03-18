@@ -13,6 +13,7 @@ UENUM()
 enum class EResourceType : uint8
 {
 	Asteroid UMETA(DisplayName = "Asteroid"),
+	Star UMETA(DisplayName = "Star"),
 	None UMETA(DisplayName = "None"),
 	
 	Num // Total
@@ -23,14 +24,19 @@ class RTSPROJECT_API AResource : public AActor
 {
 	GENERATED_BODY()
 protected:
-	
+
+	UPROPERTY(EditAnywhere, Category = "Base")
+	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(EditAnywhere, Category = "GAS")
 	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
 	UPROPERTY(EditAnywhere, Category = "GAS")
 	UResourceSourceAttributeSet* ResourceSourceAttributeSet = nullptr;
+	UPROPERTY(EditAnywhere)
+	float InitialCapacity = 0;
 	UPROPERTY()
 	AResourceManager* ResourceManager = nullptr;
 	EResourceType ResourceType;
+	FDelegateHandle ResourceCapacityDelegateHandle;
 
 public:
 
@@ -47,7 +53,7 @@ public:
 protected:
 	
 	virtual void BeginPlay() override;
-	void CheckCapacity(const FOnAttributeChangeData& Data);
-	virtual float InitialCapacity();
+	virtual void CheckCapacity(const FOnAttributeChangeData& Data);
+	virtual float SetupInitialCapacity();
 	virtual void CalculateResource(TFunction<float()> Func);
 };

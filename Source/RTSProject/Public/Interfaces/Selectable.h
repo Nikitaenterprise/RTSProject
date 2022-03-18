@@ -3,7 +3,7 @@
 #include "UObject/Interface.h"
 #include "Selectable.generated.h"
 
-UINTERFACE(MinimalAPI)
+UINTERFACE(MinimalAPI, Blueprintable)
 class USelectable : public UInterface
 {
 	GENERATED_BODY()

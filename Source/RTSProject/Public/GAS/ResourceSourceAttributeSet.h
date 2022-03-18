@@ -16,8 +16,6 @@ class RTSPROJECT_API UResourceSourceAttributeSet : public UAttributeSet
 public:
 	
 	ATTRIBUTE_ACCESSORS(UResourceSourceAttributeSet, ResourceCapacity)
-	GAMEPLAYATTRIBUTE_PROPERTY_GETTER(UResourceSourceAttributeSet, InitResourceCapacity)
-	GAMEPLAYATTRIBUTE_VALUE_GETTER(InitResourceCapacity)
 	
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 
@@ -25,7 +23,5 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FGameplayAttributeData ResourceCapacity = 100.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData InitResourceCapacity = 100.0f;
 	
 };

@@ -7,38 +7,19 @@
 
 AAsteroidResource::AAsteroidResource()
 {
-	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
-	RootComponent = SceneComponent;
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
 	StaticMeshComponent->SetupAttachment(RootComponent);
-	
+	PrimaryActorTick.bCanEverTick = true;
 	ResourceType = EResourceType::Asteroid;
 }
 
-void AAsteroidResource::Tick(float DeltaSeconds)
+void AAsteroidResource::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaSeconds);
+	Super::Tick(DeltaTime);
 	
-	if (ResourceSourceAttributeSet)
-	{
-		if (ResourceSourceAttributeSet->GetResourceCapacity() <= 0)
-		{
-			IsEmpty();
-		}
-	}
 	// Rotate asteroid
 	const FRotator Rotation = StaticMeshComponent->GetComponentRotation();
-	SetActorRotation(FRotator(Rotation.Pitch, Rotation.Yaw + (Omega * DeltaSeconds), Rotation.Roll), ETeleportType::None);
-}
-
-void AAsteroidResource::IsEmpty()
-{
-	const auto AsteroidField = Cast<AAsteroidField>(GetOwner());
-	if (AsteroidField)
-	{
-		AsteroidField->RemoveAsteroidFromField(this);
-	}
-	Destroy();
+	SetActorRotation(FRotator(Rotation.Pitch, Rotation.Yaw + (RotationSpeed * DeltaTime), Rotation.Roll), ETeleportType::None);
 }
 
 void AAsteroidResource::BeginPlay()
@@ -46,11 +27,24 @@ void AAsteroidResource::BeginPlay()
 	Super::BeginPlay();
 
 	// Set rotation speed
-	Omega = UKismetMathLibrary::RandomFloatInRange(10, 50);
-	Omega = UKismetMathLibrary::RandomBool() ? -Omega : Omega;
+	RotationSpeed = UKismetMathLibrary::RandomFloatInRange(10, 50);
+	RotationSpeed = UKismetMathLibrary::RandomBool() ? -RotationSpeed : RotationSpeed;
 }
 
-float AAsteroidResource::InitialCapacity()
+void AAsteroidResource::CheckCapacity(const FOnAttributeChangeData& Data)
+{
+	if (Data.NewValue <= 0)
+	{
+		const auto AsteroidField = Cast<AAsteroidField>(GetOwner());
+		if (AsteroidField)
+		{
+			AsteroidField->RemoveAsteroidFromField(this);
+		}
+		Destroy();
+	}
+}
+
+float AAsteroidResource::SetupInitialCapacity()
 {
 	const int SquaredSizeOfMesh = UKismetMathLibrary::VSizeSquared(GetActorScale3D());
 	if (UKismetMathLibrary::Round(SquaredSizeOfMesh) != 0)
@@ -58,7 +52,8 @@ float AAsteroidResource::InitialCapacity()
 		const auto AttributeSet = AbilitySystemComponent->GetSet<UResourceSourceAttributeSet>();
 		if (AttributeSet)
 		{
-			return UKismetMathLibrary::FTrunc(SquaredSizeOfMesh * AttributeSet->GetInitResourceCapacity());	
+			InitialCapacity = UKismetMathLibrary::FTrunc(SquaredSizeOfMesh * SizeModifier);
+			return InitialCapacity;	
 		}
 	}
 	return 0;

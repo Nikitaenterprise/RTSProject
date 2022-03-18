@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Interfaces/BaseBehavior.h"
 #include "GameFramework/Actor.h"
 #include "Turret.generated.h"
 

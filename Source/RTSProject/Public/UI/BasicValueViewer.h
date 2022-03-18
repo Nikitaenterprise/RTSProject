@@ -15,23 +15,32 @@ protected:
     
 public:
 	template<typename ValueType>
-	void SetValue(const ValueType& Value);
+	void SetText(const ValueType& Value);
 };
 
 template<typename ValueType>
-void UBasicValueViewer::SetValue(const ValueType& Value)
+void UBasicValueViewer::SetText(const ValueType& Value)
 {
-	TextBox->Text = FText::FromString(FString(Value));
+	if (TextBox)
+	{
+		TextBox->SetText(FText::FromString(FString(Value)));
+	}
 }
 
 template<>
-inline void UBasicValueViewer::SetValue<float>(const float& Value)
+inline void UBasicValueViewer::SetText<float>(const float& Value)
 {
-	TextBox->Text = FText::FromString(FString::SanitizeFloat(Value, 0));
+	if (TextBox)
+	{
+		TextBox->SetText(FText::FromString(FString::SanitizeFloat(Value, 0)));
+	}
 }
 
 template<>
-inline void UBasicValueViewer::SetValue<int32>(const int32& Value)
+inline void UBasicValueViewer::SetText<int32>(const int32& Value)
 {
-	TextBox->Text = FText::FromString(FString::SanitizeFloat(Value, 0));
+	if (TextBox)
+	{
+		TextBox->SetText(FText::FromString(FString::SanitizeFloat(Value, 0)));
+	}
 }

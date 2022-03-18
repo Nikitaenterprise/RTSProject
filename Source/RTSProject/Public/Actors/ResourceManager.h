@@ -22,7 +22,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AddAsteroidField(AAsteroidField* AsteroidFieldToAdd);
 	UFUNCTION(BlueprintCallable)
+	void RemoveAsteroidField(AAsteroidField* AsteroidFieldToRemove);
+	UFUNCTION(BlueprintCallable)
 	void AddResource(AResource* ResourceToAdd);
+	UFUNCTION(BlueprintCallable)
+	void RemoveResource(AResource* ResourceToRemove);
 	UFUNCTION(BlueprintCallable)
 	AAsteroidField* GetClosestAsteroidField(const FVector& Position);
 	UFUNCTION(BlueprintCallable)
