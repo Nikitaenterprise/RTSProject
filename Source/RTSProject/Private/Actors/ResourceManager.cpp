@@ -25,12 +25,12 @@ void AResourceManager::RemoveAsteroidField(AAsteroidField* AsteroidFieldToRemove
 	}
 }
 
-void AResourceManager::AddResource(AResource* ResourceToAdd)
+void AResourceManager::AddResource(AActor* ResourceToAdd)
 {
 	ResourcesOnMap.Add(GetActorLocation() + ResourceToAdd->GetActorLocation(), ResourceToAdd);
 }
 
-void AResourceManager::RemoveResource(AResource* ResourceToRemove)
+void AResourceManager::RemoveResource(AActor* ResourceToRemove)
 {
 	auto Num = AsteroidFieldsOnMap.Remove(GetActorLocation() + ResourceToRemove->GetActorLocation());
 	if (Num == -1)
@@ -44,7 +44,7 @@ AAsteroidField* AResourceManager::GetClosestAsteroidField(const FVector& Positio
 	return *AsteroidFieldsOnMap.Find(GetActorLocation() - Position);
 }
 
-AResource* AResourceManager::GetClosestResource(const FVector& Position)
+AActor* AResourceManager::GetClosestResource(const FVector& Position)
 {
 	return *ResourcesOnMap.Find(GetActorLocation() - Position);
 }

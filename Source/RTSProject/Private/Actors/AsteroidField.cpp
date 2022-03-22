@@ -11,9 +11,13 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Miscellaneous/FactoriesFunctionLibrary.h"
 
+#include "Miscellaneous/AsteroidMeshWorker.h"
+#include "Generators/SphereGenerator.h"
+
 AAsteroidField::AAsteroidField()
 {
- 	PrimaryActorTick.bCanEverTick = false;
+	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
+	RootComponent = SceneComponent;
 	BoxCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCollision"));
 	BoxCollision->SetupAttachment(GetRootComponent());
 	BoxCollision->SetSimulatePhysics(false);
@@ -22,14 +26,15 @@ AAsteroidField::AAsteroidField()
 	WidgetComponent->SetGeometryMode(EWidgetGeometryMode::Plane);
 	WidgetComponent->SetTwoSided(false);
 	WidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	ResourceComponent = CreateDefaultSubobject<UResourceComponent>(TEXT("ResourceComponent"));
+	ResourceComponent->SetResourceType(EResourceType::AsteroidField);
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 void AAsteroidField::BeginPlay()
 {
 	Super::BeginPlay();
-
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		ResourceSourceAttributeSet->GetResourceCapacityAttribute()).Remove(ResourceCapacityDelegateHandle);
 	
 	ARTSPlayerController* TestController = Cast<ARTSPlayerController>(GetOwner());
 	if (!IsValid(TestController))
@@ -41,6 +46,11 @@ void AAsteroidField::BeginPlay()
 	
 	WidgetComponent->InitWidget();
 	WidgetComponent->SetVisibility(false);
+
+	ResourceComponent->InitializeCapacity([&]()->float
+	{
+		return 0;
+	});
 }
 
 void AAsteroidField::Selected_Implementation(bool bIsSelected)
@@ -57,7 +67,7 @@ void AAsteroidField::Highlighted_Implementation(bool bIsHighlighted)
 			const auto BasicValueViewerWidget = Cast<UBasicValueViewer>(WidgetComponent->GetWidget());
 			if (BasicValueViewerWidget)
 			{
-				BasicValueViewerWidget->SetText(ResourceSourceAttributeSet->GetResourceCapacity());
+				BasicValueViewerWidget->SetText(ResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacity());
 			}
 			WidgetComponent->SetVisibility(true);
 		}
@@ -71,17 +81,9 @@ void AAsteroidField::Highlighted_Implementation(bool bIsHighlighted)
 void AAsteroidField::RemoveRandomAsteroidFromField()
 {
 	const int32 Index = UKismetMathLibrary::RandomIntegerInRange(0, GetNumberOfAsteroidsInField());
-	const auto Asteroid = Asteroids[Index];
-	const auto AsteroidCapacity = Asteroid->GetResourceSourceAttributeSet()->GetResourceCapacity();
-	const auto FieldCapacity = GetResourceSourceAttributeSet()->GetResourceCapacity();
-	CalculateResource([&]()->float
-	{
-		return FieldCapacity - AsteroidCapacity;
-	});
 	RemoveAsteroidFromField(Asteroids[Index]);
 	if (GetNumberOfAsteroidsInField() == 0)
 	{
-		ResourceManager->RemoveAsteroidField(this);
 		Destroy();
 	}
 }
@@ -89,21 +91,20 @@ void AAsteroidField::RemoveRandomAsteroidFromField()
 void AAsteroidField::RemoveAsteroidFromField(AAsteroidResource* Asteroid)
 {
 	Asteroids.Remove(Asteroid);
-
 	// Possible slow speed operation
 	Asteroids.Shrink();
-	const auto AsteroidCapacity = Asteroid->GetResourceSourceAttributeSet()->GetResourceCapacity();
-	const auto FieldCapacity = GetResourceSourceAttributeSet()->GetResourceCapacity();
-	CalculateResource([&]()->float
+	
+	const auto AsteroidResourceComponent = Asteroid->GetResourceComponent();
+	if (!AsteroidResourceComponent)
+	{
+		return;
+	}
+	const auto AsteroidCapacity = AsteroidResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacity();
+	const auto FieldCapacity = ResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacity();
+	ResourceComponent->ModifyResource([&]()->float
 	{
 		return FieldCapacity - AsteroidCapacity;
 	});
-}
-
-float AAsteroidField::SetupInitialCapacity()
-{
-	// Won't be destroyed because delegate GetResourceCapacityAttribute unbinded in BeginPlay
-	return 0;
 }
 
 int32 AAsteroidField::GetNumberOfAsteroidsInField()
@@ -118,6 +119,7 @@ void AAsteroidField::AddRandomNumberOfAsteroidsToField(int MinValue, int MaxValu
 	{
 		CreateAsteroidAndAddItToField();
 	}
+	AsteroidFieldMaker = UAsteroidFieldMaker::AsteroidFieldMaker(GetWorld(), this, Asteroids);
 }
 
 void AAsteroidField::CreateAsteroidAndAddItToField()
@@ -148,10 +150,6 @@ void AAsteroidField::CreateAsteroidAndAddItToField()
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn asteroid"));
 		return;
 	}
-	if (ResourceManager)
-	{
-		ResourceManager->AddResource(SpawnedAsteroid);
-	}
 	AddAsteroidToField(SpawnedAsteroid);
 }
 
@@ -165,11 +163,153 @@ void AAsteroidField::AddAsteroidToField(AAsteroidResource* AsteroidToAdd)
 	}
 	Asteroids.AddUnique(AsteroidToAdd);
 	AsteroidToAdd->SetIsInAsteroidField(true);
-	
-	const auto AsteroidCapacity = AsteroidToAdd->GetResourceSourceAttributeSet()->GetResourceCapacity();
-	const auto FieldCapacity = GetResourceSourceAttributeSet()->GetResourceCapacity();
-	CalculateResource([&]()->float
+
+	const auto AsteroidResourceComponent = AsteroidToAdd->GetResourceComponent();
+	if (!AsteroidResourceComponent)
+	{
+		return;
+	}
+	const auto AsteroidCapacity = AsteroidResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacity();
+	const auto FieldCapacity = ResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacity();
+	ResourceComponent->ModifyResource([&]()->float
 	{
 		return FieldCapacity + AsteroidCapacity;
 	});
+}
+
+UAsteroidFieldMaker::UAsteroidFieldMaker()
+{
+}
+
+UAsteroidFieldMaker* UAsteroidFieldMaker::AsteroidFieldMaker(UWorld* ThisWorld, const AAsteroidField* AsteroidField,
+                                                             TArray<AAsteroidResource*>& AsteroidsInField)
+{
+	auto Maker = NewObject<UAsteroidFieldMaker>();
+	Maker->World = ThisWorld;
+	Maker->Field = AsteroidField;
+	Maker->AsteroidsToEdit = &AsteroidsInField;
+	if (Maker->IsReady())
+	{
+		Maker->Start();
+	}
+	return Maker;
+}
+
+void UAsteroidFieldMaker::Start()
+{
+	NumberOfThreads = AsteroidsToEdit->Num();
+	ThreadWorkers.Reserve(NumberOfThreads);
+	SpawnedAsteroids2DArray.Reserve(NumberOfThreads);
+	ThreadsCompleted.Reserve(NumberOfThreads);
+	uint32 Index = 0;
+	for(AAsteroidResource* Asteroid : *AsteroidsToEdit)
+	{
+		//Asteroid->SetActorTickEnabled(false);
+		const auto Location = Asteroid->GetActorLocation();
+		const auto Vertices = Asteroid->MeshComponent->ExtractMesh(false)->GetVerticesBuffer();
+		const auto Triangles = Asteroid->MeshComponent->ExtractMesh(false)->GetTrianglesBuffer();
+		FVector VertexPosition = FVector(Vertices[0][0], Vertices[0][1], Vertices[0][2]);
+		const float Radius = VertexPosition.Size();
+
+		NumberOfAsteroidsToSpawn = 10;
+		TArray<ADynamicSDMCActor*> SpawnedAsteroids;
+		SpawnedAsteroids.Reserve(NumberOfAsteroidsToSpawn);
+		for (uint32 i = 0; i < NumberOfAsteroidsToSpawn; i++)
+		{
+			FActorSpawnParameters Params;
+			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			FTransform Transform(FVector(Location + UKismetMathLibrary::RandomUnitVector()*Radius));
+			auto AddingMesh = Asteroid->GetWorld()->SpawnActor<ADynamicSDMCActor>(
+				ADynamicSDMCActor::StaticClass(), Transform, Params);
+			if (!AddingMesh)
+			{
+				continue;
+			}
+			//AddingMesh->SetActorTickEnabled(false);
+			AddingMesh->MinimumRadius = Radius * UKismetMathLibrary::RandomFloat();
+			AddingMesh->VariableRadius = Radius/2 * UKismetMathLibrary::RandomFloat();
+			AddingMesh->PrimitiveType = EDynamicMeshActorPrimitiveType::Sphere;
+			// Update mesh after calculation
+			AddingMesh->RegenerateMesh();
+			
+			AddingMesh->TessellationLevel = 30;
+			SpawnedAsteroids.Add(AddingMesh);
+		}
+		SpawnedAsteroids2DArray.Add(SpawnedAsteroids);
+		ThreadsCompleted.Add(false);
+		
+		FTimerHandle CheckThreadCompletionTimerHandle;
+		CheckThreadCompletionTimerHandles.Add(CheckThreadCompletionTimerHandle);
+		World->GetTimerManager().SetTimer(CheckThreadCompletionTimerHandle,
+			FTimerDelegate::CreateUObject(this, &ThisClass::CheckIsThreadCompleted, Index),  0.1, true);
+		auto ThreadWorker = FAsteroidMeshWorker::AsteroidMeshWorker(Asteroid, SpawnedAsteroids2DArray[Index]);
+		ThreadWorkers.Add(ThreadWorker);
+		Index++;
+	}
+
+	// Main timer to watch other threads
+	CheckAllThreadsAreCompletedTimerDelegate.BindUObject(this, &ThisClass::CheckAreAllThreadsCompleted);
+	World->GetTimerManager().SetTimer(CheckAllThreadsAreCompletedTimerHandle, CheckAllThreadsAreCompletedTimerDelegate, 0.5, true);
+}
+
+void UAsteroidFieldMaker::CheckAreAllThreadsCompleted()
+{
+	uint32 Count = 0;
+	for (const auto& IsThreadCompleted : ThreadsCompleted)
+	{
+		if (IsThreadCompleted == false)
+		{
+			return;
+		}
+		Count++;
+	}
+	if (Count == NumberOfThreads)
+	{
+		AreAllThreadsCompleted = true;
+		OnAsteroidsModificationCompleted.ExecuteIfBound();
+		FinishUp();
+		ConditionalBeginDestroy();
+		World->GetTimerManager().ClearTimer(CheckAllThreadsAreCompletedTimerHandle);
+	}
+}
+
+void UAsteroidFieldMaker::CheckIsThreadCompleted(uint32 Index)
+{
+	if (ThreadWorkers[Index] && ThreadWorkers[Index]->IsFinished())
+	{
+		// thread completed his work
+		//delete[] ThreadWorkers[Index];
+		ThreadWorkers[Index] = nullptr;	
+		ThreadsCompleted[Index] = true;
+		World->GetTimerManager().ClearTimer(CheckThreadCompletionTimerHandles[Index]);
+	}
+}
+
+void UAsteroidFieldMaker::FinishUp()
+{
+	for (uint32 i = 0; i < static_cast<uint32>(SpawnedAsteroids2DArray.Num()); i++)
+	{
+		for (uint32 j = 0; j < static_cast<uint32>(SpawnedAsteroids2DArray[i].Num()); j++)
+		{
+			if (SpawnedAsteroids2DArray[i][j])
+			{
+				// Update mesh after calculation
+				// SpawnedAsteroids2DArray[i][j]->EditMesh([](FDynamicMesh3& Mesh3)
+				// {
+				// 	return;
+				// });
+				
+				if(UKismetMathLibrary::RandomBool())
+				{
+					(*AsteroidsToEdit)[i]->SubtractMesh(SpawnedAsteroids2DArray[i][j]);
+				}
+				else
+				{
+					(*AsteroidsToEdit)[i]->UnionWithMesh(SpawnedAsteroids2DArray[i][j]);
+				}
+				//(*AsteroidsToEdit)[i]->SolidifyMesh((*AsteroidsToEdit)[i]->MeshComponent->GetMesh()->VertexCount() * 0.5);
+				SpawnedAsteroids2DArray[i][j]->Destroy();
+			}
+		}
+	}
 }

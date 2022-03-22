@@ -1,10 +1,10 @@
 ﻿#pragma once
 
 #include "Abilities/Tasks/AbilityTask.h"
-#include "Actors/Resource.h"
 #include "AbilityTask_GatherResource.generated.h"
 
 class UResourceGathererAttributeSet;
+class UResourceComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWaitForFullCargo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWaitForConsumedResource);
@@ -21,7 +21,7 @@ public:
 	FWaitForConsumedResource OnResourceConsumed;
 	
 	UFUNCTION(BlueprintCallable, Category = "Ability|Tasks", meta = (HidePin = "OwningAbility", DefaultToSelf = "OwningAbility"))
-	static UAbilityTask_GatherResource* GatherResource(UGameplayAbility* OwningAbility, AResource* ResourceToGather);
+	static UAbilityTask_GatherResource* GatherResource(UGameplayAbility* OwningAbility, AActor* ResourceToGather);
 	virtual void Activate() override;
 
 private:
@@ -32,7 +32,9 @@ private:
 	UPROPERTY()
 	UResourceGathererAttributeSet* ResourceGatherAttributeSet = nullptr;
 	UPROPERTY()
-	AResource* ResourceToGather = nullptr;
+	AActor* ResourceToGather = nullptr;
+	UPROPERTY()
+	UResourceComponent* ResourceComponent = nullptr;
 	FTimerHandle ResourceGatherTimerHandle;
 	
 };

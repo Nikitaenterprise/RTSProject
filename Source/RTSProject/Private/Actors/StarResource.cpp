@@ -1,9 +1,12 @@
 ﻿#include "Actors/StarResource.h"
+#include "AbilitySystemComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 
 AStarResource::AStarResource()
 {
+	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
+	RootComponent = SceneComponent;
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
 	StaticMeshComponent->SetupAttachment(GetRootComponent());
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
@@ -11,14 +14,21 @@ AStarResource::AStarResource()
 	SelectionComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SelectionComponent"));
 	SelectionComponent->SetupAttachment(GetRootComponent());
 	SelectionComponent->SetVisibility(false);
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	ResourceComponent = CreateDefaultSubobject<UResourceComponent>(TEXT("ResourceComponent"));
+	ResourceComponent->SetResourceType(EResourceType::Star);
 	PrimaryActorTick.bCanEverTick = true;
-	ResourceType = EResourceType::Star;
 }
 
 void AStarResource::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ResourceComponent->InitializeCapacity([&]()->float
+	{
+		return 1000000.0;
+	});
+	
 	SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AStarResource::OnOverlapBegan);
 }
 

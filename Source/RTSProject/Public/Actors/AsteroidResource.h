@@ -1,22 +1,23 @@
 #pragma once
 
-#include "Resource.h"
+#include "Components/ResourceComponent.h"
+#include "MeshProcessingPlugin/Public/DynamicSDMCActor.h"
 #include "AsteroidResource.generated.h"
 
 class AAsteroidField;
 
 UCLASS()
-class RTSPROJECT_API AAsteroidResource : public AResource
+class RTSPROJECT_API AAsteroidResource : public ADynamicSDMCActor
 {
 	GENERATED_BODY()
-public:
-	
 protected:
-
-	UPROPERTY(EditAnywhere, Category = "Base")
-	UStaticMeshComponent* StaticMeshComponent = nullptr;
+	
+	UPROPERTY(EditAnywhere, Category = "GAS")
+	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
 	UPROPERTY(EditAnywhere)
-	float SizeModifier = 1.0;
+	UResourceComponent* ResourceComponent = nullptr;
+	UPROPERTY(EditAnywhere)
+	float InitialCapacityModifier = 1.0;
 	UPROPERTY(EditAnywhere)
 	float RotationSpeed = 0.0;
 	bool bIsInAsteroidField = false;
@@ -24,11 +25,17 @@ protected:
 public:
 	
 	AAsteroidResource();
+	virtual void PostLoad() override;
 	virtual void Tick(float DeltaTime) override;
 	
+	//UFUNCTION(BlueprintCallable)
+	//UStaticMeshComponent* GetStaticMeshComponent() const { return StaticMeshComponent; }
+	//void SetStaticMeshComponent(UStaticMeshComponent* NewStaticMeshComponent) { StaticMeshComponent = NewStaticMeshComponent; }
 	UFUNCTION(BlueprintCallable)
-	UStaticMeshComponent* GetStaticMeshComponent() const { return StaticMeshComponent; }
-	void SetStaticMeshComponent(UStaticMeshComponent* NewStaticMeshComponent) { StaticMeshComponent = NewStaticMeshComponent; }
+	UAbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
+	void SetAbilitySystemComponent(UAbilitySystemComponent* NewAbilitySystemComponent) { AbilitySystemComponent = NewAbilitySystemComponent; }
+	UFUNCTION(BlueprintCallable)
+	UResourceComponent* GetResourceComponent() const { return ResourceComponent; }
 	
 	float GetRotationSpeed() const { return RotationSpeed; }
 	void SetRotationSpeed(float NewRotationSpeed) { RotationSpeed = NewRotationSpeed; }
@@ -38,7 +45,7 @@ public:
 protected:
 	
 	virtual void BeginPlay() override;
-	virtual void CheckCapacity(const FOnAttributeChangeData& Data) override;
-	virtual float SetupInitialCapacity() override;
+	virtual void CheckCapacity(const FOnAttributeChangeData& Data);
+	void ProcessMesh();
 	
 };

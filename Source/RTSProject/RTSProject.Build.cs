@@ -11,8 +11,8 @@ public class RTSProject : ModuleRules
        
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "UMG", "Slate", "SlateCore", "AIModule", "NavigationSystem" });
 		PublicDependencyModuleNames.AddRange(new string[] { "RHI", "RenderCore" });
-		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayAbilities", "GameplayTags", "GameplayTasks" });
-
+		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayAbilities", "GameplayTags", "GameplayTasks"});
+		PrivateDependencyModuleNames.AddRange(new string[] { "MeshProcessingPlugin", "ModelingComponents", "DynamicMesh" });
 		// Uncomment if you are using Slate UI
 		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 

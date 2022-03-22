@@ -2,7 +2,7 @@
 
 #include "Abilities/Tasks/AbilityTask.h"
 #include "Actors/AsteroidField.h"
-#include "Actors/Resource.h"
+#include "Components/ResourceComponent.h"
 #include "AbilityTask_GoToClosestResource.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDestinationReached, AAsteroidField*, ClosestAsteroidField);
@@ -24,7 +24,7 @@ protected:
 	UPROPERTY()
 	AAsteroidField* ClosestAsteroidField = nullptr;
 	UPROPERTY()
-	AResource* ClosestResource = nullptr;
+	UResourceComponent* ClosestResource = nullptr;
 	float MinDistanceToStop = 0.0;
 	
 public:

@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Actors/Resource.h"
+#include "Components/ResourceComponent.h"
 #include "Actors/AsteroidField.h"
 #include "GameFramework/Actor.h"
 #include "ResourceManager.generated.h"
@@ -12,7 +12,7 @@ class RTSPROJECT_API AResourceManager : public AActor
 protected:
 
 	UPROPERTY()
-	TMap<FVector, AResource*> ResourcesOnMap;
+	TMap<FVector, AActor*> ResourcesOnMap;
 	UPROPERTY()
 	TMap<FVector, AAsteroidField*> AsteroidFieldsOnMap;
 	
@@ -24,13 +24,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RemoveAsteroidField(AAsteroidField* AsteroidFieldToRemove);
 	UFUNCTION(BlueprintCallable)
-	void AddResource(AResource* ResourceToAdd);
+	void AddResource(AActor* ResourceToAdd);
 	UFUNCTION(BlueprintCallable)
-	void RemoveResource(AResource* ResourceToRemove);
+	void RemoveResource(AActor* ResourceToRemove);
 	UFUNCTION(BlueprintCallable)
 	AAsteroidField* GetClosestAsteroidField(const FVector& Position);
 	UFUNCTION(BlueprintCallable)
-	AResource* GetClosestResource(const FVector& Position);
+	AActor* GetClosestResource(const FVector& Position);
 	
 protected:
 	

@@ -3,10 +3,11 @@
 #include "TimerManager.h"
 #include "GAS/ResourceGathererAttributeSet.h"
 #include "GAS/ResourceSourceAttributeSet.h"
+#include "Components/ResourceComponent.h"
 
-UAbilityTask_GatherResource* UAbilityTask_GatherResource::GatherResource(UGameplayAbility* OwningAbility, AResource* ResourceToGather)
+UAbilityTask_GatherResource* UAbilityTask_GatherResource::GatherResource(UGameplayAbility* OwningAbility, AActor* ResourceToGather)
 {
-	auto AbilityTask = NewAbilityTask<UAbilityTask_GatherResource>(OwningAbility);
+	const auto AbilityTask = NewAbilityTask<UAbilityTask_GatherResource>(OwningAbility);
 	AbilityTask->ResourceToGather = ResourceToGather;
 	return AbilityTask;
 }
@@ -33,6 +34,14 @@ void UAbilityTask_GatherResource::Activate()
 	{
 		EndTask();
 	}
+
+	auto TestResourceComponent = Actor->FindComponentByClass<UResourceComponent>();
+	if (!TestResourceComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Actor %s has no UResourceComponent"), *Actor->GetName());
+		EndTask();
+	}
+	ResourceComponent = TestResourceComponent;
 		
 	FTimerDelegate TimerDelegate;
 	TimerDelegate.BindUObject(this, &ThisClass::Gather);
@@ -67,10 +76,10 @@ void UAbilityTask_GatherResource::Gather()
 	FGameplayModifierInfo ToSourceGameplayModifierInfo;
 	ToGathererGameplayModifierInfo.Attribute = ResourceGatherAttributeSet->GetCargoStorageAttribute();
 	ToGathererGameplayModifierInfo.ModifierOp = EGameplayModOp::Override;
-	ToSourceGameplayModifierInfo.Attribute = ResourceToGather->GetResourceSourceAttributeSet()->GetResourceCapacityAttribute();
+	ToSourceGameplayModifierInfo.Attribute = ResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacityAttribute();
 	ToSourceGameplayModifierInfo.ModifierOp = EGameplayModOp::Override;
 
-	auto CurrentResourceCapacity = ResourceToGather->GetResourceSourceAttributeSet()->GetResourceCapacity();
+	auto CurrentResourceCapacity = ResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacity();
 	auto CurrentStorageCapacity = ResourceGatherAttributeSet->GetCargoStorage();
 	auto TryGatherAmount = ResourceGatherAttributeSet->GetResourceGatheringSpeed();
 	bool bIsCargoFull = false;
@@ -90,7 +99,8 @@ void UAbilityTask_GatherResource::Gather()
 	ToGathererResourceEffect->Modifiers.Add(ToGathererGameplayModifierInfo);
 	ToSourceResourceEffect->Modifiers.Add(ToSourceGameplayModifierInfo);
 	AbilitySystemComponent->ApplyGameplayEffectToSelf(ToGathererResourceEffect, 0, AbilitySystemComponent->MakeEffectContext());
-	ResourceToGather->GetAbilitySystemComponent()->ApplyGameplayEffectToSelf(ToSourceResourceEffect, 0, ResourceToGather->GetAbilitySystemComponent()->MakeEffectContext());
+	ResourceComponent->GetOwnerAbilitySystemComponent()->ApplyGameplayEffectToSelf(
+		ToSourceResourceEffect, 0, ResourceComponent->GetOwnerAbilitySystemComponent()->MakeEffectContext());
 	if (bIsCargoFull)
 	{
 		OnCargoFull.Broadcast();
