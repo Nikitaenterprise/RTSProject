@@ -21,8 +21,7 @@ public class MeshProcessingPlugin : ModuleRules
 		PrivateIncludePaths.AddRange(
 			new string[] {
 				"../ThirdParty/libigl/include",
-				"../ThirdParty/eigen",
-				"ProceduralMeshComponent"
+				"../ThirdParty/eigen"
 				// ... add other private include paths required here ...
 			}
 			);
@@ -33,8 +32,7 @@ public class MeshProcessingPlugin : ModuleRules
 			{
 				"Core",
 				"GeometricObjects",
-				"DynamicMesh",
-				"ModelingComponents"
+				"ProceduralMeshComponent"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -48,7 +46,6 @@ public class MeshProcessingPlugin : ModuleRules
 				"MeshDescription",
 				"StaticMeshDescription",
 				"GeometryAlgorithms",
-				"ProceduralMeshComponent",
 				"Slate",
 				"SlateCore",
 				"InputCore",
@@ -64,7 +61,6 @@ public class MeshProcessingPlugin : ModuleRules
 				"ModelingOperators",
 				"DynamicMesh",
 				"MeshConversion"
-
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

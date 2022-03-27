@@ -1,6 +1,4 @@
 #include "Actors/AsteroidField.h"
-
-//#include "KismetProceduralMeshLibrary.h"
 #include "Core/RTSPlayerController.h"
 #include "Actors/AsteroidResource.h"
 #include "Core/FactoryAssets.h"
@@ -13,9 +11,6 @@
 #include "GAS/ResourceSourceAttributeSet.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Miscellaneous/FactoriesFunctionLibrary.h"
-
-#include "Miscellaneous/AsteroidMeshWorker.h"
-#include "Generators/SphereGenerator.h"
 
 AAsteroidField::AAsteroidField()
 {
@@ -122,8 +117,6 @@ void AAsteroidField::AddRandomNumberOfAsteroidsToField(int MinValue, int MaxValu
 	{
 		CreateAsteroidAndAddItToField();
 	}
-
-	//AsteroidFieldMaker = UAsteroidFieldMaker::AsteroidFieldMaker(GetWorld(), this, Asteroids, 10);
 }
 
 void AAsteroidField::CreateAsteroidAndAddItToField()
@@ -180,194 +173,3 @@ void AAsteroidField::AddAsteroidToField(AAsteroidResource* AsteroidToAdd)
 		return FieldCapacity + AsteroidCapacity;
 	});
 }
-
-// UAsteroidFieldMaker::UAsteroidFieldMaker()
-// {
-// }
-//
-// UAsteroidFieldMaker* UAsteroidFieldMaker::AsteroidFieldMaker(UWorld* ThisWorld, const AAsteroidField* AsteroidField,
-// 	TArray<AAsteroidResource*>& AsteroidsInField, uint32 MeshSpawningAmount)
-// {
-// 	const auto Maker = NewObject<UAsteroidFieldMaker>();
-// 	Maker->World = ThisWorld;
-// 	Maker->Field = AsteroidField;
-// 	Maker->AsteroidsInFieldToEdit = &AsteroidsInField;
-// 	Maker->NumberOfAsteroidsToSpawn = MeshSpawningAmount;
-// 	if (Maker->IsReady())
-// 	{
-// 		Maker->Start();
-// 	}
-// 	return Maker;
-// }
-//
-// void UAsteroidFieldMaker::Start()
-// {
-// 	NumberOfThreads = AsteroidsInFieldToEdit->Num();
-// 	ThreadWorkers.Reserve(NumberOfThreads);
-// 	SpawnedAsteroids2DArray.Reserve(NumberOfThreads);
-// 	ThreadsCompleted.Reserve(NumberOfThreads);
-// 	
-// 	for (uint32 Index = 0; Index < static_cast<uint32>((*AsteroidsInFieldToEdit).Num()); Index++)
-// 	{
-// 		auto Asteroid = (*AsteroidsInFieldToEdit)[Index];
-// 		const auto Location = Asteroid->GetActorLocation();
-// 		const auto Vertices = Asteroid->GetMeshComponent()->ExtractMesh(false)->GetVerticesBuffer();
-// 		const auto Triangles = Asteroid->GetMeshComponent()->ExtractMesh(false)->GetTrianglesBuffer();
-// 		FVector VertexPosition = FVector(Vertices[0][0], Vertices[0][1], Vertices[0][2]);
-// 		const float Radius = VertexPosition.Size();
-// 		Materials = Asteroid->GetMeshComponent()->GetMaterials();
-// 		
-// 		TArray<ADynamicSDMCActor*> SpawnedAsteroids;
-// 		SpawnedAsteroids.Reserve(NumberOfAsteroidsToSpawn);
-// 		for (uint32 i = 0; i < NumberOfAsteroidsToSpawn; i++)
-// 		{
-// 			FActorSpawnParameters Params;
-// 			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-// 			FTransform Transform(FVector(Location + UKismetMathLibrary::RandomUnitVector()*Radius));
-// 			auto AddingMesh = Asteroid->GetWorld()->SpawnActor<ADynamicSDMCActor>(
-// 				ADynamicSDMCActor::StaticClass(), Transform, Params);
-// 			if (!AddingMesh)
-// 			{
-// 				continue;
-// 			}
-// 			AddingMesh->MinimumRadius = Radius * UKismetMathLibrary::RandomFloat();
-// 			AddingMesh->VariableRadius = Radius/10 * UKismetMathLibrary::RandomFloat();
-// 			AddingMesh->TessellationLevel = 30;
-// 			AddingMesh->PrimitiveType = EDynamicMeshActorPrimitiveType::Sphere;
-// 			AddingMesh->GetMeshComponent()->SetMaterial(0, Materials[0]);
-// 			
-// 			SpawnedAsteroids.Add(AddingMesh);
-// 		}
-// 		SpawnedAsteroids2DArray.Add(SpawnedAsteroids);
-// 		ThreadsCompleted.Add(false);
-// 		
-// 		FTimerHandle CheckThreadCompletionTimerHandle;
-// 		CheckThreadCompletionTimerHandles.Add(CheckThreadCompletionTimerHandle);
-// 		World->GetTimerManager().SetTimer(CheckThreadCompletionTimerHandle,
-// 			FTimerDelegate::CreateUObject(this, &ThisClass::CheckIsThreadCompleted, Index),  0.1, true);
-// 		auto ThreadWorker = FAsteroidMeshWorker::AsteroidMeshWorker(Asteroid, SpawnedAsteroids2DArray[Index]);
-// 		ThreadWorkers.Add(ThreadWorker);
-// 	}
-//
-// 	// Main timer to watch other threads
-// 	CheckAllThreadsAreCompletedTimerDelegate.BindUObject(this, &ThisClass::CheckAreAllThreadsCompleted);
-// 	World->GetTimerManager().SetTimer(CheckAllThreadsAreCompletedTimerHandle, CheckAllThreadsAreCompletedTimerDelegate, 0.5, true);
-// }
-//
-// void UAsteroidFieldMaker::CheckAreAllThreadsCompleted()
-// {
-// 	uint32 Count = 0;
-// 	for (const auto& IsThreadCompleted : ThreadsCompleted)
-// 	{
-// 		if (IsThreadCompleted == false)
-// 		{
-// 			return;
-// 		}
-// 		Count++;
-// 	}
-// 	if (Count == NumberOfThreads)
-// 	{
-// 		AreAllThreadsCompleted = true;
-// 		OnAsteroidsModificationCompleted.ExecuteIfBound();
-// 		FinishUp();
-// 		ConditionalBeginDestroy();
-// 		World->GetTimerManager().ClearTimer(CheckAllThreadsAreCompletedTimerHandle);
-// 	}
-// }
-//
-// void UAsteroidFieldMaker::CheckIsThreadCompleted(uint32 Index)
-// {
-// 	if (ThreadWorkers[Index] && ThreadWorkers[Index]->IsFinished())
-// 	{
-// 		// thread completed his work
-// 		//delete[] ThreadWorkers[Index];
-// 		ThreadWorkers[Index] = nullptr;	
-// 		ThreadsCompleted[Index] = true;
-// 		World->GetTimerManager().ClearTimer(CheckThreadCompletionTimerHandles[Index]);
-// 	}
-// }
-//
-// void UAsteroidFieldMaker::FinishUp()
-// {
-// 	for (uint32 i = 0; i < static_cast<uint32>(SpawnedAsteroids2DArray.Num()); i++)
-// 	{
-// 		(*AsteroidsInFieldToEdit)[i]->GetMeshComponent()->SetMaterial(0, UMaterial::GetDefaultMaterial(MD_Surface));
-// 		for (uint32 j = 0; j < static_cast<uint32>(SpawnedAsteroids2DArray[i].Num()); j++)
-// 		{
-// 			if (SpawnedAsteroids2DArray[i][j])
-// 			{
-// 				// Update mesh after calculation
-// 				SpawnedAsteroids2DArray[i][j]->RegenerateMesh();
-// 				SpawnedAsteroids2DArray[i][j]->GetMeshComponent()->SetMaterial(0, Materials[0]);
-// 				// Add or subtract meshes to initial mesh
-// 				if(UKismetMathLibrary::RandomBool())
-// 				{
-// 					(*AsteroidsInFieldToEdit)[i]->SubtractMesh(SpawnedAsteroids2DArray[i][j]);
-// 				}
-// 				else
-// 				{
-// 					(*AsteroidsInFieldToEdit)[i]->UnionWithMesh(SpawnedAsteroids2DArray[i][j]);
-// 				}
-// 				(*AsteroidsInFieldToEdit)[i]->SimplifyMeshToTriCount(5000);
-//
-// 				//CopyMesh((*AsteroidsInFieldToEdit)[i], (*AsteroidsInFieldToEdit)[i]);
-// 				// auto StatickMesh = NewObject<UStaticMeshComponent>();
-// 				// StatickMesh->GetStaticMesh()->SetMaterial(0, Materials[0]);
-// 				// UKismetProceduralMeshLibrary::CopyProceduralMeshFromStaticMeshComponent(StatickMesh, 0, );
-// 				(*AsteroidsInFieldToEdit)[i]->GetMeshComponent()->SetMaterial(0, Materials[0]);
-// 				SpawnedAsteroids2DArray[i][j]->Destroy();
-// 			}
-// 		}
-// 	}
-// }
-//
-// void UAsteroidFieldMaker::CopyMesh(const AAsteroidResource* AsteroidResourceFrom, AAsteroidResource* AsteroidResourceTo)
-// {
-// 	auto DynamicMesh3 = AsteroidResourceFrom->GetMeshRef();
-//
-// 	//// MESH DATA
-// 	//int32 NumSections = DynamicMesh3->GetNumSections(LODIndex);
-// 	//for (int32 SectionIndex = 0; SectionIndex < NumSections; SectionIndex++)
-// 	{
-// 		// Buffers for copying geom data
-// 		auto Vertices = DynamicMesh3.GetVerticesBuffer();
-// 		auto Triangles = DynamicMesh3.GetTrianglesBuffer();
-// 		auto Normals = DynamicMesh3.GetNormalsBuffer();
-// 		auto UVs = DynamicMesh3.GetUVBuffer();
-// 		TArray<FVector2D> UVs1;
-// 		TArray<FVector2D> UVs2;
-// 		TArray<FVector2D> UVs3;
-// 		//TArray<FProcMeshTangent> Tangents;
-//
-// 		// Get geom data from static mesh
-// 		//GetSectionFromStaticMesh(DynamicMesh3, LODIndex, SectionIndex, Vertices, Triangles, Normals, UVs, Tangents);
-//
-// 		// Create section using data
-// 		TArray<FLinearColor> DummyColors;
-// 		//ProcMeshComponent->CreateMeshSection_LinearColor(SectionIndex, Vertices, Triangles, Normals, UVs, UVs1, UVs2, UVs3, DummyColors, Tangents, bCreateCollision);
-// 	}
-// 	AsteroidResourceTo->GetMeshComponent()->SetMaterial(0, Materials[0]);
-// 	//// SIMPLE COLLISION
-//
-// 	// Clear any existing collision hulls
-// 	// ProcMeshComponent->ClearCollisionConvexMeshes();
-// 	//
-// 	// if (DynamicMesh3->GetBodySetup() != nullptr)
-// 	// {
-// 	// 	// Iterate over all convex hulls on static mesh..
-// 	// 	const int32 NumConvex = DynamicMesh3->GetBodySetup()->AggGeom.ConvexElems.Num();
-// 	// 	for (int ConvexIndex = 0; ConvexIndex < NumConvex; ConvexIndex++)
-// 	// 	{
-// 	// 		// Copy convex verts to ProcMesh
-// 	// 		FKConvexElem& MeshConvex = DynamicMesh3->GetBodySetup()->AggGeom.ConvexElems[ConvexIndex];
-// 	// 		ProcMeshComponent->AddCollisionConvexMesh(MeshConvex.VertexData);
-// 	// 	}
-// 	// }
-//
-// 	//// MATERIALS
-//
-// 	// for (int32 MatIndex = 0; MatIndex < StaticMeshComponent->GetNumMaterials(); MatIndex++)
-// 	// {
-// 	// 	ProcMeshComponent->SetMaterial(MatIndex, StaticMeshComponent->GetMaterial(MatIndex));
-// 	// }
-// }

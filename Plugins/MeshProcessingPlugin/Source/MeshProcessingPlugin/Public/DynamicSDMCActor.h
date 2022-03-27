@@ -11,18 +11,14 @@ class MESHPROCESSINGPLUGIN_API ADynamicSDMCActor : public ADynamicMeshBaseActor
 {
 	GENERATED_BODY()
 protected:
-	
 	UPROPERTY(VisibleAnywhere)
-	USimpleDynamicMeshComponent* MeshComponent = nullptr;
-
+	USimpleDynamicMeshComponent* SDMComponent = nullptr;
 public:
-	
 	ADynamicSDMCActor();
 
-	USimpleDynamicMeshComponent* GetMeshComponent() const { return MeshComponent; }
-	
+	USimpleDynamicMeshComponent* GetSDMComponent() const { return SDMComponent; }
+
 protected:
-	
 	virtual void OnMeshEditedInternal() override;
 	virtual void UpdateSDMCMesh();
 };

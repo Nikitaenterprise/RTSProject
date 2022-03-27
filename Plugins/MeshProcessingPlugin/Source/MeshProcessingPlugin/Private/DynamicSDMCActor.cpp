@@ -3,8 +3,8 @@
 
 ADynamicSDMCActor::ADynamicSDMCActor()
 {
-	MeshComponent = CreateDefaultSubobject<USimpleDynamicMeshComponent>(TEXT("MeshComponent"), false);
-	SetRootComponent(MeshComponent);
+	SDMComponent = CreateDefaultSubobject<USimpleDynamicMeshComponent>(TEXT("MeshComponent"), false);
+	SetRootComponent(SDMComponent);
 }
 
 void ADynamicSDMCActor::OnMeshEditedInternal()
@@ -15,14 +15,14 @@ void ADynamicSDMCActor::OnMeshEditedInternal()
 
 void ADynamicSDMCActor::UpdateSDMCMesh()
 {
-	if (MeshComponent)
+	if (SDMComponent)
 	{
-		*(MeshComponent->GetMesh()) = SourceMesh;
-		MeshComponent->NotifyMeshUpdated();
+		*(SDMComponent->GetMesh()) = SourceMesh;
+		SDMComponent->NotifyMeshUpdated();
 
 		// update material on new section
 		UMaterialInterface* UseMaterial = (this->Material != nullptr) ? this->Material : UMaterial::GetDefaultMaterial(MD_Surface);
-		MeshComponent->SetMaterial(0, UseMaterial);
+		SDMComponent->SetMaterial(0, UseMaterial);
 	}
 }
 

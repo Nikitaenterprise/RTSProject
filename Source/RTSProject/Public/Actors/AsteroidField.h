@@ -8,7 +8,6 @@ class AAsteroidResource;
 class ARTSPlayerController;
 class UBoxComponent;
 class UWidgetComponent;
-//class UAsteroidFieldMaker;
 
 UCLASS()
 class RTSPROJECT_API AAsteroidField : public AActor, public ISelectable
@@ -28,8 +27,6 @@ protected:
 	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
 	UPROPERTY(EditAnywhere)
 	UResourceComponent* ResourceComponent = nullptr;
-	//UPROPERTY()
-	//UAsteroidFieldMaker* AsteroidFieldMaker = nullptr;
 	TArray<AAsteroidResource*> Asteroids;
 	
 	
@@ -65,51 +62,3 @@ public:
 	TArray<AAsteroidResource*>& GetAsteroids() { return Asteroids; }
 	
 };
-
-// DECLARE_DELEGATE(FAsteroidsReady)
-//
-// class ADynamicSDMCActor;
-// class FDynamicMesh3;
-// class FAsteroidMeshWorker;
-//
-// UCLASS()
-// class RTSPROJECT_API UAsteroidFieldMaker : public UObject
-// {
-// 	GENERATED_BODY()
-// protected:
-// 	
-// 	UPROPERTY()
-// 	UWorld* World = nullptr;
-// 	UPROPERTY()
-// 	const AAsteroidField* Field = nullptr;
-// 	TArray<AAsteroidResource*>* AsteroidsInFieldToEdit = nullptr;
-// 	TArray<FAsteroidMeshWorker*> ThreadWorkers;
-// 	uint32 NumberOfThreads = 0;
-// 	uint32 NumberOfAsteroidsToSpawn = 1;
-// 	TArray<TArray<ADynamicSDMCActor*>> SpawnedAsteroids2DArray;
-// 	UPROPERTY()
-// 	TArray<UMaterialInterface*> Materials;
-// 	
-// 	FTimerHandle CheckAllThreadsAreCompletedTimerHandle;
-// 	FTimerDelegate CheckAllThreadsAreCompletedTimerDelegate;
-// 	bool AreAllThreadsCompleted = false;
-// 	TArray<bool> ThreadsCompleted;
-// 	TArray<FTimerHandle> CheckThreadCompletionTimerHandles;
-//
-// 	UAsteroidFieldMaker();
-// 	bool IsReady() const { return World && Field && AsteroidsInFieldToEdit; }
-// 	void Start();
-// 	UFUNCTION()
-// 	void CheckAreAllThreadsCompleted();
-// 	UFUNCTION()
-// 	void CheckIsThreadCompleted(uint32 Index);
-// 	void FinishUp();
-// 	void CopyMesh(const AAsteroidResource* AsteroidResourceFrom, AAsteroidResource* AsteroidResourceTo);
-// 	
-// public:
-// 	FAsteroidsReady OnAsteroidsModificationCompleted;
-// 	
-// 	static UAsteroidFieldMaker* AsteroidFieldMaker(UWorld* ThisWorld,
-// 		const AAsteroidField* AsteroidField, TArray<AAsteroidResource*>& AsteroidsInField, uint32 MeshSpawningAmount);
-// 	
-// };
