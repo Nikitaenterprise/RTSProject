@@ -38,18 +38,25 @@ uint32 FAsteroidMeshWorker::Run()
 {	
 	for (uint32 Index = 0; Index < AsteroidsToModify; Index++)
 	{
-		//if (StopTaskCounter.GetValue() != 0 && !IsFinished())
-		//ProcessAsteroid(Asteroid, (*SpawnedAsteroids)[Index]);
-		auto Mesh = (*SpawnedAsteroids)[Index]->MeshComponent->GetMesh();
+		const auto Mesh = (*SpawnedAsteroids)[Index]->GetMeshComponent()->GetMesh();
 		// generate new mesh
 		FSphereGenerator SphereGen;
 		SphereGen.NumPhi = SphereGen.NumTheta = FMath::Clamp((*SpawnedAsteroids)[Index]->TessellationLevel, 3, 50);
-		SphereGen.Radius = AsteroidResource->MinimumRadius + AsteroidResource->VariableRadius * FMathd::Sin(UKismetMathLibrary::RandomFloat());
+		SphereGen.Radius = (*SpawnedAsteroids)[Index]->MinimumRadius +
+			(*SpawnedAsteroids)[Index]->VariableRadius * FMathd::Sin(UKismetMathLibrary::RandomFloat());
 		(*Mesh).Copy(&SphereGen.Generate());
+		//(*SpawnedAsteroids)[Index]->RegenerateMesh();
+		// if(UKismetMathLibrary::RandomBool())
+		// {
+		// 	AsteroidResource->SubtractMesh((*SpawnedAsteroids)[Index]);
+		// }
+		// else
+		// {
+		// 	AsteroidResource->UnionWithMesh((*SpawnedAsteroids)[Index]);
+		// }
 		TotalNumberOfModifiedAsteroids++;
-		 
 		//prevent thread from using too many resources
-		FWindowsPlatformProcess::Sleep(0.01);
+		FWindowsPlatformProcess::Sleep(0.005);
 	} 
 	return 0;
 }
@@ -60,7 +67,7 @@ void FAsteroidMeshWorker::Stop()
 }
 
 FAsteroidMeshWorker* FAsteroidMeshWorker::AsteroidMeshWorker(AAsteroidResource* AsteroidResource,
-		TArray<ADynamicSDMCActor*>& SpawnedAsteroids)
+	TArray<ADynamicSDMCActor*>& SpawnedAsteroids)
 {
 	// Create new instance of thread if it does not exist
 	// and the platform supports multi threading!

@@ -4,7 +4,7 @@
 #include "Actors/AsteroidField.h"
 #include "GAS/ResourceSourceAttributeSet.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "MeshProcessingPlugin/Public/MeshProcessingPlugin.h"
+#include "GeneratedMeshDeformersLibrary.h"
 #include "Generators/SphereGenerator.h"
 
 AAsteroidResource::AAsteroidResource()
@@ -15,30 +15,29 @@ AAsteroidResource::AAsteroidResource()
 	ResourceComponent->SetResourceType(EResourceType::Asteroid);
 
 	PrimitiveType = EDynamicMeshActorPrimitiveType::Sphere;
-	TessellationLevel = 500;
-	MinimumRadius = 50;
+	TessellationLevel = 50;
+	MinimumRadius = 100;
+	VariableRadius = 20;
 	CollisionMode = EDynamicMeshActorCollisionMode::ComplexAsSimple;
 }
 
 void AAsteroidResource::PostLoad()
 {
 	Super::PostLoad();
-	EditMesh([&](FDynamicMesh3& MeshToUpdate) {
-		if (SourceType == EDynamicMeshActorSourceType::Primitive)
-		{
-			double UseRadius = (this->MinimumRadius + this->VariableRadius)
-				+ (this->VariableRadius) * FMathd::Sin(PulseSpeed * AccumulatedTime);
 	
-			// generate new mesh
-			if (this->PrimitiveType == EDynamicMeshActorPrimitiveType::Sphere)
-			{
-				FSphereGenerator SphereGen;
-				SphereGen.NumPhi = SphereGen.NumTheta = FMath::Clamp(this->TessellationLevel, 3, 50);
-				SphereGen.Radius = UseRadius;
-				MeshToUpdate.Copy(&SphereGen.Generate());
-			}
-		}
-	});
+	// EditMesh([&](FDynamicMesh3& MeshToUpdate) {
+	// 	if (SourceType == EDynamicMeshActorSourceType::Primitive)
+	// 	{
+	// 		FSphereGenerator SphereGen;
+	// 		SphereGen.NumPhi = SphereGen.NumTheta = FMath::Clamp(this->TessellationLevel, 3, 50);
+	// 		SphereGen.Radius = (this->MinimumRadius + this->VariableRadius)
+	// 		+ (this->VariableRadius) * FMathd::Sin(PulseSpeed * AccumulatedTime);
+	// 		//MeshToUpdate.Copy(&SphereGen.Generate());
+	// 		
+	// 		
+	// 	}
+	//});
+	
 }
 
 void AAsteroidResource::Tick(float DeltaTime)
@@ -46,15 +45,51 @@ void AAsteroidResource::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	
 	// Rotate asteroid
-	const FRotator Rotation = MeshComponent->GetComponentRotation();
-	SetActorRotation(FRotator(Rotation.Pitch, Rotation.Yaw + (RotationSpeed * DeltaTime), Rotation.Roll), ETeleportType::None);
+	GetMeshComponent()->AddLocalRotation(RandomRotator * DeltaTime);
 }
 
 void AAsteroidResource::BeginPlay()
 {
 	Super::BeginPlay();
+	UGeneratedMesh* AllocatedMesh = AllocateComputeMesh();
+	AllocatedMesh->AppendSphere(MinimumRadius + VariableRadius * FMathd::Sin(PulseSpeed * AccumulatedTime), 500, 500);
+	UGeneratedMeshDeformersLibrary::DeformMeshAxisSinWaveRadial(AllocatedMesh, 6, 0.1, 0.1, FVector(0,1,0));
+	UGeneratedMeshDeformersLibrary::DeformMeshAxisSinWave1D(AllocatedMesh, 12, 0.05, 0.1, FVector(0,1,1), FVector(1,1,0));
+	CopyFromMesh(AllocatedMesh);
+	if (!bManualSetUpNumberOfCavities)
+	{
+		NumberOfCavities = UKismetMathLibrary::RandomInteger(10);
+	}
+	for (int32 Index = 0; Index < NumberOfCavities; Index++)
+	{
+		UGeneratedMesh* SubtractAllocatedMesh = AllocateComputeMesh();
+		SubtractAllocatedMesh->AppendSphere(
+			MinimumRadius/20 + VariableRadius * FMathd::Sin(UKismetMathLibrary::RandomInteger(360)), 100, 100);
+		if (bShouldDistortCavityWithSinWave)
+		{
+			UGeneratedMeshDeformersLibrary::DeformMeshAxisSinWaveRadial(
+				SubtractAllocatedMesh, 6, 0.1, 0.1, FVector(0,1,0));
+			UGeneratedMeshDeformersLibrary::DeformMeshAxisSinWave1D(
+				SubtractAllocatedMesh, 12, 0.05, 0.1, FVector(0,1,1), FVector(1,1,0));
+		}
+		auto NearestPoint = AllocatedMesh->NearestPoint(UKismetMathLibrary::RandomUnitVector() * MinimumRadius);
+		const auto Scale = FVector(
+			UKismetMathLibrary::RandomFloatInRange(0.5, 2),
+			UKismetMathLibrary::RandomFloatInRange(0.5, 2),
+			UKismetMathLibrary::RandomFloatInRange(0.5, 2));
+		const FTransform Transform (FRotator(0, 0, 0), NearestPoint, Scale);
+		const auto GeneratedMesh = AllocatedMesh->BooleanWithTransformed(
+			SubtractAllocatedMesh, Transform, EGeneratedMeshBooleanOperation::Subtraction);
+		CopyFromMesh(GeneratedMesh);
+		AllocatedMesh->SolidifyMesh();
+	}
 	
-	//ProcessMesh();
+	if (!bManualSetUpRotation)
+	{
+		RotationSpeed = UKismetMathLibrary::RandomFloat();
+	}
+	RotationSpeed *= UKismetMathLibrary::RandomBool() ? 1 : -1;
+	RandomRotator = UKismetMathLibrary::RandomRotator(false) * RotationSpeed;
 
 	const auto AttributeSet = GetAbilitySystemComponent()->GetSet<UResourceSourceAttributeSet>();
 	if (AttributeSet)

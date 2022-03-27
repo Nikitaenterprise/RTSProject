@@ -20,6 +20,17 @@ protected:
 	float InitialCapacityModifier = 1.0;
 	UPROPERTY(EditAnywhere)
 	float RotationSpeed = 0.0;
+	UPROPERTY(EditAnywhere)
+	bool bManualSetUpRotation = false;
+	UPROPERTY(EditAnywhere)
+	FRotator RandomRotator;
+
+	UPROPERTY(EditAnywhere)
+	bool bManualSetUpNumberOfCavities;
+	UPROPERTY(EditAnywhere)
+	int32 NumberOfCavities;
+	bool bShouldDistortCavityWithSinWave = false;
+	
 	bool bIsInAsteroidField = false;
 	
 public:
