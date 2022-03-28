@@ -6,6 +6,12 @@ void UResourceSourceAttributeSet::PreAttributeChange(const FGameplayAttribute& A
 
 	if (Attribute == GetResourceCapacityAttribute())
 	{
-		NewValue = NewValue > 0 ? NewValue : 0;
+		if (NewValue > 0)
+		{
+			return;
+		}
+		NewValue = 0;
+		// broadcast if health < 0
+		OnResourceCapacityZeroed.ExecuteIfBound();
 	}
 }

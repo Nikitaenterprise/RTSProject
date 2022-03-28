@@ -1,7 +1,6 @@
 #pragma once
 
 #include "AbilitySystemInterface.h"
-#include "AttributeSet.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/Selectable.h"
 #include "Ship.generated.h"
@@ -21,6 +20,7 @@ class UAttackComponent;
 class UMiniMapInfluencerComponent;
 class UAbilitySystemComponent;
 class UShipAttributeSet;
+class UAttributeSet;
 
 UCLASS()
 class RTSPROJECT_API AShip : public APawn, public ISelectable, public IAbilitySystemInterface

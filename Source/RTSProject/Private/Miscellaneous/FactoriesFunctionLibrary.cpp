@@ -183,9 +183,6 @@ ABuilding* UFactoriesFunctionLibrary::NewBuilding(UWorld* World, UClass* ClassTy
 		return nullptr;
 	}
 	
-	SpawnedBuilding->bJustCreated = true;
-	Controller->PlayersActors.AddUnique(SpawnedBuilding);
-
 	return SpawnedBuilding;
 }
 

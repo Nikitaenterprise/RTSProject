@@ -1,5 +1,6 @@
 #include "Actors/Building.h"
 
+#include "AbilitySystemComponent.h"
 #include "Miscellaneous/FactoriesFunctionLibrary.h"
 #include "Components/FogOfWarInfluencerComponent.h"
 #include "Core/RTSPlayerController.h"
@@ -10,10 +11,10 @@
 #include "Actors/Ship.h"
 #include "UI/GameHUD.h"
 #include "UI/SelectionRectangleWidget.h"
-
+#include "AttributeSet.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
-#include "Particles/ParticleSystemComponent.h"
+#include "GAS/BuildingAttributeSet.h"
 #include "UI/SelectionRectangleWidget.h"
 
 ABuilding::ABuilding()
@@ -31,11 +32,10 @@ ABuilding::ABuilding()
 	HealthShieldBar->SetWidgetSpace(EWidgetSpace::Screen);
 
 	FOWInfluencerComponent = CreateDefaultSubobject<UFogOfWarInfluencerComponent>(TEXT("FOWInfluencerComponent"));
-	
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	BuildingAttributeSet = CreateDefaultSubobject<UBuildingAttributeSet>(TEXT("BuildingAttributeSet"));
 	SpawnPoint = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SpawnPoint"));
-	
 	HealthShieldComponent = CreateDefaultSubobject<UHealthShieldComponent>(TEXT("HealthShieldComponent"));
-
 	MiniMapInfluencerComponent = CreateDefaultSubobject<UMiniMapInfluencerComponent>(TEXT("MiniMapInfluencerComponent"));
 	MiniMapIconComponent = CreateDefaultSubobject<UMiniMapIconComponent>(TEXT("MiniMapIconComponent"));
 }
@@ -44,6 +44,8 @@ void ABuilding::BeginPlay()
 {
 	Super::BeginPlay();
 
+	bJustCreated = true;
+	
 	ARTSPlayerController* TestController = Cast<ARTSPlayerController>(GetOwner());
 	if (!IsValid(TestController))
 	{
@@ -51,6 +53,7 @@ void ABuilding::BeginPlay()
 		return;
 	}
 	PlayerController = TestController;
+	PlayerController->PlayersActors.AddUnique(this);
 
 	HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
 	HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
@@ -67,6 +70,17 @@ void ABuilding::BeginPlay()
 
 	SpawnPoint->SetRelativeLocation(FVector(150, 0, 0));
 	SpawnPoint->SetVisibility(false);
+	
+	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(BuildingAttributeSet);
+	BuildingUnitHandle = AbilitySystemComponent->GiveAbility(
+			FGameplayAbilitySpec(BuildUnitAbility, 1, INDEX_NONE, this));
+	BuildingAttributeSet->OnHealthZeroed.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()
+	{
+		if (This.IsValid())
+		{
+			This->Destroy();
+		}
+	});
 }
 
 void ABuilding::Tick(float DeltaTime)
@@ -88,8 +102,7 @@ void ABuilding::Tick(float DeltaTime)
 		bJustCreated = false;
 		if (PlayerController->GameHUD) PlayerController->GameHUD->UnlockSelectionRectangle();
 	}
-	if (ConstructionState == EConstructionState::RequestedConstruction) StartBuildingUnit();
-
+	//if (ConstructionState == EConstructionState::RequestedConstruction) StartBuildingUnit();
 }
 
 void ABuilding::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -107,11 +120,6 @@ void ABuilding::LMBPressed()
 void ABuilding::LMBReleased()
 {
 	bLMBPressed = false;
-}
-
-void ABuilding::SetSpawnPointLocation(const FVector& Location) const
-{
-	SpawnPoint->SetWorldLocation(Location);
 }
 
 void ABuilding::Selected_Implementation(bool _bIsSelected)
@@ -145,7 +153,6 @@ void ABuilding::Highlighted_Implementation(bool _bIsHighlighted)
 	}
 }
 
-
 void ABuilding::UpdatePositionWhenCreated()
 {
 	FHitResult Hit;
@@ -177,41 +184,11 @@ int ABuilding::GetBuildingQueueSizeByClass(TSubclassOf<AActor> ActorClass) const
 void ABuilding::RequestBuildingUnit(TSubclassOf<AActor> ActorClass)
 {
 	BuildingQueue.Add(ActorClass);
-	ConstructionState = EConstructionState::RequestedConstruction;
-}
-
-void ABuilding::StartBuildingUnit()
-{
-	if (BuildingQueue.Num() == 0) return;
-	ConstructionState = EConstructionState::Constructing;
-	float BaseTimeToBuild = 1;
-	// Binding BuildUnit() function that will spawn ship in SpawnLocation
-	// when timer hits BaseTimeToBuild
-	FTimerDelegate TimerDelegate;
-	TimerDelegate.BindUFunction(this, FName("BuildUnit"));
-	// Start timer
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, BaseTimeToBuild, false);
-}
-
-void ABuilding::BuildUnit()
-{
-	const TSubclassOf<AActor> Subclass = BuildingQueue.Pop();
-	UClass* ClassType = Subclass.Get();
-	// Add height to spawn location
-	const FVector SpawnLocation = SpawnPoint->GetComponentLocation() + FVector(0, 0, 100);
-	// First the ship is created in a place outside the borders
-	AShip* SpawnedShip = UFactoriesFunctionLibrary::NewShip(GetWorld(), ClassType, PlayerController, SpawnLocation);
-	if (IsValid(SpawnedShip))
+	if (BuildingUnitHandle.IsValid())
 	{
-		UFactoriesFunctionLibrary::AddTurretsToShip(SpawnedShip);
+		if (!bIsBuildingUnit)
+		{
+			AbilitySystemComponent->TryActivateAbility(BuildingUnitHandle, false);
+		}
 	}
-	FinishBuildingUnit();
 }
-
-void ABuilding::FinishBuildingUnit()
-{
-	// Check if there are more units to build
-	if (BuildingQueue.Num() != 0) ConstructionState = EConstructionState::RequestedConstruction;
-	else ConstructionState = EConstructionState::NotConstructing;
-}
-

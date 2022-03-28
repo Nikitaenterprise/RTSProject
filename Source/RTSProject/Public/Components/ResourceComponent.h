@@ -25,7 +25,6 @@ class RTSPROJECT_API UResourceComponent : public UActorComponent
 {
 	GENERATED_BODY()
 protected:
-	
 	UPROPERTY()
 	UResourceSourceAttributeSet* ResourceSourceAttributeSet = nullptr;
 	UPROPERTY()
@@ -37,9 +36,7 @@ protected:
 	EResourceType ResourceType;
 	FDelegateHandle ResourceCapacityDelegateHandle;
 	bool bCapacityWasInitialized = false;
-
 public:
-
 	UResourceComponent();
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -55,9 +52,4 @@ public:
 	void SetResourceCapacityDelegateHandle(FDelegateHandle NewHandle) { ResourceCapacityDelegateHandle = NewHandle; }
 	UFUNCTION(BlueprintCallable)
 	UAbilitySystemComponent* GetOwnerAbilitySystemComponent() const { return AbilitySystemComponent; }
-	
-protected:
-	
-	void CheckCapacity(const FOnAttributeChangeData& Data);
-	
 };

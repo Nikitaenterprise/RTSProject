@@ -1,6 +1,5 @@
-﻿#include "GAS/ShipAttributeSet.h"
-
-void UShipAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+﻿#include "GAS/BuildingAttributeSet.h"
+void UBuildingAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	Super::PreAttributeChange(Attribute, NewValue);
 	if (Attribute == GetHealthAttribute())

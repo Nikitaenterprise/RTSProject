@@ -37,6 +37,18 @@ void UResourceComponent::BeginPlay()
 	}
 	AbilitySystemComponent = TestAbilitySystemComponent;
 	ResourceSourceAttributeSet = NewObject<UResourceSourceAttributeSet>(this);
+	ResourceSourceAttributeSet->OnResourceCapacityZeroed.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()
+	{
+		if(This.IsValid())
+		{
+			if (!This->bCapacityWasInitialized)
+			{
+				return;
+			}
+			This->ResourceManager->RemoveResource(This->GetOwner());
+			This->GetOwner()->Destroy();
+		}
+	});
 	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(ResourceSourceAttributeSet);
 }
 
@@ -61,19 +73,6 @@ void UResourceComponent::InitializeCapacity(TFunction<float()> CalculationFuncti
 {
 	ModifyResource(CalculationFunction);
 	bCapacityWasInitialized = true;
-}
-
-void UResourceComponent::CheckCapacity(const FOnAttributeChangeData& Data)
-{
-	if (!bCapacityWasInitialized)
-	{
-		return;
-	}
-	if (Data.NewValue <= 0)
-	{
-		ResourceManager->RemoveResource(GetOwner());
-		GetOwner()->Destroy();
-	}
 }
 
 void UResourceComponent::ModifyResource(TFunction<float()> CalculationFunction)

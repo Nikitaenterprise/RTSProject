@@ -1,5 +1,4 @@
 #include "Actors/Ship.h"
-
 #include "Components/AttackComponent.h"
 #include "Core/RTSPlayerController.h"
 #include "Actors/Turret.h"
@@ -20,7 +19,7 @@
 #include "Components/MiniMapIconComponent.h"
 #include "Components/MiniMapInfluencerComponent.h"
 #include "UI/GameHUD.h"
-
+#include "AttributeSet.h"
 
 AShip::AShip(const FObjectInitializer& OI)
 	: Super(OI.SetDefaultSubobjectClass<UShipMovementComponent>(FName("ShipMovementComponent")))
@@ -110,6 +109,15 @@ void AShip::BeginPlay()
 	HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
 	HealthShieldBar->SetVisibility(false);
 	SelectionCircle->SetVisibility(false);
+
+	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(ShipAttributeSet);
+	ShipAttributeSet->OnHealthZeroed.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()
+	{
+		if(This.IsValid())
+		{
+			This->Destroy();
+		}
+	});
 }
 
 void AShip::Tick(float DeltaTime)
