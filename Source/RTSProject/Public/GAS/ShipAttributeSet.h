@@ -4,8 +4,6 @@
 #include "AbilitySystemComponent.h"
 #include "ShipAttributeSet.generated.h"
 
-DECLARE_DELEGATE(FOnHealthZeroed);
-
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName)       	\
 GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName) \
 GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName)           	\
@@ -16,16 +14,11 @@ class RTSPROJECT_API UShipAttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()
 public:
-	ATTRIBUTE_ACCESSORS(UShipAttributeSet, Health)
-	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
-	FOnHealthZeroed OnHealthZeroed;
-	ATTRIBUTE_ACCESSORS(UShipAttributeSet, Shield)
-	ATTRIBUTE_ACCESSORS(UShipAttributeSet, MoveSpeed)
+	ATTRIBUTE_ACCESSORS(UShipAttributeSet, CurrentMoveSpeed)
+	ATTRIBUTE_ACCESSORS(UShipAttributeSet, MaxMoveSpeed)
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData Health = 100.0f;
+	FGameplayAttributeData CurrentMoveSpeed = 600.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData Shield = 100.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData MoveSpeed = 600.0f;
+	FGameplayAttributeData MaxMoveSpeed = 600.0f;
 };

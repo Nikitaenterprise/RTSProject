@@ -1,34 +1,34 @@
 #pragma once
 
 #include "AbilitySystemInterface.h"
+#include "Abilities/GameplayAbility.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/Selectable.h"
 #include "Ship.generated.h"
 
 class UMiniMapIconComponent;
 class UFogOfWarInfluencerComponent;
-class UHealthShieldComponent;
 class UShipMovementComponent;
 class UStaticMeshComponent;
-class UWidgetComponent;
+class UHealthShieldWidgetComponent;
 class UPawnSensingComponent;
 class ARTSPlayerController;
 class ATurret;
 class UUserWidget;
-class UHealthShieldBarHUD;
+class UHealthShieldWidget;
 class UAttackComponent;
 class UMiniMapInfluencerComponent;
 class UAbilitySystemComponent;
 class UShipAttributeSet;
 class UAttributeSet;
+class UHealthShieldAttributeSet;
+
 
 UCLASS()
 class RTSPROJECT_API AShip : public APawn, public ISelectable, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
-
 public:
-	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
@@ -38,11 +38,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UStaticMeshComponent* SelectionCircle = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget")
-	UWidgetComponent* HealthShieldBar = nullptr;
+	UHealthShieldWidgetComponent* HealthShieldWidgetComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UPawnSensingComponent* PawnSensing = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UHealthShieldComponent* HealthShieldComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UShipMovementComponent* MovementComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -53,10 +51,16 @@ public:
 	UMiniMapInfluencerComponent* MiniMapInfluencerComponent = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
 	UMiniMapIconComponent* MiniMapIconComponent = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
 	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
+	UPROPERTY(EditAnywhere, Category = "GAS")
+	TSubclassOf<UGameplayAbility> AttackAbility;
+	FGameplayAbilitySpecHandle AttackAbilityHandle;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
 	UShipAttributeSet* ShipAttributeSet = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	UHealthShieldAttributeSet* HealthShieldAttributeSet = nullptr;
 	UPROPERTY(EditAnywhere, Category = "GAS")
 	TArray<UAttributeSet*> AdditionalAttributeSets;
 	
@@ -64,10 +68,6 @@ public:
 	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "Input")
 	UInputComponent* DebugInputComponent = nullptr;
-	
-	// Widget
-	UPROPERTY(BlueprintReadOnly, Category = "Widget")
-	UHealthShieldBarHUD* HealthShieldBarHUD = nullptr;
 
 	UPROPERTY(BlueprintReadOnly)
 	bool bJustCreated = false;

@@ -2,15 +2,13 @@
 #include "Components/AttackComponent.h"
 #include "Core/RTSPlayerController.h"
 #include "Actors/Turret.h"
-#include "UI/HealthShieldBarHUD.h"
 #include "Components/ShipMovementComponent.h"
 #include "Actors/Camera.h"
 #include "Components/FogOfWarInfluencerComponent.h"
-#include "Components/HealthShieldComponent.h"
 #include "AbilitySystemComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/WidgetComponent.h"
+#include "Components/HealthShieldWidgetComponent.h"
 #include "Components/InputComponent.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -20,6 +18,7 @@
 #include "Components/MiniMapInfluencerComponent.h"
 #include "UI/GameHUD.h"
 #include "AttributeSet.h"
+#include "GAS/HealthShieldAttributeSet.h"
 
 AShip::AShip(const FObjectInitializer& OI)
 	: Super(OI.SetDefaultSubobjectClass<UShipMovementComponent>(FName("ShipMovementComponent")))
@@ -40,30 +39,18 @@ AShip::AShip(const FObjectInitializer& OI)
 	SelectionCircle->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SelectionCircle->SetupAttachment(GetRootComponent());
 	
-	HealthShieldBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthShieldBar"));
-	HealthShieldBar->SetDrawSize(FVector2D(150, 150));
-	HealthShieldBar->SetWidgetSpace(EWidgetSpace::Screen);
-	HealthShieldBar->SetupAttachment(GetRootComponent());
-	
-
-	HealthShieldComponent = CreateDefaultSubobject<UHealthShieldComponent>(TEXT("HealthShieldComponent"));
+	HealthShieldWidgetComponent = CreateDefaultSubobject<UHealthShieldWidgetComponent>(TEXT("HealthShieldWidgetComponent"));
+	HealthShieldWidgetComponent->SetupAttachment(GetRootComponent());
 	
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
-
 	MovementComponent = CreateDefaultSubobject<UShipMovementComponent>(TEXT("ShipMovementComponent"));
-
 	AttackComponent = CreateDefaultSubobject<UAttackComponent>(TEXT("AttackComponent"));
-
 	FOWInfluencerComponent = CreateDefaultSubobject<UFogOfWarInfluencerComponent>(TEXT("FOWInfluencerComponent"));
-
 	MiniMapInfluencerComponent = CreateDefaultSubobject<UMiniMapInfluencerComponent>(TEXT("MiniMapInfluencerComponent"));
-
 	MiniMapIconComponent = CreateDefaultSubobject<UMiniMapIconComponent>(TEXT("MiniMapIconComponent"));
-
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-
 	ShipAttributeSet = CreateDefaultSubobject<UShipAttributeSet>(TEXT("ShipAttributeSet"));
-	
+	HealthShieldAttributeSet = CreateDefaultSubobject<UHealthShieldAttributeSet>(TEXT("HealthShieldAttributeSet"));
 }
 
 void AShip::PreInitializeComponents()
@@ -98,20 +85,16 @@ void AShip::BeginPlay()
 	DebugInputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &AShip::LMBPressed);
 	DebugInputComponent->BindAction(TEXT("LMB"), IE_Released, this, &AShip::LMBReleased);
 
-	HealthShieldBar->InitWidget();
-	HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
-	if (!IsValid(HealthShieldBarHUD))
+	if (HealthShieldWidgetComponent)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("HealthShieldBarHUD in AShip->Initialize() is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("HealthShieldBarHUD in AShip->Initialize() is nullptr"));
-		return;
+		HealthShieldWidgetComponent->SetHealthShieldAttributeSet(HealthShieldAttributeSet);
 	}
-	HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
-	HealthShieldBar->SetVisibility(false);
 	SelectionCircle->SetVisibility(false);
 
 	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(ShipAttributeSet);
-	ShipAttributeSet->OnHealthZeroed.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()
+	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(HealthShieldAttributeSet);
+	AttackAbilityHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AttackAbility, 1, INDEX_NONE, this));
+	HealthShieldAttributeSet->OnHealthZeroed.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()
 	{
 		if(This.IsValid())
 		{
@@ -123,8 +106,6 @@ void AShip::BeginPlay()
 void AShip::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (HealthShieldComponent->IsDead()) Destroy(false, true);
 
 	if (bJustCreated && !bLMBPressed)
 	{
@@ -156,12 +137,12 @@ void AShip::Selected_Implementation(bool _bIsSelected)
 	bIsSelected = _bIsSelected;
 	if (bIsSelected)
 	{
-		HealthShieldBar->SetVisibility(true);
+		HealthShieldWidgetComponent->SetVisibility(true);
 		SelectionCircle->SetVisibility(true);
 	}
 	else
 	{
-		HealthShieldBar->SetVisibility(false);
+		HealthShieldWidgetComponent->SetVisibility(false);
 		SelectionCircle->SetVisibility(false);
 	}
 }
@@ -173,12 +154,12 @@ void AShip::Highlighted_Implementation(bool _bIsHighlighted)
 		bIsHighlighted = _bIsHighlighted;
 		if (bIsHighlighted)
 		{
-			HealthShieldBar->SetVisibility(true);
+			HealthShieldWidgetComponent->SetVisibility(true);
 			SelectionCircle->SetVisibility(true);
 		}
 		else
 		{
-			HealthShieldBar->SetVisibility(false);
+			HealthShieldWidgetComponent->SetVisibility(false);
 			SelectionCircle->SetVisibility(false);
 		}
 	}

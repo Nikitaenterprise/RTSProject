@@ -8,9 +8,7 @@ UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RTSPROJECT_API UHealthShieldComponent : public UActorComponent
 {
 	GENERATED_BODY()
-
 public:
-	
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "Health Shield")
 	AActor* Owner = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health Shield")
@@ -21,16 +19,12 @@ public:
 	int StartingHealth = 100;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health Shield")
 	int StartingShield = 100;
-
 private:
-
 	int Health = 0;
 	int Shield = 0;
 	float HealthPercent = 0;
 	float ShieldPercent = 0;
-
 public:
-	
 	UHealthShieldComponent();
 	virtual void InitializeComponent() override;
 	virtual void BeginPlay() override;
@@ -61,9 +55,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Health Shield")
 	bool IsDead();
-
 private:
-
 	inline void RecalculatePercents();
-
 };

@@ -6,7 +6,7 @@
 
 UAttackComponent::UAttackComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 	bWantsInitializeComponent = true;
 }
 
@@ -14,15 +14,7 @@ void UAttackComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
 
-	AActor* TestOwner = Cast<AActor>(GetOwner());
-	if (!IsValid(TestOwner))
-	{
-		UE_LOG(LogTemp, Error, TEXT("TestOwner is nullptr in UAttackComponent::InitializeComponent()"));
-		return;
-	}
-	Owner = TestOwner;
-
-	AShip* TestOwnerShip = Cast<AShip>(Owner);
+	AShip* TestOwnerShip = Cast<AShip>(GetOwner());
 	if (!TestOwnerShip)
 	{
 		UE_LOG(LogTemp, Error, TEXT("TestOwnerShip is nullptr in UAttackComponent::InitializeComponent() it's because this component is not part of AShip class"));
@@ -35,20 +27,4 @@ void UAttackComponent::InitializeComponent()
 		return;
 	}
 	PlayerController = TestController;
-}
-
-
-void UAttackComponent::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
-void UAttackComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
-void UAttackComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	Super::EndPlay(EndPlayReason);
 }

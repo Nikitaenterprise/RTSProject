@@ -4,17 +4,18 @@
 #include "Miscellaneous/FactoriesFunctionLibrary.h"
 #include "Components/FogOfWarInfluencerComponent.h"
 #include "Core/RTSPlayerController.h"
-#include "UI/HealthShieldBarHUD.h"
-#include "Components/HealthShieldComponent.h"
+#include "UI/HealthShieldWidget.h"
 #include "Components/MiniMapIconComponent.h"
 #include "Components/MiniMapInfluencerComponent.h"
 #include "Actors/Ship.h"
 #include "UI/GameHUD.h"
 #include "UI/SelectionRectangleWidget.h"
 #include "AttributeSet.h"
+#include "Components/HealthShieldWidgetComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GAS/BuildingAttributeSet.h"
+#include "GAS/HealthShieldAttributeSet.h"
 #include "UI/SelectionRectangleWidget.h"
 
 ABuilding::ABuilding()
@@ -26,16 +27,14 @@ ABuilding::ABuilding()
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMesh->SetupAttachment(GetRootComponent());
 
-	HealthShieldBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthShieldBar"));
-	HealthShieldBar->SetupAttachment(GetRootComponent());
-	HealthShieldBar->SetDrawSize(FVector2D(150, 150));
-	HealthShieldBar->SetWidgetSpace(EWidgetSpace::Screen);
+	HealthShieldWidgetComponent = CreateDefaultSubobject<UHealthShieldWidgetComponent>(TEXT("HealthShieldWidgetComponent"));
+	HealthShieldWidgetComponent->SetupAttachment(GetRootComponent());
 
 	FOWInfluencerComponent = CreateDefaultSubobject<UFogOfWarInfluencerComponent>(TEXT("FOWInfluencerComponent"));
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	BuildingAttributeSet = CreateDefaultSubobject<UBuildingAttributeSet>(TEXT("BuildingAttributeSet"));
+	HealthShieldAttributeSet = CreateDefaultSubobject<UHealthShieldAttributeSet>(TEXT("HealthShieldAttributeSet"));
 	SpawnPoint = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SpawnPoint"));
-	HealthShieldComponent = CreateDefaultSubobject<UHealthShieldComponent>(TEXT("HealthShieldComponent"));
 	MiniMapInfluencerComponent = CreateDefaultSubobject<UMiniMapInfluencerComponent>(TEXT("MiniMapInfluencerComponent"));
 	MiniMapIconComponent = CreateDefaultSubobject<UMiniMapIconComponent>(TEXT("MiniMapIconComponent"));
 }
@@ -55,9 +54,10 @@ void ABuilding::BeginPlay()
 	PlayerController = TestController;
 	PlayerController->PlayersActors.AddUnique(this);
 
-	HealthShieldBarHUD = Cast<UHealthShieldBarHUD>(HealthShieldBar->GetWidget());
-	HealthShieldBarHUD->BindHealthShieldValues(HealthShieldComponent->GetHealthPercentPtr(), HealthShieldComponent->GetShieldPercentPtr());
-	HealthShieldBar->SetVisibility(false);
+	if (HealthShieldWidgetComponent)
+	{
+		HealthShieldWidgetComponent->SetHealthShieldAttributeSet(HealthShieldAttributeSet);
+	}
 
 	DebugInputComponent = PlayerController->InputComponent;
 	if (!IsValid(DebugInputComponent))
@@ -72,9 +72,10 @@ void ABuilding::BeginPlay()
 	SpawnPoint->SetVisibility(false);
 	
 	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(BuildingAttributeSet);
+	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(HealthShieldAttributeSet);
 	BuildingUnitHandle = AbilitySystemComponent->GiveAbility(
 			FGameplayAbilitySpec(BuildUnitAbility, 1, INDEX_NONE, this));
-	BuildingAttributeSet->OnHealthZeroed.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()
+	HealthShieldAttributeSet->OnHealthZeroed.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()
 	{
 		if (This.IsValid())
 		{
@@ -87,11 +88,6 @@ void ABuilding::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (HealthShieldComponent->IsDead())
-	{
-		Destroy();
-	}
-
 	if (bJustCreated && !bLMBPressed)
 	{
 		if (PlayerController->GameHUD) PlayerController->GameHUD->LockSelectionRectangle();
@@ -102,7 +98,6 @@ void ABuilding::Tick(float DeltaTime)
 		bJustCreated = false;
 		if (PlayerController->GameHUD) PlayerController->GameHUD->UnlockSelectionRectangle();
 	}
-	//if (ConstructionState == EConstructionState::RequestedConstruction) StartBuildingUnit();
 }
 
 void ABuilding::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -127,12 +122,12 @@ void ABuilding::Selected_Implementation(bool _bIsSelected)
 	bIsSelected = _bIsSelected;
 	if (bIsSelected)
 	{
-		HealthShieldBar->SetVisibility(true);
+		HealthShieldWidgetComponent->SetVisibility(true);
 		SpawnPoint->SetVisibility(true);
 	}
 	else
 	{
-		HealthShieldBar->SetVisibility(false);
+		HealthShieldWidgetComponent->SetVisibility(false);
 		SpawnPoint->SetVisibility(false);
 	}
 }
@@ -144,11 +139,11 @@ void ABuilding::Highlighted_Implementation(bool _bIsHighlighted)
 		bIsHighlighted = _bIsHighlighted;
 		if (bIsHighlighted)
 		{
-			HealthShieldBar->SetVisibility(true);
+			HealthShieldWidgetComponent->SetVisibility(true);
 		}
 		else
 		{
-			HealthShieldBar->SetVisibility(false);
+			HealthShieldWidgetComponent->SetVisibility(false);
 		}
 	}
 }

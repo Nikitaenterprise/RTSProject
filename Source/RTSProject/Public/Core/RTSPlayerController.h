@@ -19,12 +19,7 @@ UCLASS()
 class RTSPROJECT_API ARTSPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-
 public:
-
-	// Key press
-	bool bShiftPressed = false;
-
 	// Mouse clicks
 	bool bLMBPressed = false;
 	bool bRMBPressed = false;
@@ -42,7 +37,6 @@ public:
 	// True if FogOfWarBoundsVolume was placed on level in editor
 	// Checked in GameMode class
 	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
-	// Pointer to FogOfWar class
 	bool bIsFOWBoundsVolumePlacedOnLevel = false;
 	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
 	AFogOfWar* FogOfWar = nullptr;
@@ -66,9 +60,7 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	AGameHUD* GameHUD = nullptr;
-
 public:
-
 	ARTSPlayerController();
 	virtual void PreInitializeComponents() override;
 	virtual void BeginPlay() override;
@@ -76,8 +68,6 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	virtual void SetupInputComponent() override; //(class UInputComponent* PlayerInputComponent)
-	
-	void TestThis();
 
 	void ShiftPressed();
 	void ShiftReleased();
@@ -90,9 +80,6 @@ public:
 
 	void DamagePressed();
 	
-	// Units selection
-	void UpdateSelection();
-	void HighlightActorsUnderCursor();
 	template <class ActorType>
 	bool IsArrayContainThisTypeActors(const TArray<AActor*>& Array);
 
@@ -115,7 +102,6 @@ public:
 	UFactoryAssets* GetFactoryAssets() const { return FactoryAssets; }
 	UFUNCTION(BlueprintCallable, Category = "Getters")
 	AFogOfWar* GetFOWManager() const { return FogOfWar; }
-	
 };
 
 template <class ActorType>

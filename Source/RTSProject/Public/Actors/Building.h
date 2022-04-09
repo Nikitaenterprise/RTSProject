@@ -1,7 +1,6 @@
 #pragma once
 
 #include "AbilitySystemInterface.h"
-#include "../../../../../Engine/Plugins/Media/BinkMedia/Source/SDK/include/binkplugin.h"
 #include "Abilities/GameplayAbility.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/Selectable.h"
@@ -11,13 +10,13 @@
 class UMiniMapIconComponent;
 class UMiniMapInfluencerComponent;
 class UFogOfWarInfluencerComponent;
-class UHealthShieldComponent;
-class UWidgetComponent;
+class UHealthShieldWidgetComponent;
 class UHealthShield;
 class ARTSPlayerController;
-class UHealthShieldBarHUD;
+class UHealthShieldWidget;
 class UAbilitySystemComponent;
 class UBuildingAttributeSet;
+class UHealthShieldAttributeSet;
 
 UCLASS()
 class RTSPROJECT_API ABuilding : public AActor, public ISelectable, public IAbilitySystemInterface
@@ -29,17 +28,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
-	UWidgetComponent* HealthShieldBar = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
-	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
-	TSubclassOf<UGameplayAbility> BuildUnitAbility;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
-	UBuildingAttributeSet* BuildingAttributeSet = nullptr;
+	UHealthShieldWidgetComponent* HealthShieldWidgetComponent = nullptr;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UParticleSystemComponent* SpawnPoint = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UHealthShieldComponent* HealthShieldComponent = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
 	UFogOfWarInfluencerComponent* FOWInfluencerComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -51,9 +43,6 @@ protected:
 	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "Input")
 	UInputComponent* DebugInputComponent = nullptr;
-
-	UPROPERTY(BlueprintReadOnly, Category = "HUD")
-	UHealthShieldBarHUD* HealthShieldBarHUD = nullptr;
 	
 	bool bIsSelected = false;
 	bool bIsHighlighted = false;
@@ -61,7 +50,15 @@ protected:
 	bool bLMBPressed = false;
 
 	FVector LocationToSpawnOutsideTheBorders = FVector(0, 0, -10000);
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayAbility> BuildUnitAbility;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	UBuildingAttributeSet* BuildingAttributeSet = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	UHealthShieldAttributeSet* HealthShieldAttributeSet = nullptr;
 	TArray<TSubclassOf<AActor>> BuildingQueue;
 	FGameplayAbilitySpecHandle BuildingUnitHandle;
 	bool bIsBuildingUnit = false;
