@@ -11,9 +11,7 @@ DECLARE_DELEGATE(FOnShieldZeroed);
 GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName) \
 GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName)           	\
 GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName)
-/**
- * 
- */
+
 UCLASS()
 class RTSPROJECT_API UHealthShieldAttributeSet : public UAttributeSet
 {

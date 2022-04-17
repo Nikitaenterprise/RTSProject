@@ -22,7 +22,7 @@ class UAbilitySystemComponent;
 class UShipAttributeSet;
 class UAttributeSet;
 class UHealthShieldAttributeSet;
-
+class UAttackAbility;
 
 UCLASS()
 class RTSPROJECT_API AShip : public APawn, public ISelectable, public IAbilitySystemInterface
@@ -51,11 +51,10 @@ public:
 	UMiniMapInfluencerComponent* MiniMapInfluencerComponent = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
 	UMiniMapIconComponent* MiniMapIconComponent = nullptr;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
 	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
 	UPROPERTY(EditAnywhere, Category = "GAS")
-	TSubclassOf<UGameplayAbility> AttackAbility;
+	TSubclassOf<UAttackAbility> AttackAbility;
 	FGameplayAbilitySpecHandle AttackAbilityHandle;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
 	UShipAttributeSet* ShipAttributeSet = nullptr;
@@ -106,9 +105,7 @@ public:
 	bool bHasWorkingTurrets = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Turret")
 	TArray<ATurret*> Turrets;
-
 public:
-
 	AShip(const FObjectInitializer& ObjectInitializer);
 	virtual void PreInitializeComponents() override;
 	virtual void BeginPlay() override;
@@ -123,6 +120,7 @@ public:
 	void Highlighted(bool _bIsHighlighted);
 	virtual void Highlighted_Implementation(bool _bIsHighlighted) override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+	UHealthShieldAttributeSet* GetHealthShieldAttributeSet() const { return HealthShieldAttributeSet; }
 
 	// Moving
 	UFUNCTION(BlueprintCallable, Category = "Moving")
@@ -144,6 +142,4 @@ public:
 
 	void LMBPressed();
 	void LMBReleased();
-	
-
 };

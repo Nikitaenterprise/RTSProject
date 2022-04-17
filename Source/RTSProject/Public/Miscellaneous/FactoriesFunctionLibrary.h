@@ -6,7 +6,7 @@
 class ARTSPlayerController;
 class AShip;
 class ATurret;
-class ARocket;
+class AProjectile;
 class ABuilding;
 class AAsteroidResource;
 class AAsteroidField;
@@ -39,7 +39,7 @@ public:
 	static AAsteroidField* NewAsteroidField(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContext"))
-	static ARocket* NewRocket(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
-	static ARocket* NewRocket(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
+	static AProjectile* NewRocket(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
+	static AProjectile* NewRocket(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
 	
 };

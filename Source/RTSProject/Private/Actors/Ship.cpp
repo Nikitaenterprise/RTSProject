@@ -14,6 +14,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "DrawDebugHelpers.h"
 #include "GAS/ShipAttributeSet.h"
+#include "GAS/AttackAbility.h"
 #include "Components/MiniMapIconComponent.h"
 #include "Components/MiniMapInfluencerComponent.h"
 #include "UI/GameHUD.h"

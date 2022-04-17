@@ -8,7 +8,7 @@ class AFogOfWarBoundsVolume;
 
 class AShip;
 class ATurret;
-class ARocket;
+class AProjectile;
 class ABuilding;
 class AAsteroidField;
 class AAsteroidResource;
@@ -31,7 +31,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Turret", meta = (AllowPrivateAcces = "true"))
 	TArray<TSubclassOf<ATurret>> TurretClasses;
 	UPROPERTY(EditAnywhere, Category = "Rocket", meta = (AllowPrivateAcces = "true"))
-	TArray<TSubclassOf<ARocket>> RocketClasses;
+	TArray<TSubclassOf<AProjectile>> RocketClasses;
 	UPROPERTY(EditAnywhere, Category = "Building", meta = (AllowPrivateAcces = "true"))
 	TArray<TSubclassOf<ABuilding>> BuildingClasses;
 	UPROPERTY(EditAnywhere, Category = "Resource", meta = (AllowPrivateAcces = "true"))
@@ -61,10 +61,10 @@ public:
 	TSubclassOf<ATurret> GetTurretClass(int Index) const { return Index > 0 && Index <= TurretClasses.Num() ? TurretClasses[Index] : TurretClasses[0]; }
 	// Returns array copy of TArray<TSubclassOf<ARocket>> RocketClasses
 	UFUNCTION(BlueprintCallable)
-	TArray<TSubclassOf<ARocket>> GetRocketClasses() const { return RocketClasses; }
+	TArray<TSubclassOf<AProjectile>> GetRocketClasses() const { return RocketClasses; }
 	// Returns copy of TArray<TSubclassOf<ARocket>> RocketClasses[i] if Index is in borders of array, else returns first element
 	UFUNCTION(BlueprintCallable)
-	TSubclassOf<ARocket> GetRocketClass(int Index) const { return Index > 0 && Index <= RocketClasses.Num() ? RocketClasses[Index] : RocketClasses[0]; }
+	TSubclassOf<AProjectile> GetRocketClass(int Index) const { return Index > 0 && Index <= RocketClasses.Num() ? RocketClasses[Index] : RocketClasses[0]; }
 	// Returns array copy of TArray<TSubclassOf<ABuilding>> BuildingClasses
 	UFUNCTION(BlueprintCallable)
 	TArray<TSubclassOf<ABuilding>> GetBuildingClasses() const { return BuildingClasses; }

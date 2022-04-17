@@ -6,8 +6,6 @@
 #include "Actors/Camera.h"
 #include "Core/FactoryAssets.h"
 #include "UI/GameHUD.h"
-
-#include "Miscellaneous/DamageDealer.h"
 #include "DrawDebugHelpers.h"
 #include "Actors/FogOfWar.h"
 
@@ -140,8 +138,6 @@ void ARTSPlayerController::RMBReleased()
 
 void ARTSPlayerController::DamagePressed()
 {
-	AShip* Ship = Cast<AShip>(HighlightedActor);
-	if (Ship) DamageDealer::DealDamage(30, Ship);
 }
 
 TArray<ABuilding*> ARTSPlayerController::GetSelectedBuildings()

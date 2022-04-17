@@ -1,15 +1,18 @@
 #pragma once
 
+#include "AbilitySystemInterface.h"
+#include "GameplayAbilitySpec.h"
 #include "GameFramework/Actor.h"
 #include "Turret.generated.h"
 
-class ARocket;
-class UHealthShieldComponent;
+class AProjectile;
 class UStaticMeshComponent;
 class ARTSPlayerController;
 class UArrowComponent;
-class UHealthShield;
 class AShip;
+class UHealthShieldAttributeSet;
+class UTurretAttributeSet;
+class UTurretFireAbility;
 
 enum class ESide
 {
@@ -18,57 +21,57 @@ enum class ESide
 };
 
 UCLASS()
-class RTSPROJECT_API ATurret : public AActor
+class RTSPROJECT_API ATurret : public AActor, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
-	
-public:
-	
+protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UArrowComponent* Arrow = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UHealthShieldComponent* HealthShieldComponent = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(BlueprintReadOnly)
 	AShip* OwnerShip = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rocket")
-	TSubclassOf<ARocket> RocketClass;
-	UPROPERTY(BlueprintReadOnly, Category = "Rocket")
-	TArray<ARocket*> FiredRockets;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+	TSubclassOf<AProjectile> ProjectileClass;
+	UPROPERTY(BlueprintReadOnly, Category = "Projectile")
+	TArray<AProjectile*> FiredProjectiles;
+	UPROPERTY(BlueprintReadWrite)
 	const AActor* ActorToAttack = nullptr;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	int FireEveryThisSeconds = 2;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	float ChanceToFire = 0.1;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	UHealthShieldAttributeSet* HealthShieldAttributeSet = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	UTurretAttributeSet* TurretAttributeSet = nullptr;
+	UPROPERTY(EditAnywhere, Category = "GAS")
+	TSubclassOf<UTurretFireAbility> TurretFireAbility;
+	UPROPERTY(BlueprintReadOnly, Category = "GAS")
+	FGameplayAbilitySpecHandle TurretFireAbilityHandle;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation")
 	float RotationSpeed = 1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation")
 	float MaxAngleDeviation = 45;
 
-	
-
-private:
-	
 	// Timer handle for firing rockets
 	FTimerHandle THForFiring;
 	bool bShouldFire = false;
 	bool bIsOrderedToAttack = false;
 	ESide OnWhichSide;
 	FRotator DeltaRotation = FRotator(0, 0, 0);
-	
-public:	
-
+public:
 	ATurret();
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	AShip* GetOwnerShip() const { return OwnerShip; };
+	UTurretAttributeSet* GetTurretAttributeSet() const { return TurretAttributeSet; }
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 
 	UFUNCTION(BlueprintCallable)
 	void RequestAttack(const AActor* _ActorToAttack);
@@ -82,5 +85,4 @@ public:
 	void SetFacingOnActor(const AActor* ActorToSetFacingTo);
 	UFUNCTION(BlueprintCallable)
 	void CheckAngle();
-	
 };

@@ -14,7 +14,7 @@
 #include "DrawDebugHelpers.h"
 #include "Actors/AsteroidResource.h"
 #include "Actors/ResourceManager.h"
-#include "Actors/Rocket.h"
+#include "Actors/Projectile.h"
 
 
 AShip* UFactoriesFunctionLibrary::NewShip(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location, const FRotator& Rotation)
@@ -276,7 +276,7 @@ AAsteroidField* UFactoriesFunctionLibrary::NewAsteroidField(UWorld* World, UClas
 	return SpawnedAsteroidField;
 }
 
-ARocket* UFactoriesFunctionLibrary::NewRocket(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location, const FRotator& Rotation)
+AProjectile* UFactoriesFunctionLibrary::NewRocket(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location, const FRotator& Rotation)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
 	if (!World)
@@ -288,7 +288,7 @@ ARocket* UFactoriesFunctionLibrary::NewRocket(const UObject* WorldContext, UClas
 	return NewRocket(World, ClassType, Controller, Turret, Location, Rotation);
 }
 
-ARocket* UFactoriesFunctionLibrary::NewRocket(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location, const FRotator& Rotation)
+AProjectile* UFactoriesFunctionLibrary::NewRocket(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location, const FRotator& Rotation)
 {
 	if (!Controller)
 	{
@@ -309,7 +309,7 @@ ARocket* UFactoriesFunctionLibrary::NewRocket(UWorld* World, UClass* ClassType, 
 	Params.Instigator = nullptr;
 	Params.Owner = Turret;
 
-	ARocket* SpawnedRocket = World->SpawnActor<ARocket>(
+	AProjectile* SpawnedRocket = World->SpawnActor<AProjectile>(
 		ClassType,
 		Location,
 		Rotation,

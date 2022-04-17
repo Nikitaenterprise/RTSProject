@@ -1,18 +1,18 @@
 #include "Actors/Turret.h"
-
+#include "AbilitySystemComponent.h"
 #include "Core/RTSPlayerController.h"
 #include "Actors/Ship.h"
 #include "Miscellaneous/AnglesFunctions.h"
 #include "Core/FactoryAssets.h"
-#include "Components/HealthShieldComponent.h"
-#include "Actors/Rocket.h"
-
+#include "GAS/HealthShieldAttributeSet.h"
+#include "GAS/TurretAttributeSet.h"
+#include "GAS/TurretFireAbility.h"
+#include "Actors/Projectile.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/ArrowComponent.h"
 #include "Components/SceneComponent.h"
 #include "Miscellaneous/FactoriesFunctionLibrary.h"
-
 
 ATurret::ATurret()
 {
@@ -25,8 +25,9 @@ ATurret::ATurret()
 
 	Arrow = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
 	Arrow->SetupAttachment(GetRootComponent());
-	
-	HealthShieldComponent = CreateDefaultSubobject<UHealthShieldComponent>(TEXT("HealthShieldComponent"));
+	AbilitySystemComponent=CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	HealthShieldAttributeSet = CreateDefaultSubobject<UHealthShieldAttributeSet>(TEXT("HealthShieldAttributeSet"));
+	TurretAttributeSet = CreateDefaultSubobject<UTurretAttributeSet>(TEXT("TurretAttributeSet"));
 }
 
 void ATurret::BeginPlay()
@@ -48,6 +49,17 @@ void ATurret::BeginPlay()
 	}
 	PlayerController = OwnerShip->PlayerController;
 
+	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(HealthShieldAttributeSet);
+	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(TurretAttributeSet);
+	TurretFireAbilityHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(TurretFireAbility, 1, INDEX_NONE, this));
+	HealthShieldAttributeSet->OnHealthZeroed.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()
+	{
+		if(This.IsValid())
+		{
+			This->Destroy();
+		}
+	});
+	
 	// Decide on which side the turret is
 	const FVector ShipForward = OwnerShip->GetActorForwardVector();
 	const FVector FromCenterOfShipToTurret = GetActorLocation() - OwnerShip->GetActorLocation();
@@ -60,13 +72,13 @@ void ATurret::BeginPlay()
 	OwnerShip->bHasWorkingTurrets = true;
 
 	// If no rocket is set in turret blueprint then set first from FactoryAssets
-	if (RocketClass.Get() == nullptr)
+	if (ProjectileClass.Get() == nullptr)
 	{
 		if (PlayerController->GetFactoryAssets())
 		{
 			if (PlayerController->GetFactoryAssets()->GetRocketClass(0))
 			{
-				RocketClass = PlayerController->GetFactoryAssets()->GetRocketClass(0);
+				ProjectileClass = PlayerController->GetFactoryAssets()->GetRocketClass(0);
 			}
 			else
 			{
@@ -80,18 +92,12 @@ void ATurret::BeginPlay()
 	}
 	OwnerShip->Turrets.AddUnique(this);
 
-	FiredRockets.Reserve(20);
+	FiredProjectiles.Reserve(20);
 }
 
 void ATurret::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (HealthShieldComponent->IsDead() || !IsValid(OwnerShip))
-	{
-		Destroy();
-		return;
-	}
 
 	if (OwnerShip->bIsSelected && !bIsOrderedToAttack)
 	{
@@ -130,7 +136,6 @@ void ATurret::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-
 void ATurret::RequestAttack(const AActor* _ActorToAttack)
 {
 	if (!IsValid(_ActorToAttack))
@@ -141,7 +146,7 @@ void ATurret::RequestAttack(const AActor* _ActorToAttack)
 	bIsOrderedToAttack = true;
 
 	// Binding Fire() function that will fire rocket when timer hits FireEveryThisSeconds
-	GetWorldTimerManager().SetTimer(THForFiring,this, &ATurret::Fire, FireEveryThisSeconds, true);
+	GetWorldTimerManager().SetTimer(THForFiring,this, &ATurret::Fire, TurretAttributeSet->GetFireRate(), true);
 }
 
 void ATurret::Fire()
@@ -161,18 +166,18 @@ void ATurret::Fire()
 	const float AngleBetweenTurretAndActor = AnglesFunctions::FindAngleBetweenVectorsOn2D(GetActorForwardVector(), VectorFromTurretToActorToAttack);
 	if (AngleBetweenTurretAndActor > 0 && AngleBetweenTurretAndActor < 10 || AngleBetweenTurretAndActor < 0 && AngleBetweenTurretAndActor > -10) this->bShouldFire = true;
 
-	if (bShouldFire && UKismetMathLibrary::RandomFloat() > ChanceToFire)
+	if (bShouldFire && UKismetMathLibrary::RandomFloat() > TurretAttributeSet->GetChanceToFire())
 	{
 		// Fire rocket from arrow
-		ARocket* SpawnedRocket = UFactoriesFunctionLibrary::NewRocket(
+		AProjectile* SpawnedRocket = UFactoriesFunctionLibrary::NewRocket(
 			GetWorld(), 
-			RocketClass.Get(), 
+			ProjectileClass.Get(), 
 			PlayerController, 
 			this,
 			GetActorLocation(),
 			VectorFromTurretToActorToAttack.Rotation());
 		bShouldFire = false;
-		FiredRockets.Add(SpawnedRocket);
+		FiredProjectiles.Add(SpawnedRocket);
 	}
 }
 
