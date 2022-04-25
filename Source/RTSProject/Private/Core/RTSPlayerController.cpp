@@ -98,9 +98,30 @@ void ARTSPlayerController::SetupInputComponent()
 
 void ARTSPlayerController::RMBReleased()
 {
-	ExecuteCommandToSelectedActors<AShip>(&ThisClass::MoveSelectedActors);
-	ExecuteCommandToSelectedActors<AShip>(&ThisClass::AttackBySelectedActors);
-	ExecuteCommandToSelectedActors<ABuilding>(&ThisClass::SetSpawnPointForSelectedBuildings);
+	ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
+	{
+		if (This.IsValid())
+		{
+			return This->MoveSelectedActors(Args...);
+		}
+		return false;
+	});
+	ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
+	{
+		if (This.IsValid())
+		{
+			return This->AttackBySelectedActors(Args...);
+		}
+		return false;
+	});
+	ExecuteCommandToSelectedActors<ABuilding>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
+	{
+		if (This.IsValid())
+		{
+			return This->SetSpawnPointForSelectedBuildings(Args...);
+		}
+		return false;
+	});
 }
 
 void ARTSPlayerController::DamagePressed()

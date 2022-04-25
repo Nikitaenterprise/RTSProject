@@ -1,5 +1,4 @@
 #pragma once
-
 #include "GameFramework/PlayerController.h"
 #include "RTSPlayerController.generated.h"
 
@@ -84,9 +83,8 @@ public:
 	bool AttackBySelectedActors(AShip* Ship, FHitResult HitResult);
 	bool SetSpawnPointForSelectedBuildings(ABuilding* Building,FHitResult HitResult);
 	template <typename ActorType>
-	bool ExecuteCommandToSelectedActors(bool(ARTSPlayerController::* FnCommand)(ActorType* Actor, FHitResult HitResult));
+	bool ExecuteCommandToSelectedActors(TFunction<bool(ActorType* Actor, FHitResult HitResult)> Function);
 
-	
 	// FactoryAssets	
 	UFUNCTION(BlueprintCallable, Category = "Getters")
 	UFactoryAssets* GetFactoryAssets() const { return FactoryAssets; }
@@ -119,7 +117,7 @@ TArray<ActorType*> ARTSPlayerController::GetSelectedActorsByType()
 }
 
 template <typename ActorType>
-bool ARTSPlayerController::ExecuteCommandToSelectedActors(bool(ARTSPlayerController::* FnCommand)(ActorType* Actor, FHitResult HitResult))
+bool ARTSPlayerController::ExecuteCommandToSelectedActors(TFunction<bool(ActorType* Actor, FHitResult HitResult)> Function)
 {
 	if (SelectedActors.Num() == 0)
 	{
@@ -134,8 +132,7 @@ bool ARTSPlayerController::ExecuteCommandToSelectedActors(bool(ARTSPlayerControl
 			const bool bHit = GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
 			if (bHit)
 			{
-				// Calling std::invoke to avoid this monstrosity: (this->*FnCommand)(Actor1, HitResult1);
-				bool bSuccess = std::invoke(FnCommand, this, ThisActor, Hit);
+				bool bSuccess = Function(ThisActor, Hit);
 			}
 		}
 	}
