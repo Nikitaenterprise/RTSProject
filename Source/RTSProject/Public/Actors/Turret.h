@@ -37,8 +37,6 @@ protected:
 	AShip* OwnerShip = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
 	TSubclassOf<AProjectile> ProjectileClass;
-	UPROPERTY(BlueprintReadOnly, Category = "Projectile")
-	TArray<AProjectile*> FiredProjectiles;
 	UPROPERTY(BlueprintReadWrite)
 	const AActor* ActorToAttack = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
@@ -58,7 +56,7 @@ protected:
 	float MaxAngleDeviation = 45;
 
 	// Timer handle for firing rockets
-	FTimerHandle THForFiring;
+	FTimerHandle FiringTimerHandle;
 	bool bShouldFire = false;
 	bool bIsOrderedToAttack = false;
 	ESide OnWhichSide;
@@ -74,7 +72,7 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 
 	UFUNCTION(BlueprintCallable)
-	void RequestAttack(const AActor* _ActorToAttack);
+	void RequestAttack(const AActor* NewActorToAttack);
 	UFUNCTION(BlueprintCallable)
 	void Fire();
 	UFUNCTION(BlueprintCallable)

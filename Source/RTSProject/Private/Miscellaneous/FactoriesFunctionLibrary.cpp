@@ -59,7 +59,7 @@ AShip* UFactoriesFunctionLibrary::NewShip(UWorld* World, UClass* ClassType, ARTS
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn ship"));
 		return nullptr;
 	}
-	Controller->PlayersActors.AddUnique(SpawnedShip);
+	Controller->AddToPlayersActors(SpawnedShip);
 	SpawnedShip->bJustCreated = true;
 
 	return SpawnedShip;

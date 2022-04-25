@@ -1,8 +1,6 @@
 #include "Components/AttackComponent.h"
-
-#include "Core/RTSPlayerController.h"
-#include "Actors/Ship.h"
-
+#include "Interfaces/AttackInterface.h"
+#include "Actors/Turret.h"
 
 UAttackComponent::UAttackComponent()
 {
@@ -10,21 +8,18 @@ UAttackComponent::UAttackComponent()
 	bWantsInitializeComponent = true;
 }
 
-void UAttackComponent::InitializeComponent()
+void UAttackComponent::RequestAttack(const AActor* ActorToAttack)
 {
-	Super::InitializeComponent();
-
-	AShip* TestOwnerShip = Cast<AShip>(GetOwner());
-	if (!TestOwnerShip)
+	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::White, FString::Printf(TEXT("Attacking %s %s"), *ActorToAttack->GetName(), *GetOwner()->GetName()));
+	if (IAttackInterface* AttackInterface = Cast<IAttackInterface>(GetOwner()))
 	{
-		UE_LOG(LogTemp, Error, TEXT("TestOwnerShip is nullptr in UAttackComponent::InitializeComponent() it's because this component is not part of AShip class"));
-		return;
+		auto Turrets = AttackInterface->GetTurrets();
+		for(const auto& Turret : Turrets)
+		{
+			if (Turret)
+			{
+				Turret->RequestAttack(ActorToAttack);
+			}
+		}
 	}
-	ARTSPlayerController* TestController = TestOwnerShip->PlayerController;
-	if (!IsValid(TestController))
-	{
-		UE_LOG(LogTemp, Error, TEXT("TestController is nullptr in UAttackComponent::InitializeComponent()"));
-		return;
-	}
-	PlayerController = TestController;
 }

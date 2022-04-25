@@ -19,63 +19,53 @@ UCLASS()
 class RTSPROJECT_API ARTSPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-public:
-	// Mouse clicks
-	bool bLMBPressed = false;
-	bool bRMBPressed = false;
-
-	// Mouse wheel
-	bool bDisableZooming = false;
-
+protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Camera")
-	ACamera* CameraRef = nullptr;
+	ACamera* CameraRef {nullptr};
 
 	// True if FogOfWar was placed on level in editor
 	// Checked in GameMode class
 	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
-	bool bIsFOWPlacedOnLevel = false;
+	bool bIsFOWPlacedOnLevel {false};
 	// True if FogOfWarBoundsVolume was placed on level in editor
 	// Checked in GameMode class
 	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
-	bool bIsFOWBoundsVolumePlacedOnLevel = false;
+	bool bIsFOWBoundsVolumePlacedOnLevel {false};
 	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
-	AFogOfWar* FogOfWar = nullptr;
+	AFogOfWar* FogOfWar {nullptr};
 
 	// Units selection
-	//Array of actors that should appear in SelectedActors array
-	UPROPERTY(BlueprintReadOnly, Category = "Selection")
-	TArray<AActor*> ShouldBeSelected;
 	// Array of currently selected actors for this controller
 	UPROPERTY(BlueprintReadOnly, Category = "Selection")
 	TArray<AActor*> SelectedActors;
 	// Array of all created and owned by this controller actors
 	UPROPERTY(BlueprintReadOnly, Category = "Selection")
 	TArray<AActor*> PlayersActors;
-	// Currently highlighted actor
-	UPROPERTY(BlueprintReadOnly, Category = "Selection")
-	AActor* HighlightedActor = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Factory")
-	UFactoryAssets* FactoryAssets = nullptr;
+	UFactoryAssets* FactoryAssets {nullptr};
 
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")
-	AGameHUD* GameHUD = nullptr;
+	AGameHUD* GameHUD {nullptr};
 public:
-	ARTSPlayerController();
-	virtual void PreInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void Tick(float mainDeltaTime) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
 	virtual void SetupInputComponent() override; //(class UInputComponent* PlayerInputComponent)
 
-	void ShiftPressed();
-	void ShiftReleased();
-
+	void AddToSelectedActors(AActor* ActorToAdd) { SelectedActors.AddUnique(ActorToAdd); }
+	void RemoveFromSelectedActors(AActor* ActorToRemove) { SelectedActors.Remove(ActorToRemove); }
+	const TArray<AActor*>& GetSelectedActors() const { return SelectedActors; }
+	TArray<AActor*>& GetSelectedActorsRef() { return SelectedActors; }
+	void AddToPlayersActors(AActor* ActorToAdd) { PlayersActors.AddUnique(ActorToAdd); }
+	void RemoveFromPlayersActors(AActor* ActorToRemove) { PlayersActors.Remove(ActorToRemove); }
+	const TArray<AActor*>& GetPlayersActors() const { return PlayersActors; }
+	TArray<AActor*>& GetPlayersActorsRef() { return PlayersActors; }
+	AGameHUD* GetGameHUD() const { return GameHUD; }
+	ACamera* GetCamera() const {return CameraRef; }
+	AFogOfWar* GetFogOfWar() const { return FogOfWar; }
+	
 	// Mouse clicks
-	void LMBPressed();
-	void LMBReleased();
-	void RMBPressed();
 	void RMBReleased();
 
 	void DamagePressed();
@@ -131,7 +121,10 @@ TArray<ActorType*> ARTSPlayerController::GetSelectedActorsByType()
 template <typename ActorType>
 bool ARTSPlayerController::ExecuteCommandToSelectedActors(bool(ARTSPlayerController::* FnCommand)(ActorType* Actor, FHitResult HitResult))
 {
-	if (SelectedActors.Num() == 0) return false;
+	if (SelectedActors.Num() == 0)
+	{
+		return false;
+	}
 	for (auto& Actor : SelectedActors)
 	{
 		ActorType* ThisActor = Cast<ActorType>(Actor);

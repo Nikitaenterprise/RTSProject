@@ -3,6 +3,7 @@
 #include "AbilitySystemInterface.h"
 #include "Abilities/GameplayAbility.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/AttackInterface.h"
 #include "Interfaces/Selectable.h"
 #include "Ship.generated.h"
 
@@ -25,7 +26,10 @@ class UHealthShieldAttributeSet;
 class UAttackAbility;
 
 UCLASS()
-class RTSPROJECT_API AShip : public APawn, public ISelectable, public IAbilitySystemInterface
+class RTSPROJECT_API AShip : public APawn,
+	public ISelectable,
+	public IAbilitySystemInterface,
+	public IAttackInterface
 {
 	GENERATED_BODY()
 public:
@@ -121,13 +125,11 @@ public:
 	virtual void Highlighted_Implementation(bool _bIsHighlighted) override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 	UHealthShieldAttributeSet* GetHealthShieldAttributeSet() const { return HealthShieldAttributeSet; }
-
+	virtual UAttackComponent* GetAttackComponent() const override { return AttackComponent; }
+	virtual TArray<ATurret*>& GetTurrets() override { return Turrets; }
 	// Moving
 	UFUNCTION(BlueprintCallable, Category = "Moving")
 	bool RequestMove(const FVector TargetLocation);
-
-	UFUNCTION(BlueprintCallable)
-	void RequestAttack(const AActor* ActorToAttack);
 
 	void DrawNavLine();
 	void UpdatePositionWhenCreated();

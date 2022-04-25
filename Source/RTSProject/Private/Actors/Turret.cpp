@@ -91,8 +91,6 @@ void ATurret::BeginPlay()
 		}
 	}
 	OwnerShip->Turrets.AddUnique(this);
-
-	FiredProjectiles.Reserve(20);
 }
 
 void ATurret::Tick(float DeltaTime)
@@ -136,17 +134,18 @@ void ATurret::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void ATurret::RequestAttack(const AActor* _ActorToAttack)
+void ATurret::RequestAttack(const AActor* NewActorToAttack)
 {
-	if (!IsValid(_ActorToAttack))
+	if (!IsValid(NewActorToAttack))
 	{
 		return;
 	}
-	ActorToAttack = _ActorToAttack;
+	ActorToAttack = NewActorToAttack;
 	bIsOrderedToAttack = true;
-
+	// Clear previous timer if it was set
+	GetWorldTimerManager().ClearTimer(FiringTimerHandle);
 	// Binding Fire() function that will fire rocket when timer hits FireEveryThisSeconds
-	GetWorldTimerManager().SetTimer(THForFiring,this, &ATurret::Fire, TurretAttributeSet->GetFireRate(), true);
+	GetWorldTimerManager().SetTimer(FiringTimerHandle,this, &ThisClass::Fire, TurretAttributeSet->GetFireRate(), true);
 }
 
 void ATurret::Fire()
@@ -156,8 +155,8 @@ void ATurret::Fire()
 	{
 		bIsOrderedToAttack = false;
 		bShouldFire = false;
-		GetWorldTimerManager().ClearTimer(THForFiring);
-		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::White, TEXT("Turret is stopping firing"));
+		GetWorldTimerManager().ClearTimer(FiringTimerHandle);
+		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::White, TEXT("Turret stops firing"));
 		return;
 	}
 	
@@ -166,18 +165,21 @@ void ATurret::Fire()
 	const float AngleBetweenTurretAndActor = AnglesFunctions::FindAngleBetweenVectorsOn2D(GetActorForwardVector(), VectorFromTurretToActorToAttack);
 	if (AngleBetweenTurretAndActor > 0 && AngleBetweenTurretAndActor < 10 || AngleBetweenTurretAndActor < 0 && AngleBetweenTurretAndActor > -10) this->bShouldFire = true;
 
-	if (bShouldFire && UKismetMathLibrary::RandomFloat() > TurretAttributeSet->GetChanceToFire())
+	if (bShouldFire && UKismetMathLibrary::RandomFloat() < TurretAttributeSet->GetChanceToFire())
 	{
 		// Fire rocket from arrow
-		AProjectile* SpawnedRocket = UFactoriesFunctionLibrary::NewRocket(
+		AProjectile* Projectile = UFactoriesFunctionLibrary::NewRocket(
 			GetWorld(), 
 			ProjectileClass.Get(), 
 			PlayerController, 
 			this,
 			GetActorLocation(),
 			VectorFromTurretToActorToAttack.Rotation());
+		if (Projectile)
+		{
+			Projectile->SetTarget(ActorToAttack);
+		}
 		bShouldFire = false;
-		FiredProjectiles.Add(SpawnedRocket);
 	}
 }
 

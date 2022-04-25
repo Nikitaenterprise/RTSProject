@@ -110,14 +110,14 @@ void AShip::Tick(float DeltaTime)
 
 	if (bJustCreated && !bLMBPressed)
 	{
-		PlayerController->CameraRef->bDisableZooming = true;
-		if (PlayerController->GameHUD) PlayerController->GameHUD->LockSelectionRectangle();
+		PlayerController->GetCamera()->bDisableZooming = true;
+		if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->LockSelectionRectangle();
 		UpdatePositionWhenCreated();
 	}
 	else if (bLMBPressed)
 	{
-		PlayerController->CameraRef->bDisableZooming = false;
-		if (PlayerController->GameHUD) PlayerController->GameHUD->UnlockSelectionRectangle();
+		PlayerController->GetCamera()->bDisableZooming = false;
+		if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->UnlockSelectionRectangle();
 		bJustCreated = false;
 	}
 
@@ -127,8 +127,8 @@ void AShip::Tick(float DeltaTime)
 
 void AShip::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	PlayerController->PlayersActors.Remove(this);
-	PlayerController->SelectedActors.Remove(this);
+	PlayerController->RemoveFromPlayersActors(this);
+	PlayerController->RemoveFromSelectedActors(this);
 	Turrets.Empty();
 	Super::EndPlay(EndPlayReason);
 }
@@ -178,15 +178,6 @@ bool AShip::RequestMove(const FVector TargetLocation)
 	NavPathCoords = MovementComponent->GetNavPathCoords();
 	//DrawNavLine();
 	return true;
-}
-
-void AShip::RequestAttack(const AActor* ActorToAttack)
-{
-	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::White, FString::Printf(TEXT("Attacking %s"), *ActorToAttack->GetName()));
-	for(const auto Turret : Turrets)
-	{
-		Turret->RequestAttack(ActorToAttack);
-	}
 }
 
 void AShip::DrawNavLine()

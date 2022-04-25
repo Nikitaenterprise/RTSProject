@@ -11,16 +11,17 @@ class RTSPROJECT_API UAttackComponent : public UActorComponent
 {
 	GENERATED_BODY()
 protected:
-	UPROPERTY(BlueprintReadOnly)
-	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bCanAttack = true;
+	bool bCanAttack {true};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bCanBeAttacked = true;
+	bool bCanBeAttacked {true};
 public:
 	UAttackComponent();
-	virtual void InitializeComponent() override;
 
+	UFUNCTION(BlueprintCallable)
 	bool GetCanAttack() const { return bCanAttack; }
+	UFUNCTION(BlueprintCallable)
 	bool GetCanBeAttacked() const { return bCanBeAttacked; }
+	UFUNCTION(BlueprintCallable)
+	void RequestAttack(const AActor* ActorToAttack);
 };

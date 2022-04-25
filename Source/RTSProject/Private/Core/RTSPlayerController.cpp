@@ -8,19 +8,8 @@
 #include "UI/GameHUD.h"
 #include "DrawDebugHelpers.h"
 #include "Actors/FogOfWar.h"
-
 #include "Kismet/GameplayStatics.h"
 #include "Math/UnitConversion.h"
-
-
-ARTSPlayerController::ARTSPlayerController() {
-
-}
-
-void ARTSPlayerController::PreInitializeComponents()
-{
-	Super::PreInitializeComponents();
-}
 
 void ARTSPlayerController::BeginPlay()
 {
@@ -50,7 +39,7 @@ void ARTSPlayerController::BeginPlay()
 	UE_LOG(LogTemp, Display, TEXT("Trying to find AFogOfWar on level in ARTSPlayerController::BeginPlay()"));
 	TArray<AActor*> ActorsOfClass;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFogOfWar::StaticClass(), ActorsOfClass);
-	for (auto& Actor : ActorsOfClass)
+	for (const auto& Actor : ActorsOfClass)
 	{
 		AFogOfWar* TestFogOfWar = Cast<AFogOfWar>(Actor);
 		if (!IsValid(TestFogOfWar))
@@ -103,37 +92,15 @@ void ARTSPlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 	
 	bShowMouseCursor = true;
-	InputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &ARTSPlayerController::LMBPressed);
-	InputComponent->BindAction(TEXT("LMB"), IE_Released, this, &ARTSPlayerController::LMBReleased);
-	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ARTSPlayerController::RMBPressed);
 	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ARTSPlayerController::RMBReleased);
-	
 	InputComponent->BindAction(TEXT("Damage"), IE_Released, this, &ARTSPlayerController::DamagePressed);
-}
-
-void ARTSPlayerController::LMBPressed()
-{
-	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Cyan, TEXT("LMBPressed"));
-	bLMBPressed = true;
-}
-
-void ARTSPlayerController::LMBReleased()
-{
-	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Cyan, TEXT("LMBReleased"));
-	bLMBPressed = false;
-}
-
-void ARTSPlayerController::RMBPressed()
-{
-	bRMBPressed = true;
 }
 
 void ARTSPlayerController::RMBReleased()
 {
-	bRMBPressed = false;
-	ExecuteCommandToSelectedActors<AShip>(&ARTSPlayerController::MoveSelectedActors);
-	ExecuteCommandToSelectedActors<AShip>(&ARTSPlayerController::AttackBySelectedActors);
-	ExecuteCommandToSelectedActors<ABuilding>(&ARTSPlayerController::SetSpawnPointForSelectedBuildings);
+	ExecuteCommandToSelectedActors<AShip>(&ThisClass::MoveSelectedActors);
+	ExecuteCommandToSelectedActors<AShip>(&ThisClass::AttackBySelectedActors);
+	ExecuteCommandToSelectedActors<ABuilding>(&ThisClass::SetSpawnPointForSelectedBuildings);
 }
 
 void ARTSPlayerController::DamagePressed()
@@ -161,15 +128,15 @@ bool ARTSPlayerController::AttackBySelectedActors(AShip* Ship, FHitResult HitRes
 	UAttackComponent* AttackComponent = Ship->FindComponentByClass<UAttackComponent>();
 	if (AttackComponent)
 	{
-		AActor* AttackedActor = HitResult.Actor.Get();
-		UAttackComponent* AttackedActorAttackComponent = AttackedActor->FindComponentByClass<UAttackComponent>();
+		const AActor* AttackedActor = HitResult.Actor.Get();
+		const UAttackComponent* AttackedActorAttackComponent = AttackedActor->FindComponentByClass<UAttackComponent>();
 		if (AttackedActorAttackComponent)
 		{
 			if (AttackComponent->GetCanAttack() &&
 				AttackedActor != Ship &&
 				AttackedActorAttackComponent->GetCanBeAttacked())
 			{
-				Ship->RequestAttack(AttackedActor);
+				AttackComponent->RequestAttack(AttackedActor);
 			}
 			else return false;
 		}

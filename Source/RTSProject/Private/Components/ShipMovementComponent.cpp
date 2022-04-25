@@ -196,7 +196,7 @@ bool UShipMovementComponent::RequestNavMoving(const FVector TargetLocation)
 
 void UShipMovementComponent::TurnOnCapsuleCollision(const bool TurnOn) const
 {
-	for (auto& Actor : PlayerController->PlayersActors)
+	for (auto& Actor : PlayerController->GetPlayersActors())
 	{
 		AShip* Ship = Cast<AShip>(Actor);
 		if (Ship && Ship != Owner)

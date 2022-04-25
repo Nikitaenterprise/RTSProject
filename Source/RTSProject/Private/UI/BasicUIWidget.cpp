@@ -17,7 +17,7 @@ bool UBasicUIWidget::IsShipsAreSelected() const
 {
 	if (PlayerController)
 	{
-		return PlayerController->IsArrayContainThisTypeActors<AShip>(PlayerController->SelectedActors);
+		return PlayerController->IsArrayContainThisTypeActors<AShip>(PlayerController->GetSelectedActors());
 	}
 	else
 	{
@@ -30,7 +30,7 @@ bool UBasicUIWidget::IsBuildingsAreSelected() const
 {
 	if (PlayerController)
 	{
-		return PlayerController->IsArrayContainThisTypeActors<ABuilding>(PlayerController->SelectedActors);
+		return PlayerController->IsArrayContainThisTypeActors<ABuilding>(PlayerController->GetSelectedActors());
 	}
 	else
 	{

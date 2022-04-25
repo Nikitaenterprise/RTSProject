@@ -43,10 +43,18 @@ void AProjectile::BeginPlay()
 	});
 	GetWorld()->GetTimerManager().SetTimer(MaxLifeTimeTimerHandle,
 		TimerDelegate, ProjectileAttributeSet->GetMaxLifeTime(), false);
+	StartMoving();
+}
+
+void AProjectile::StartMoving()
+{
+	ProjectileMovementComponent->MaxSpeed = ProjectileAttributeSet->GetMaxSpeed();
+	const FVector HeadingVector = OwnerTurret->GetActorForwardVector();
+	ProjectileMovementComponent->AddForce(HeadingVector*ProjectileAttributeSet->GetMaxSpeed());
 }
 
 void AProjectile::OnOverlapBegin_Implementation(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                                                UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	const auto Ship = Cast<AShip>(OtherActor);
 	if (!Ship)

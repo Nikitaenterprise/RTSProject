@@ -20,25 +20,25 @@ void UMiniMapWidget::NativeConstruct()
 	}
 	PlayerController = TestPlayerController;
 
-	if (!IsValid(PlayerController->FogOfWar))
+	if (!IsValid(PlayerController->GetFogOfWar()))
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerController->FogOfWar is nullptr in UMiniMapWidget::NativeConstruct()"));
 		return;
 	}
-	if (!IsValid(PlayerController->FogOfWar->FOWBoundsVolume))
+	if (!IsValid(PlayerController->GetFogOfWar()->FOWBoundsVolume))
 	{
 		UE_LOG(LogTemp, Error, TEXT("FOWBoundsVolume is nullptr in UMiniMapWidget::NativeConstruct()"));
 		return;
 	}
-	FOWBoundsVolume = PlayerController->FogOfWar->FOWBoundsVolume;
+	FOWBoundsVolume = PlayerController->GetFogOfWar()->FOWBoundsVolume;
 
-	FOWTexture = UTexture2D::CreateTransient(PlayerController->FogOfWar->VolumeWidthInCells, PlayerController->FogOfWar->VolumeHeightInCells);
+	FOWTexture = UTexture2D::CreateTransient(PlayerController->GetFogOfWar()->VolumeWidthInCells, PlayerController->GetFogOfWar()->VolumeHeightInCells);
 	FOWTexture->CompressionSettings = TextureCompressionSettings::TC_VectorDisplacementmap;
 	FOWTexture->AddToRoot();
 	FOWTexture->UpdateResource();
 
-	MiniMapUpdateTextureRegion = new FUpdateTextureRegion2D(0, 0, 0, 0, PlayerController->FogOfWar->VolumeWidthInCells, PlayerController->FogOfWar->VolumeHeightInCells);
-	MiniMapTextureBuffer = new uint8[PlayerController->FogOfWar->VolumeWidthInCells * PlayerController->FogOfWar->VolumeHeightInCells * 4];
+	MiniMapUpdateTextureRegion = new FUpdateTextureRegion2D(0, 0, 0, 0, PlayerController->GetFogOfWar()->VolumeWidthInCells, PlayerController->GetFogOfWar()->VolumeHeightInCells);
+	MiniMapTextureBuffer = new uint8[PlayerController->GetFogOfWar()->VolumeWidthInCells * PlayerController->GetFogOfWar()->VolumeHeightInCells * 4];
 	MiniMapMaterialInstance = UMaterialInstanceDynamic::Create(MiniMapMaterial, nullptr);
 	MiniMapMaterialInstance->SetTextureParameterValue(FName("FogOfWarMask"), FOWTexture);
 
@@ -57,21 +57,21 @@ void UMiniMapWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 
 	CleanUpArrays();
 
-	if (IsValid(PlayerController->FogOfWar))
+	if (IsValid(PlayerController->GetFogOfWar()))
 	{
-		for (uint32 TileY = 0; TileY < PlayerController->FogOfWar->VolumeHeightInCells; TileY++)
+		for (uint32 TileY = 0; TileY < PlayerController->GetFogOfWar()->VolumeHeightInCells; TileY++)
 		{
-			for (uint32 TileX = 0; TileX < PlayerController->FogOfWar->VolumeWidthInCells; TileX++)
+			for (uint32 TileX = 0; TileX < PlayerController->GetFogOfWar()->VolumeWidthInCells; TileX++)
 			{
-				const int i = TileX + TileY * PlayerController->FogOfWar->VolumeWidthInCells;
+				const int i = TileX + TileY * PlayerController->GetFogOfWar()->VolumeWidthInCells;
 				const int Blue = i * 4 + 0;
 				const int Green = i * 4 + 1;
 				const int Red = i * 4 + 2;
 				const int Alpha = i * 4 + 3;
-				MiniMapTextureBuffer[Blue] = PlayerController->FogOfWar->FOWTextureBuffer[Blue];
-				MiniMapTextureBuffer[Green] = PlayerController->FogOfWar->FOWTextureBuffer[Green];
-				MiniMapTextureBuffer[Red] = PlayerController->FogOfWar->FOWTextureBuffer[Red];
-				MiniMapTextureBuffer[Alpha] = PlayerController->FogOfWar->FOWTextureBuffer[Alpha];
+				MiniMapTextureBuffer[Blue] = PlayerController->GetFogOfWar()->FOWTextureBuffer[Blue];
+				MiniMapTextureBuffer[Green] = PlayerController->GetFogOfWar()->FOWTextureBuffer[Green];
+				MiniMapTextureBuffer[Red] = PlayerController->GetFogOfWar()->FOWTextureBuffer[Red];
+				MiniMapTextureBuffer[Alpha] = PlayerController->GetFogOfWar()->FOWTextureBuffer[Alpha];
 			}
 		}
 	}
@@ -79,7 +79,7 @@ void UMiniMapWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerController->FogOfWar is nullptr in UMiniMapWidget::NativeTick()"));
 	}
-	FOWTexture->UpdateTextureRegions(0, 1, MiniMapUpdateTextureRegion, PlayerController->FogOfWar->VolumeWidthInCells * 4, static_cast<uint8>(4), MiniMapTextureBuffer);
+	FOWTexture->UpdateTextureRegions(0, 1, MiniMapUpdateTextureRegion, PlayerController->GetFogOfWar()->VolumeWidthInCells * 4, static_cast<uint8>(4), MiniMapTextureBuffer);
 }
 
 int32 UMiniMapWidget::NativePaint(const FPaintArgs& MovieSceneBlends, const FGeometry& AllottedGeometry,
@@ -120,8 +120,8 @@ FReply UMiniMapWidget::NativeOnMouseMove(const FGeometry& MovieSceneBlends, cons
 		FVector2D HoldLocation = MovieSceneBlends.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
 		HoldLocation = HoldLocation / GetCachedGeometry().GetLocalSize();
 		HoldLocation = (HoldLocation - 0.5) * FOWBoundsVolume->GetVolumeWidth();
-		const FVector NewLocation = FVector(HoldLocation, PlayerController->CameraRef->GetActorLocation().Z);
-		PlayerController->CameraRef->SetActorLocation(NewLocation);
+		const FVector NewLocation = FVector(HoldLocation, PlayerController->GetCamera()->GetActorLocation().Z);
+		PlayerController->GetCamera()->SetActorLocation(NewLocation);
 	}
 	return Super::NativeOnMouseMove(MovieSceneBlends, InMouseEvent);
 }

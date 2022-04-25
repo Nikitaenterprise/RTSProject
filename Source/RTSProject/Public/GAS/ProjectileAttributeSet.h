@@ -15,13 +15,13 @@ class RTSPROJECT_API UProjectileAttributeSet : public UAttributeSet
 	GENERATED_BODY()
 public:
 	ATTRIBUTE_ACCESSORS(UProjectileAttributeSet, MaxLifeTime);
-	ATTRIBUTE_ACCESSORS(UProjectileAttributeSet, Speed);
+	ATTRIBUTE_ACCESSORS(UProjectileAttributeSet, MaxSpeed);
 	ATTRIBUTE_ACCESSORS(UProjectileAttributeSet, Damage);
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData MaxLifeTime = 5;
+	FGameplayAttributeData MaxLifeTime = 50;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData Speed = 300;
+	FGameplayAttributeData MaxSpeed = 5000;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FGameplayAttributeData Damage = 25;
 };

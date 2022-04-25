@@ -24,8 +24,10 @@ protected:
 	UProjectileMovementComponent* ProjectileMovementComponent {nullptr};
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh {nullptr};
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	UPROPERTY(BlueprintReadOnly, Category = "Weapon")
 	ATurret* OwnerTurret {nullptr};
+	UPROPERTY(BlueprintReadOnly)
+	const AActor* Target {nullptr};
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
 	UAbilitySystemComponent* AbilitySystemComponent {nullptr};
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
@@ -40,10 +42,14 @@ public:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable)
+	void SetTarget(const AActor* NewTarget) { Target = NewTarget; }
+	UFUNCTION(BlueprintCallable)
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	virtual void OnOverlapBegin_Implementation(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+protected:
+	void StartMoving();
 };

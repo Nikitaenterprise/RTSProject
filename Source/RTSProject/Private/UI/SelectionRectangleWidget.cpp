@@ -178,7 +178,7 @@ void USelectionRectangleWidget::StartRectangleSelection(const FGeometry& MovieSc
 	if (!bIsLeftShiftPressed)
 	{
 		SelectedActors.Empty();
-		PlayerController->SelectedActors.Empty();
+		PlayerController->GetSelectedActorsRef().Empty();
 	}
 	ShouldBeSelected.Empty();
 
@@ -216,7 +216,7 @@ void USelectionRectangleWidget::EndRectangleSelection(const FGeometry& MovieScen
 	}
 	for (const auto& Actor : ShouldBeSelected)
 	{
-		if (PlayerController->PlayersActors.Contains(Actor))
+		if (PlayerController->GetPlayersActors().Contains(Actor))
 		{
 			// If SelectedActors has no actors then add first
 			if (SelectedActors.Num() == 0)
@@ -268,7 +268,7 @@ void USelectionRectangleWidget::ClearSelection()
 
 	// All actors should be deselected unless shift is pressed
 	// in this case SelectedActors won't be deselected
-	for (auto& Actor : PlayerController->PlayersActors)
+	for (auto& Actor : PlayerController->GetPlayersActors())
 	{
 		if (!SelectedActors.Contains(Actor))
 		{
@@ -311,7 +311,7 @@ void USelectionRectangleWidget::SelectActorUnderCursor()
 	if (bHit)
 	{
 		AActor* Actor = Hit.GetActor();
-		if (PlayerController->PlayersActors.Contains(Actor))
+		if (PlayerController->GetPlayersActors().Contains(Actor))
 		{
 			ShouldBeSelected.AddUnique(Actor);
 			SelectedActors.AddUnique(Actor);
@@ -388,5 +388,5 @@ void USelectionRectangleWidget::UpdatePlayerControllerSelectedActors()
 		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("PlayerController is nullptr in USelectionRectangleWidget::HighlightActorsUnderCursor"));
 		return;
 	}
-	PlayerController->SelectedActors = SelectedActors;
+	PlayerController->GetSelectedActorsRef() = SelectedActors;
 }

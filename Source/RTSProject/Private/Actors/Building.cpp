@@ -52,7 +52,7 @@ void ABuilding::BeginPlay()
 		return;
 	}
 	PlayerController = TestController;
-	PlayerController->PlayersActors.AddUnique(this);
+	PlayerController->AddToPlayersActors(this);
 
 	if (HealthShieldWidgetComponent)
 	{
@@ -90,19 +90,19 @@ void ABuilding::Tick(float DeltaTime)
 
 	if (bJustCreated && !bLMBPressed)
 	{
-		if (PlayerController->GameHUD) PlayerController->GameHUD->LockSelectionRectangle();
+		if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->LockSelectionRectangle();
 		UpdatePositionWhenCreated();
 	}
 	else if (bLMBPressed)
 	{
 		bJustCreated = false;
-		if (PlayerController->GameHUD) PlayerController->GameHUD->UnlockSelectionRectangle();
+		if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->UnlockSelectionRectangle();
 	}
 }
 
 void ABuilding::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	PlayerController->PlayersActors.Remove(this);
+	PlayerController->RemoveFromPlayersActors(this);
 	//SpawnEmitterAtLocation()
 	Super::EndPlay(EndPlayReason);
 }
