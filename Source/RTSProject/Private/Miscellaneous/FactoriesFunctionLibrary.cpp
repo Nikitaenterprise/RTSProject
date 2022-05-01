@@ -47,7 +47,7 @@ AShip* UFactoriesFunctionLibrary::NewShip(UWorld* World, UClass* ClassType, ARTS
 	}
 
 	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	Params.Owner = Controller;
 	//Some shit happens here. Before calling SpawnActor the Controller is ARTSPlayerController type. After calling SpawnActor
 	// the Controller becomes RTSAIController
@@ -60,7 +60,7 @@ AShip* UFactoriesFunctionLibrary::NewShip(UWorld* World, UClass* ClassType, ARTS
 		return nullptr;
 	}
 	Controller->AddToPlayersActors(SpawnedShip);
-	SpawnedShip->bJustCreated = true;
+	SpawnedShip->SetJustCreated(true);
 
 	return SpawnedShip;
 }
@@ -68,21 +68,21 @@ AShip* UFactoriesFunctionLibrary::NewShip(UWorld* World, UClass* ClassType, ARTS
 
 void UFactoriesFunctionLibrary::AddTurretsToShip(AShip* Ship)
 {
-	if (!IsValid(Ship) || Ship->bHasWorkingTurrets)
+	if (!IsValid(Ship) || Ship->GetHasWorkingTurrets())
 	{
 		UE_LOG(LogTemp, Error, TEXT("Ship is not valid in UFactoriesFunctionLibrary::AddTurretsToShip()"));
 		return;
 	}
-	if(!IsValid(Ship->PlayerController))
+	if(!IsValid(Ship->GetPlayerController()))
 	{
 		UE_LOG(LogTemp, Error, TEXT("Ship->PlayerController is not valid in UFactoriesFunctionLibrary::AddTurretsToShip()"));
 		return;
 	}
 	
-	const TSubclassOf<ATurret> TurretClass = Ship->PlayerController->GetFactoryAssets()->GetTurretClass(0);
+	const TSubclassOf<ATurret> TurretClass = Ship->GetPlayerController()->GetFactoryAssets()->GetTurretClass(0);
 	if (TurretClass)
 	{
-		UStaticMeshComponent* StaticMesh = Ship->StaticMesh;
+		UStaticMeshComponent* StaticMesh = Ship->GetStaticMeshComponent();
 
 		for (auto& Socket : StaticMesh->GetAllSocketNames())
 		{
@@ -133,7 +133,7 @@ void UFactoriesFunctionLibrary::AddTurretsToShip(AShip* Ship)
 				true);
 			SpawnedTurret->AttachToComponent(StaticMesh, AttachmentRules, Socket);
 		}
-		Ship->bHasWorkingTurrets = true;
+		Ship->SetHasWorkingTurrets(true);
 	}
 }
 

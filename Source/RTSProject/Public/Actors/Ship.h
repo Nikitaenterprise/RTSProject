@@ -32,7 +32,7 @@ class RTSPROJECT_API AShip : public APawn,
 	public IAttackInterface
 {
 	GENERATED_BODY()
-public:
+protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
@@ -115,18 +115,27 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	virtual UAttackComponent* GetAttackComponent() const override { return AttackComponent; }
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+	UCapsuleComponent* GetCapsuleComponent() const { return CapsuleComponent; }
+	UStaticMeshComponent* GetStaticMeshComponent() const { return StaticMesh; }
 	
-	// Interfaces
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Selected(bool _bIsSelected);
 	virtual void Selected_Implementation(bool _bIsSelected) override;
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Highlighted(bool _bIsHighlighted);
 	virtual void Highlighted_Implementation(bool _bIsHighlighted) override;
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+	
 	UHealthShieldAttributeSet* GetHealthShieldAttributeSet() const { return HealthShieldAttributeSet; }
-	virtual UAttackComponent* GetAttackComponent() const override { return AttackComponent; }
+	TArray<UAttributeSet*> GetAdditionalAttributeSets() const { return AdditionalAttributeSets; }
 	virtual TArray<ATurret*>& GetTurrets() override { return Turrets; }
+	ARTSPlayerController* GetPlayerController() const { return PlayerController; }
+	bool GetHasWorkingTurrets() const { return bHasWorkingTurrets; }
+	void SetHasWorkingTurrets( bool NewHasWorkingTurrets) { bHasWorkingTurrets = NewHasWorkingTurrets; }
+	bool GetIsSelected() const { return bIsSelected; }
+	void SetJustCreated(bool NewJustCreated) { bJustCreated = NewJustCreated; }
 	// Moving
 	UFUNCTION(BlueprintCallable, Category = "Moving")
 	bool RequestMove(const FVector TargetLocation);

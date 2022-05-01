@@ -40,7 +40,7 @@ void UShipMovementComponent::InitializeComponent()
 	}
 	Owner = TestOwner;
 
-	ARTSPlayerController* TestController = Owner->PlayerController;
+	ARTSPlayerController* TestController = Owner->GetPlayerController();
 	if (!IsValid(TestController))
 	{
 		UE_LOG(LogTemp, Error, TEXT("ARTSPlayerController is nullptr in UShipMovementComponent::InitializeComponent()"));
@@ -147,7 +147,7 @@ bool UShipMovementComponent::RequestNavMoving(const FVector TargetLocation)
 {
 	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
 
-	if (Owner->CapsuleComponent->bDynamicObstacle == false)
+	if (Owner->GetCapsuleComponent()->bDynamicObstacle == false)
 	{
 		FString ErrorMsg = "Dynamic obstacle in capsule component in " + Owner->GetName() + " is false";
 		ErrorMsg += "\nNavigation path wold be incorrect";
@@ -185,7 +185,7 @@ bool UShipMovementComponent::RequestNavMoving(const FVector TargetLocation)
 	MakePathInXYPlane(Owner->GetActorLocation().Z);
 	LineSegments.Empty();
 	BuildLineSegments();
-	ReverceLineSegments();
+	ReverseLineSegments();
 
 	CurrentLine = nullptr;
 	bShouldMove = true;
@@ -201,20 +201,20 @@ void UShipMovementComponent::TurnOnCapsuleCollision(const bool TurnOn) const
 		AShip* Ship = Cast<AShip>(Actor);
 		if (Ship && Ship != Owner)
 		{
-			if (Ship->CapsuleComponent->bDynamicObstacle == false)
+			if (Ship->GetCapsuleComponent()->bDynamicObstacle == false)
 			{
 				FString ErrorMsg = "Dynamic obstacle in capsule component in " + Ship->GetName() + " is false";
 				GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red, *ErrorMsg);
 				UE_LOG(LogTemp, Error, TEXT("%s"), *ErrorMsg);
 			}
-			Ship->CapsuleComponent->SetCanEverAffectNavigation(TurnOn);
+			Ship->GetCapsuleComponent()->SetCanEverAffectNavigation(TurnOn);
 		}
 	}
 }
 
-void UShipMovementComponent::ReverceLineSegments()
+void UShipMovementComponent::ReverseLineSegments()
 {
-	TArray<LineSegment*> TemporaryLineSegments;
+	TArray<FLineSegment*> TemporaryLineSegments;
 	TemporaryLineSegments.Reserve(LineSegments.Num());
 	for (size_t i = LineSegments.Num(); i > 0; i--)
 	{
@@ -246,7 +246,7 @@ void UShipMovementComponent::BuildLineSegments()
 
 		if (ForwardAndDirToDestinationAngle < 15)
 		{
-			LineSegments.Add(new StraightLine(Start, End, StartToEnd.Size(), bClockwiseRotation, ForwardAndDirToDestinationAngle));
+			LineSegments.Add(new FStraightLine(Start, End, StartToEnd.Size(), bClockwiseRotation, ForwardAndDirToDestinationAngle));
 		}
 		else
 		{
@@ -273,7 +273,7 @@ void UShipMovementComponent::BuildLineSegments()
 			// If End point is inside Circle
 			if (DistanceFromCircleCenterToDestination < MinTurnRadius)
 			{
-				LineSegments.Add(new StraightLine(Start, End, StartToEnd.Size(), bClockwiseRotation, ForwardAndDirToDestinationAngle));
+				LineSegments.Add(new FStraightLine(Start, End, StartToEnd.Size(), bClockwiseRotation, ForwardAndDirToDestinationAngle));
 				continue;
 			}
 
@@ -298,8 +298,8 @@ void UShipMovementComponent::BuildLineSegments()
 			// Total angle to cover while moving on circle
 			const float AngleOnCircle = 270 - Phi - Theta;
 			
-			LineSegments.Add(new ArcLine(Start, LeavingCirclePoint, AngleOnCircle * MinTurnRadius, bClockwiseRotation, CircleCenter, Owner->GetActorRotation().Yaw, UKismetMathLibrary::DegreesToRadians(Phi + Theta)));
-			LineSegments.Add(new StraightLine(LeavingCirclePoint, End, LengthOfStraightPart, bClockwiseRotation, ForwardAndDirToDestinationAngle));
+			LineSegments.Add(new FArcLine(Start, LeavingCirclePoint, AngleOnCircle * MinTurnRadius, bClockwiseRotation, CircleCenter, Owner->GetActorRotation().Yaw, UKismetMathLibrary::DegreesToRadians(Phi + Theta)));
+			LineSegments.Add(new FStraightLine(LeavingCirclePoint, End, LengthOfStraightPart, bClockwiseRotation, ForwardAndDirToDestinationAngle));
 			i++;
 		}
 	}
@@ -315,7 +315,7 @@ void UShipMovementComponent::MakePathInXYPlane(float SetZToThisValue)
 
 void UShipMovementComponent::ProcessStraightLine(float DeltaTime)
 {
-	StraightLine* StraightSegment = static_cast<StraightLine*>(CurrentLine);
+	FStraightLine* StraightSegment = static_cast<FStraightLine*>(CurrentLine);
 	const float YawToDestination = AnglesFunctions::FindAngleBetweenVectorsOn2D(
 		Owner->GetActorForwardVector(),
 		(StraightSegment->EndPosition - Owner->GetActorLocation()).GetSafeNormal());
@@ -430,7 +430,7 @@ void UShipMovementComponent::ProcessStraightLine(float DeltaTime)
 
 void UShipMovementComponent::ProcessArcLine(float DeltaTime)
 {
-	ArcLine* ArcSegment = static_cast<ArcLine*>(CurrentLine);
+	FArcLine* ArcSegment = static_cast<FArcLine*>(CurrentLine);
 	// Determine current angle on arc (AngleOnCircle) by adding or
 	// subtracting 90 degrees to the starting angle
 	// depending on whether turning to the right or left

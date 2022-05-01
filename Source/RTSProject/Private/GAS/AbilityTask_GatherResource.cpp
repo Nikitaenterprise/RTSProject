@@ -20,7 +20,7 @@ void UAbilityTask_GatherResource::Activate()
 	auto Actor = Cast<AShip>(GetOwnerActor());
 	if (Actor)
 	{
-		for (const auto Attribute : Actor->AdditionalAttributeSets)
+		for (const auto Attribute : Actor->GetAdditionalAttributeSets())
 		{
 			ResourceGatherAttributeSet = Cast<UResourceGathererAttributeSet>(Attribute);
 			if (ResourceGatherAttributeSet)

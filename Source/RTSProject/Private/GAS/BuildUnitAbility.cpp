@@ -44,7 +44,7 @@ void UBuildUnitAbility::BuildUnit()
 	const TSubclassOf<AActor> Subclass = (*BuildingQueue).Pop();
 	UClass* ClassType = Subclass.Get();
 	// Add height to spawn location
-	const FVector SpawnLocation = Building->GetSpawnPointLocation() + FVector(0, 0, 100);
+	const FVector SpawnLocation = Building->GetSpawnPointLocation() + FVector(0, 0, 150);
 	// First the ship is created in a place outside the borders
 	AShip* SpawnedShip = UFactoriesFunctionLibrary::NewShip(
 		GetWorld(), ClassType, Building->GetPlayerController(), SpawnLocation);

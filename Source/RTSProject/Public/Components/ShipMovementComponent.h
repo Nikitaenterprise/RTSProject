@@ -91,30 +91,37 @@ public:
 	FRotator RotationRate = FRotator(15, 15, 15);
 	
 	TArray<FVector> NavPathCoords;
-
-	AShip* Owner = nullptr;
-	ARTSPlayerController* PlayerController = nullptr;
-	ARTSAIController* RTSAIController = nullptr;
+	UPROPERTY()
+	AShip* Owner {nullptr};
+	UPROPERTY()
+	ARTSPlayerController* PlayerController {nullptr};
+	UPROPERTY()
+	ARTSAIController* RTSAIController {nullptr};
 	
 private:
 	enum ELineSegment
 	{
 		STRAIGHT_LINE,
-		ARC_LINE
+		ARC_LINE,
+		None
 	};
 	static constexpr char* ELineSegmentStr[] =
 	{
 		"StraightLine",
-		"ArcLine"
+		"ArcLine",
+		"None"
 	};
-	class LineSegment
+	class FLineSegment
 	{
 	public:
-		LineSegment(FVector StartPosition, FVector EndPosition, float Length, bool bClockwiseRotation) :
+		FLineSegment(const FVector StartPosition, const FVector EndPosition, const float Length, const bool bClockwiseRotation) :
 			StartPosition(StartPosition),
 			EndPosition(EndPosition),
 			Length(Length),
-			bClockwiseRotation(bClockwiseRotation){}
+			bClockwiseRotation(bClockwiseRotation)
+		{
+			LineType = ELineSegment::None;
+		}
 		
 		ELineSegment LineType;
 		FVector StartPosition = FVector::ZeroVector;
@@ -122,11 +129,11 @@ private:
 		float Length = 0;
 		bool bClockwiseRotation = true;
 	};
-	class StraightLine : public LineSegment
+	class FStraightLine : public FLineSegment
 	{
 	public:
-		StraightLine(FVector StartPosition, FVector EndPosition, float Length, bool bClockwiseRotation, float Angle) :
-			LineSegment(StartPosition, EndPosition, Length, bClockwiseRotation),
+		FStraightLine(const FVector StartPosition, const FVector EndPosition, const float Length, const bool bClockwiseRotation, const float Angle) :
+			FLineSegment(StartPosition, EndPosition, Length, bClockwiseRotation),
 			Angle(Angle)
 		{
 			LineType = STRAIGHT_LINE;
@@ -134,11 +141,11 @@ private:
 		
 		float Angle = 0;
 	};
-	class ArcLine : public LineSegment
+	class FArcLine : public FLineSegment
 	{
 	public:
-		ArcLine(FVector StartPosition, FVector EndPosition, float Length, bool bClockwiseRotation, FVector2D CircleCenter, float StartingAngle, float TotalRadiansCover) :
-			LineSegment(StartPosition, EndPosition, Length, bClockwiseRotation),
+		FArcLine(const FVector StartPosition, const FVector EndPosition, const float Length, const bool bClockwiseRotation, const FVector2D CircleCenter, const float StartingAngle, float TotalRadiansCover) :
+			FLineSegment(StartPosition, EndPosition, Length, bClockwiseRotation),
 			CircleCenter(CircleCenter),
 			StartingAngle(StartingAngle),
 			TotalRadiansCover(TotalRadiansCover)
@@ -152,8 +159,8 @@ private:
 	};
 
 	
-	TArray<LineSegment*> LineSegments;
-	LineSegment* CurrentLine = nullptr;
+	TArray<FLineSegment*> LineSegments;
+	FLineSegment* CurrentLine = nullptr;
 
 	// Normalized direction vector to shift this frame
 	FVector InputVector = FVector(0, 0, 0);
@@ -190,7 +197,7 @@ private:
 	inline void ProcessStraightLine(float DeltaTime);
 	inline void ProcessArcLine(float DeltaTime);
 	
-	inline void ReverceLineSegments();
+	inline void ReverseLineSegments();
 	void BuildLineSegments();
 	inline void MakePathInXYPlane(float SetZToThisValue);
 	inline void CalculateForwardSpeed();

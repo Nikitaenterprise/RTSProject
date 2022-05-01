@@ -17,5 +17,5 @@ public:
 	ATTRIBUTE_ACCESSORS(UBuildingAttributeSet, BuildingSpeed);
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData BuildingSpeed = 5.0f;
+	FGameplayAttributeData BuildingSpeed = 1.0f;
 };

@@ -163,7 +163,7 @@ bool USelectionRectangleWidget::GetActorsInSelectionRectangle(const FVector2D& F
 		// If selected actor is a ship then select not by ROotComp
 		// but by static mesh collision box
 		AShip* Ship = Cast<AShip>(EachActor);
-		if (Ship) EachActorBounds = Ship->StaticMesh->Bounds.GetBox();
+		if (Ship) EachActorBounds = Ship->GetStaticMeshComponent()->Bounds.GetBox();
 
 		//Center
 		const FVector BoxCenter = EachActorBounds.GetCenter();

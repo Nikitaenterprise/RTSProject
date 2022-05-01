@@ -42,12 +42,12 @@ void ATurret::BeginPlay()
 	}
 	OwnerShip = TestOwner;
 
-	if (!IsValid(OwnerShip->PlayerController))
+	if (!IsValid(OwnerShip->GetPlayerController()))
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr in ATurret::BeginPlay()"));
 		return;
 	}
-	PlayerController = OwnerShip->PlayerController;
+	PlayerController = OwnerShip->GetPlayerController();
 
 	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(HealthShieldAttributeSet);
 	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(TurretAttributeSet);
@@ -69,7 +69,7 @@ void ATurret::BeginPlay()
 
 	SetFacingLeftRight();
 
-	OwnerShip->bHasWorkingTurrets = true;
+	OwnerShip->SetHasWorkingTurrets(true);
 
 	// If no rocket is set in turret blueprint then set first from FactoryAssets
 	if (ProjectileClass.Get() == nullptr)
@@ -90,14 +90,14 @@ void ATurret::BeginPlay()
 			UE_LOG(LogTemp, Error, TEXT("FactoryAssets in PlayerController is nullptr"));
 		}
 	}
-	OwnerShip->Turrets.AddUnique(this);
+	OwnerShip->GetTurrets().AddUnique(this);
 }
 
 void ATurret::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (OwnerShip->bIsSelected && !bIsOrderedToAttack)
+	if (OwnerShip->IsSelected() && !bIsOrderedToAttack)
 	{
 		//SetFacingOnMouse();
 	}
@@ -123,11 +123,11 @@ void ATurret::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (IsValid(OwnerShip))
 	{
-		OwnerShip->Turrets.Remove(this);
+		OwnerShip->GetTurrets().Remove(this);
 		// If ship has no working turrets then set bool variable to false
-		if (OwnerShip->Turrets.Num() == 0)
+		if (OwnerShip->GetTurrets().Num() == 0)
 		{
-			OwnerShip->bHasWorkingTurrets = false;
+			OwnerShip->SetHasWorkingTurrets(false);
 		}
 		//SpawnEmitterAtLocation()
 	}
