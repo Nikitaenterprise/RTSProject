@@ -45,7 +45,7 @@ void AAsteroidField::BeginPlay()
 	WidgetComponent->InitWidget();
 	WidgetComponent->SetVisibility(false);
 
-	ResourceComponent->InitializeCapacity([&]()->float
+	ResourceComponent->InitializeCapacity([]()->float
 	{
 		return 0;
 	});
@@ -62,8 +62,7 @@ void AAsteroidField::Highlighted_Implementation(bool bIsHighlighted)
 	{
 		if (bIsHighlighted)
 		{
-			const auto BasicValueViewerWidget = Cast<UBasicValueViewer>(WidgetComponent->GetWidget());
-			if (BasicValueViewerWidget)
+			if (auto* BasicValueViewerWidget = Cast<UBasicValueViewer>(WidgetComponent->GetWidget()))
 			{
 				BasicValueViewerWidget->SetText(ResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacity());
 			}
@@ -99,7 +98,7 @@ void AAsteroidField::RemoveAsteroidFromField(AAsteroidResource* Asteroid)
 	}
 	const auto AsteroidCapacity = AsteroidResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacity();
 	const auto FieldCapacity = ResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacity();
-	ResourceComponent->ModifyResource([&]()->float
+	ResourceComponent->ModifyResource([FieldCapacity, AsteroidCapacity]()->float
 	{
 		return FieldCapacity - AsteroidCapacity;
 	});
@@ -168,7 +167,7 @@ void AAsteroidField::AddAsteroidToField(AAsteroidResource* AsteroidToAdd)
 	}
 	const auto AsteroidCapacity = AsteroidResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacity();
 	const auto FieldCapacity = ResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacity();
-	ResourceComponent->ModifyResource([&]()->float
+	ResourceComponent->ModifyResource([FieldCapacity, AsteroidCapacity]()->float
 	{
 		return FieldCapacity + AsteroidCapacity;
 	});

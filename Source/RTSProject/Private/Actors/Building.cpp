@@ -73,8 +73,7 @@ void ABuilding::BeginPlay()
 	
 	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(BuildingAttributeSet);
 	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(HealthShieldAttributeSet);
-	BuildingUnitHandle = AbilitySystemComponent->GiveAbility(
-			FGameplayAbilitySpec(BuildUnitAbility, 1, INDEX_NONE, this));
+	BuildingUnitHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(BuildUnitAbility, 1, INDEX_NONE, this));
 	HealthShieldAttributeSet->OnHealthZeroed.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()
 	{
 		if (This.IsValid())

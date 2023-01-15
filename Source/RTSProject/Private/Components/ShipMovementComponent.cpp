@@ -52,11 +52,6 @@ void UShipMovementComponent::InitializeComponent()
 	PointMoveTo = Owner->GetActorLocation();
 }
 
-void UShipMovementComponent::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
 void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -78,23 +73,16 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	
 	switch(CurrentLine->LineType)
 	{
-	case STRAIGHT_LINE:
-	{
-		ProcessStraightLine(DeltaTime);
-		break;
-	}
-	case ARC_LINE:
-	{
-		ProcessArcLine(DeltaTime);
-		break;
-	}
+	case MovementComponent::ELineSegment::STRAIGHT_LINE:	ProcessStraightLine(DeltaTime);	break;
+	case MovementComponent::ELineSegment::ARC_LINE:			ProcessArcLine(DeltaTime);		break;
+	default:												checkNoEntry();
 	}
 	
-	if (RollState == ROLL_TO_ZERO)
+	if (RollState == MovementComponent::EShipRollState::ROLL_TO_ZERO)
 	{
 		// If ship has some roll angle then it should be counter-rolled
 		const float CurrentRoll = Owner->GetActorRotation().Roll;
-		if (abs(CurrentRoll) > 0)
+		if (FMath::Abs(CurrentRoll) > 0)
 		{
 			float DeltaRoll = CurrentRoll > 0 ? -1 : 1;
 			DeltaRoll *= CurrentRollSpeed * DeltaTime;
@@ -103,7 +91,7 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		else
 		{
 			Rotator.Roll = 0;
-			RollState = NO_ROLLING;
+			RollState = MovementComponent::EShipRollState::NO_ROLLING;
 		}
 	}
 	
@@ -150,7 +138,7 @@ bool UShipMovementComponent::RequestNavMoving(const FVector TargetLocation)
 	if (Owner->GetCapsuleComponent()->bDynamicObstacle == false)
 	{
 		FString ErrorMsg = "Dynamic obstacle in capsule component in " + Owner->GetName() + " is false";
-		ErrorMsg += "\nNavigation path wold be incorrect";
+		ErrorMsg += "\nNavigation path would be incorrect";
 		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red, *ErrorMsg);
 		UE_LOG(LogTemp, Error, TEXT("%s"), *ErrorMsg);
 	}
@@ -214,7 +202,7 @@ void UShipMovementComponent::TurnOnCapsuleCollision(const bool TurnOn) const
 
 void UShipMovementComponent::ReverseLineSegments()
 {
-	TArray<FLineSegment*> TemporaryLineSegments;
+	TArray<MovementComponent::FLineSegment*> TemporaryLineSegments;
 	TemporaryLineSegments.Reserve(LineSegments.Num());
 	for (size_t i = LineSegments.Num(); i > 0; i--)
 	{
@@ -246,7 +234,7 @@ void UShipMovementComponent::BuildLineSegments()
 
 		if (ForwardAndDirToDestinationAngle < 15)
 		{
-			LineSegments.Add(new FStraightLine(Start, End, StartToEnd.Size(), bClockwiseRotation, ForwardAndDirToDestinationAngle));
+			LineSegments.Add(new MovementComponent::FStraightLine(Start, End, StartToEnd.Size(), bClockwiseRotation, ForwardAndDirToDestinationAngle));
 		}
 		else
 		{
@@ -273,7 +261,7 @@ void UShipMovementComponent::BuildLineSegments()
 			// If End point is inside Circle
 			if (DistanceFromCircleCenterToDestination < MinTurnRadius)
 			{
-				LineSegments.Add(new FStraightLine(Start, End, StartToEnd.Size(), bClockwiseRotation, ForwardAndDirToDestinationAngle));
+				LineSegments.Add(new MovementComponent::FStraightLine(Start, End, StartToEnd.Size(), bClockwiseRotation, ForwardAndDirToDestinationAngle));
 				continue;
 			}
 
@@ -298,8 +286,8 @@ void UShipMovementComponent::BuildLineSegments()
 			// Total angle to cover while moving on circle
 			const float AngleOnCircle = 270 - Phi - Theta;
 			
-			LineSegments.Add(new FArcLine(Start, LeavingCirclePoint, AngleOnCircle * MinTurnRadius, bClockwiseRotation, CircleCenter, Owner->GetActorRotation().Yaw, UKismetMathLibrary::DegreesToRadians(Phi + Theta)));
-			LineSegments.Add(new FStraightLine(LeavingCirclePoint, End, LengthOfStraightPart, bClockwiseRotation, ForwardAndDirToDestinationAngle));
+			LineSegments.Add(new MovementComponent::FArcLine(Start, LeavingCirclePoint, AngleOnCircle * MinTurnRadius, bClockwiseRotation, CircleCenter, Owner->GetActorRotation().Yaw, UKismetMathLibrary::DegreesToRadians(Phi + Theta)));
+			LineSegments.Add(new MovementComponent::FStraightLine(LeavingCirclePoint, End, LengthOfStraightPart, bClockwiseRotation, ForwardAndDirToDestinationAngle));
 			i++;
 		}
 	}
@@ -315,7 +303,7 @@ void UShipMovementComponent::MakePathInXYPlane(float SetZToThisValue)
 
 void UShipMovementComponent::ProcessStraightLine(float DeltaTime)
 {
-	FStraightLine* StraightSegment = static_cast<FStraightLine*>(CurrentLine);
+	const auto* StraightSegment = static_cast<MovementComponent::FStraightLine*>(CurrentLine);
 	const float YawToDestination = AnglesFunctions::FindAngleBetweenVectorsOn2D(
 		Owner->GetActorForwardVector(),
 		(StraightSegment->EndPosition - Owner->GetActorLocation()).GetSafeNormal());
@@ -342,26 +330,26 @@ void UShipMovementComponent::ProcessStraightLine(float DeltaTime)
 		// Situation when ship is standing
 		if (CurrentForwardSpeed == 0)
 		{
-			TurnState = TURNING_WHILE_STANDING;
+			TurnState = MovementComponent::EShipYawState::TURNING_WHILE_STANDING;
 		}
 		else
 		// Situation when ship is accelerating 
 		if (CurrentForwardSpeed >= 0.5 * MaxForwardSpeed)
 		{
-			AccelerationState = DECELERATING;
-			TurnState = TURNING_WHILE_MOVING;
+			AccelerationState = MovementComponent::EShipAccelerationState::DECELERATING;
+			TurnState = MovementComponent::EShipYawState::TURNING_WHILE_MOVING;
 		}
 		else
 		if (CurrentForwardSpeed < 0.5 * MaxForwardSpeed && CurrentForwardSpeed >= 0.2 * MaxForwardSpeed)
 		{
-			AccelerationState = ACCELERATING;
-			TurnState = TURNING_WHILE_MOVING;
+			AccelerationState = MovementComponent::EShipAccelerationState::ACCELERATING;
+			TurnState = MovementComponent::EShipYawState::TURNING_WHILE_MOVING;
 		}
 		else
 		if (CurrentForwardSpeed < 0.2 * MaxForwardSpeed)
 		{
-			AccelerationState = CONSTANT_VELOCITY;
-			TurnState = TURNING_WHILE_MOVING;
+			AccelerationState = MovementComponent::EShipAccelerationState::CONSTANT_VELOCITY;
+			TurnState = MovementComponent::EShipYawState::TURNING_WHILE_MOVING;
 		}
 	}
 	else
@@ -369,44 +357,44 @@ void UShipMovementComponent::ProcessStraightLine(float DeltaTime)
 	if (YawToDestination < 45 && YawToDestination > 1)
 	{
 		// If ship is turning while standing still
-		if (CurrentForwardSpeed == 0 && TurnState == TURNING_WHILE_STANDING)
+		if (CurrentForwardSpeed == 0 && TurnState == MovementComponent::EShipYawState::TURNING_WHILE_STANDING)
 		{
 			// Ship can start moving and turning at the same time
-			AccelerationState = ACCELERATING;
+			AccelerationState = MovementComponent::EShipAccelerationState::ACCELERATING;
 		}
 		else
 		if (CurrentForwardSpeed < 0.5 * MaxForwardSpeed && CurrentForwardSpeed >= 0.2 * MaxForwardSpeed)
 		{
-			AccelerationState = ACCELERATING;
+			AccelerationState = MovementComponent::EShipAccelerationState::ACCELERATING;
 		}
 		else
 		if (CurrentForwardSpeed > 0.5 * MaxForwardSpeed)
 		{
-			AccelerationState = CONSTANT_VELOCITY;
+			AccelerationState = MovementComponent::EShipAccelerationState::CONSTANT_VELOCITY;
 		}
-		TurnState = TURNING_WHILE_MOVING;
-		RollState = ROLLING;
+		TurnState = MovementComponent::EShipYawState::TURNING_WHILE_MOVING;
+		RollState = MovementComponent::EShipRollState::ROLLING;
 	}
 	else
 	if (YawToDestination <= 1)
 	{
 		if (CurrentForwardSpeed == 0)
 		{
-			AccelerationForwardRate = ACCELERATING;
+			AccelerationState = MovementComponent::EShipAccelerationState::ACCELERATING;
 		}
 		else
 		if (CurrentForwardSpeed < 0.5 * MaxForwardSpeed && CurrentForwardSpeed >= 0.2 * MaxForwardSpeed)
 		{
-			AccelerationState = ACCELERATING;
+			AccelerationState = MovementComponent::EShipAccelerationState::ACCELERATING;
 		}
 		else
 		if (CurrentForwardSpeed < 0.2 * MaxForwardSpeed)
 		{
-			AccelerationState = CONSTANT_VELOCITY;
+			AccelerationState = MovementComponent::EShipAccelerationState::CONSTANT_VELOCITY;
 		}
 
-		TurnState = NO_TURNING;
-		RollState = ROLL_TO_ZERO;
+		TurnState = MovementComponent::EShipYawState::NO_TURNING;
+		RollState = MovementComponent::EShipRollState::ROLL_TO_ZERO;
 		DeltaYaw = 0;
 	}
 
@@ -414,23 +402,23 @@ void UShipMovementComponent::ProcessStraightLine(float DeltaTime)
 
 	if (DistanceToPoint < 15 * AcceptanceRadius)
 	{
-		AccelerationState = DECELERATING;
+		AccelerationState = MovementComponent::EShipAccelerationState::DECELERATING;
 	}
 	if (DistanceToPoint < 10 * AcceptanceRadius)
 	{
-		AccelerationState = BRAKING;
+		AccelerationState = MovementComponent::EShipAccelerationState::BRAKING;
 	}
 	if (DistanceToPoint <= AcceptanceRadius)
 	{
-		AccelerationState = FULL_STOP;
-		TurnState = NO_TURNING;
-		RollState = ROLL_TO_ZERO;
+		AccelerationState = MovementComponent::EShipAccelerationState::FULL_STOP;
+		TurnState = MovementComponent::EShipYawState::NO_TURNING;
+		RollState = MovementComponent::EShipRollState::ROLL_TO_ZERO;
 	}
 }
 
 void UShipMovementComponent::ProcessArcLine(float DeltaTime)
 {
-	FArcLine* ArcSegment = static_cast<FArcLine*>(CurrentLine);
+	MovementComponent::FArcLine* ArcSegment = static_cast<MovementComponent::FArcLine*>(CurrentLine);
 	// Determine current angle on arc (AngleOnCircle) by adding or
 	// subtracting 90 degrees to the starting angle
 	// depending on whether turning to the right or left
@@ -458,9 +446,9 @@ void UShipMovementComponent::ProcessArcLine(float DeltaTime)
 	Rotator.Roll = Rotator.Roll > MaxRollAngle ? MaxRollAngle : (Rotator.Roll < -MaxRollAngle ? -MaxRollAngle : Rotator.Roll);
 	
 	// Determine acceleration state
-	AccelerationState = ACCELERATING;
-	TurnState = TURNING_WHILE_MOVING;
-	RollState = ROLLING;
+	AccelerationState = MovementComponent::EShipAccelerationState::ACCELERATING;
+	TurnState = MovementComponent::EShipYawState::TURNING_WHILE_MOVING;
+	RollState = MovementComponent::EShipRollState::ROLLING;
 
 	DrawDebugCircle(GetWorld(),
 		FVector(ArcSegment->CircleCenter.X, ArcSegment->CircleCenter.Y, 150),
@@ -487,10 +475,10 @@ void UShipMovementComponent::CalculateForwardSpeed()
 {
 	switch (AccelerationState)
 	{
-	case FULL_STOP:
+	case MovementComponent::EShipAccelerationState::FULL_STOP:
 		CurrentForwardSpeed = 0;
 		break;
-	case ACCELERATING:
+	case MovementComponent::EShipAccelerationState::ACCELERATING:
 		if (CurrentForwardSpeed < MaxForwardSpeed)
 		{
 			CurrentForwardSpeed += AccelerationForwardRate;
@@ -500,7 +488,7 @@ void UShipMovementComponent::CalculateForwardSpeed()
 			CurrentForwardSpeed = MaxForwardSpeed;
 		}
 		break;
-	case DECELERATING:
+	case MovementComponent::EShipAccelerationState::DECELERATING:
 		if (CurrentForwardSpeed > 0)
 		{
 			CurrentForwardSpeed -= AccelerationForwardRate;
@@ -510,9 +498,9 @@ void UShipMovementComponent::CalculateForwardSpeed()
 			CurrentForwardSpeed = 0;
 		}
 		break;
-	case CONSTANT_VELOCITY:
+	case MovementComponent::EShipAccelerationState::CONSTANT_VELOCITY:
 		break;
-	case BRAKING:
+	case MovementComponent::EShipAccelerationState::BRAKING:
 		if (CurrentForwardSpeed > 0)
 		{
 			CurrentForwardSpeed -= 2 * AccelerationForwardRate;
@@ -522,6 +510,8 @@ void UShipMovementComponent::CalculateForwardSpeed()
 			CurrentForwardSpeed = 0;
 		}
 		break;
+	default:
+		checkNoEntry();
 	}
 }
 
@@ -529,7 +519,7 @@ void UShipMovementComponent::CalculateYawSpeed()
 {
 	switch (TurnState)
 	{
-	case NO_TURNING:
+	case MovementComponent::EShipYawState::NO_TURNING:
 		if (CurrentYawSpeed > 0)
 		{
 			CurrentYawSpeed -= AccelerationYawRate;
@@ -539,7 +529,7 @@ void UShipMovementComponent::CalculateYawSpeed()
 			CurrentYawSpeed = 0;
 		}
 		break;
-	case TURNING_WHILE_MOVING:
+	case MovementComponent::EShipYawState::TURNING_WHILE_MOVING:
 		if (CurrentYawSpeed < MaxYawSpeed)
 		{
 			CurrentYawSpeed += AccelerationYawRate;
@@ -549,7 +539,7 @@ void UShipMovementComponent::CalculateYawSpeed()
 			CurrentYawSpeed = MaxYawSpeed;
 		}
 		break;
-	case TURNING_WHILE_STANDING:
+	case MovementComponent::EShipYawState::TURNING_WHILE_STANDING:
 		if (CurrentYawSpeed < MaxYawSpeed)
 		{
 			CurrentYawSpeed += 0.5 * AccelerationYawRate;
@@ -559,6 +549,8 @@ void UShipMovementComponent::CalculateYawSpeed()
 			CurrentYawSpeed = MaxYawSpeed;
 		}
 		break;
+	default:
+		checkNoEntry();
 	}
 }
 
@@ -566,7 +558,7 @@ void UShipMovementComponent::CalculateRoll()
 {
 	switch (RollState)
 	{
-	case NO_ROLLING:
+	case MovementComponent::EShipRollState::NO_ROLLING:
 		if (CurrentRollSpeed > 0)
 		{
 			CurrentRollSpeed -= AccelerationRollRate;
@@ -576,9 +568,9 @@ void UShipMovementComponent::CalculateRoll()
 			CurrentRollSpeed = 0;
 		}
 		break;
-	case ROLL_TO_ZERO:
+	case MovementComponent::EShipRollState::ROLL_TO_ZERO:
 		break;
-	case ROLLING:
+	case MovementComponent::EShipRollState::ROLLING:
 		if (CurrentRollSpeed < MaxRollSpeed)
 		{
 			CurrentRollSpeed += AccelerationRollRate;
@@ -588,5 +580,7 @@ void UShipMovementComponent::CalculateRoll()
 			CurrentRollSpeed = MaxRollSpeed;
 		}
 		break;
+	default:
+		checkNoEntry();
 	}
 }

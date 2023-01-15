@@ -51,41 +51,13 @@ void AAsteroidResource::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (FModuleManager::Get().IsModuleLoaded("MeshProcessingPlugin"))
+	AsyncTask(ENamedThreads::AnyHiPriThreadNormalTask, [This = TWeakObjectPtr<ThisClass>(this)]()
 	{
-		UGeneratedMesh* AllocatedMesh = AllocateComputeMesh();
-		AllocatedMesh->AppendSphere(MinimumRadius + VariableRadius * FMathd::Sin(PulseSpeed * AccumulatedTime), 500, 500);
-		UGeneratedMeshDeformersLibrary::DeformMeshAxisSinWaveRadial(AllocatedMesh, 6, 0.1, 0.1, FVector(0,1,0));
-		UGeneratedMeshDeformersLibrary::DeformMeshAxisSinWave1D(AllocatedMesh, 12, 0.05, 0.1, FVector(0,1,1), FVector(1,1,0));
-		CopyFromMesh(AllocatedMesh);
-		if (!bManualSetUpNumberOfCavities)
+		if (This.IsValid())
 		{
-			NumberOfCavities = UKismetMathLibrary::RandomInteger(10);
+			This->Deform();
 		}
-		for (int32 Index = 0; Index < NumberOfCavities; Index++)
-		{
-			UGeneratedMesh* SubtractAllocatedMesh = AllocateComputeMesh();
-			SubtractAllocatedMesh->AppendSphere(
-				MinimumRadius/20 + VariableRadius * FMathd::Sin(UKismetMathLibrary::RandomInteger(360)), 100, 100);
-			if (bShouldDistortCavityWithSinWave)
-			{
-				UGeneratedMeshDeformersLibrary::DeformMeshAxisSinWaveRadial(
-					SubtractAllocatedMesh, 6, 0.1, 0.1, FVector(0,1,0));
-				UGeneratedMeshDeformersLibrary::DeformMeshAxisSinWave1D(
-					SubtractAllocatedMesh, 12, 0.05, 0.1, FVector(0,1,1), FVector(1,1,0));
-			}
-			auto NearestPoint = AllocatedMesh->NearestPoint(UKismetMathLibrary::RandomUnitVector() * MinimumRadius);
-			const auto Scale = FVector(
-				UKismetMathLibrary::RandomFloatInRange(0.5, 2),
-				UKismetMathLibrary::RandomFloatInRange(0.5, 2),
-				UKismetMathLibrary::RandomFloatInRange(0.5, 2));
-			const FTransform Transform (FRotator(0, 0, 0), NearestPoint, Scale);
-			const auto GeneratedMesh = AllocatedMesh->BooleanWithTransformed(
-				SubtractAllocatedMesh, Transform, EGeneratedMeshBooleanOperation::Subtraction);
-			CopyFromMesh(GeneratedMesh);
-			AllocatedMesh->SolidifyMesh();
-		}
-	}
+	});
 	
 	if (!bManualSetUpRotation)
 	{
@@ -129,5 +101,44 @@ void AAsteroidResource::CheckCapacity(const FOnAttributeChangeData& Data)
 			AsteroidField->RemoveAsteroidFromField(this);
 		}
 		Destroy();
+	}
+}
+
+void AAsteroidResource::Deform()
+{
+	if (FModuleManager::Get().IsModuleLoaded("MeshProcessingPlugin"))
+	{
+		UGeneratedMesh* AllocatedMesh = AllocateComputeMesh();
+		AllocatedMesh->AppendSphere(MinimumRadius + VariableRadius * FMathd::Sin(PulseSpeed * AccumulatedTime), 500, 500);
+		UGeneratedMeshDeformersLibrary::DeformMeshAxisSinWaveRadial(AllocatedMesh, 6, 0.1, 0.1, FVector(0,1,0));
+		UGeneratedMeshDeformersLibrary::DeformMeshAxisSinWave1D(AllocatedMesh, 12, 0.05, 0.1, FVector(0,1,1), FVector(1,1,0));
+		CopyFromMesh(AllocatedMesh);
+		if (!bManualSetUpNumberOfCavities)
+		{
+			NumberOfCavities = UKismetMathLibrary::RandomInteger(10);
+		}
+		for (int32 Index = 0; Index < NumberOfCavities; Index++)
+		{
+			UGeneratedMesh* SubtractAllocatedMesh = AllocateComputeMesh();
+			SubtractAllocatedMesh->AppendSphere(
+				MinimumRadius/20 + VariableRadius * FMathd::Sin(UKismetMathLibrary::RandomInteger(360)), 100, 100);
+			if (bShouldDistortCavityWithSinWave)
+			{
+				UGeneratedMeshDeformersLibrary::DeformMeshAxisSinWaveRadial(
+					SubtractAllocatedMesh, 6, 0.1, 0.1, FVector(0,1,0));
+				UGeneratedMeshDeformersLibrary::DeformMeshAxisSinWave1D(
+					SubtractAllocatedMesh, 12, 0.05, 0.1, FVector(0,1,1), FVector(1,1,0));
+			}
+			auto NearestPoint = AllocatedMesh->NearestPoint(UKismetMathLibrary::RandomUnitVector() * MinimumRadius);
+			const auto Scale = FVector(
+				UKismetMathLibrary::RandomFloatInRange(0.5, 2),
+				UKismetMathLibrary::RandomFloatInRange(0.5, 2),
+				UKismetMathLibrary::RandomFloatInRange(0.5, 2));
+			const FTransform Transform (FRotator(0, 0, 0), NearestPoint, Scale);
+			const auto GeneratedMesh = AllocatedMesh->BooleanWithTransformed(
+				SubtractAllocatedMesh, Transform, EGeneratedMeshBooleanOperation::Subtraction);
+			CopyFromMesh(GeneratedMesh);
+			AllocatedMesh->SolidifyMesh();
+		}
 	}
 }

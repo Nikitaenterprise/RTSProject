@@ -50,4 +50,5 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void CheckCapacity(const FOnAttributeChangeData& Data);
+	void Deform();
 };

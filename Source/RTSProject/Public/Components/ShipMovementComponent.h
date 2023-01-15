@@ -7,58 +7,104 @@ class ARTSPlayerController;
 class ARTSAIController;
 class AShip;
 
+namespace MovementComponent
+{
+UENUM(BlueprintType)
+enum class EShipAccelerationState : uint8
+{
+	FULL_STOP,
+	ACCELERATING,
+	DECELERATING,
+	CONSTANT_VELOCITY,
+	BRAKING,
+
+	COUNT
+};
+
+UENUM()
+enum class EShipYawState : uint8
+{
+	NO_TURNING,
+	TURNING_WHILE_STANDING,
+	TURNING_WHILE_MOVING,
+	
+	COUNT
+};
+
+UENUM()
+enum class EShipRollState : uint8
+{
+	NO_ROLLING,
+	ROLLING,
+	ROLL_TO_ZERO,
+	
+	COUNT
+};
+
+UENUM()
+enum class ELineSegment : uint8
+{
+	STRAIGHT_LINE,
+	ARC_LINE,
+	
+	COUNT
+};
+	
+class FLineSegment
+{
+public:
+	FLineSegment(const FVector StartPosition, const FVector EndPosition, const float Length, const bool bClockwiseRotation) :
+		StartPosition(StartPosition),
+		EndPosition(EndPosition),
+		Length(Length),
+		bClockwiseRotation(bClockwiseRotation)
+	{
+		LineType = ELineSegment::COUNT;
+	}
+	
+	ELineSegment LineType;
+	FVector StartPosition = FVector::ZeroVector;
+	FVector EndPosition = FVector::ZeroVector;
+	float Length = 0;
+	bool bClockwiseRotation = true;
+};
+	
+class FStraightLine : public FLineSegment
+{
+public:
+	FStraightLine(const FVector StartPosition, const FVector EndPosition, const float Length, const bool bClockwiseRotation, const float Angle) :
+		FLineSegment(StartPosition, EndPosition, Length, bClockwiseRotation),
+		Angle(Angle)
+	{
+		LineType = ELineSegment::STRAIGHT_LINE;
+	}
+	
+	float Angle = 0;
+};
+class FArcLine : public FLineSegment
+{
+public:
+	FArcLine(const FVector StartPosition, const FVector EndPosition, const float Length, const bool bClockwiseRotation, const FVector2D CircleCenter, const float StartingAngle, float TotalRadiansCover) :
+		FLineSegment(StartPosition, EndPosition, Length, bClockwiseRotation),
+		CircleCenter(CircleCenter),
+		StartingAngle(StartingAngle),
+		TotalRadiansCover(TotalRadiansCover)
+	{
+		LineType = ELineSegment::ARC_LINE;
+	}
+
+	FVector2D CircleCenter = FVector2D::ZeroVector;
+	float StartingAngle = 0;
+	float TotalRadiansCover = 0;
+};
+}
+
 UCLASS()
 class RTSPROJECT_API UShipMovementComponent : public UPawnMovementComponent
 {
 	GENERATED_BODY()
 	
-public:
-	
-	enum EShipAccelerationState
-	{
-		FULL_STOP,
-		ACCELERATING,
-		DECELERATING,
-		CONSTANT_VELOCITY,
-		BRAKING
-	};
-	static constexpr char* EShipAccelerationStateStr[] =
-	{
-		"FULL_STOP",
-		"ACCELERATING",
-		"DECELERATING",
-		"CONSTANT_VELOCITY",
-		"BRAKING"
-	};
-
-	enum EShipYawState
-	{
-		NO_TURNING,
-		TURNING_WHILE_STANDING,
-		TURNING_WHILE_MOVING
-	};
-	static constexpr char* EShipYawStateStr[] =
-	{
-		"NO_TURNING",
-		"TURNING_WHILE_STANDING",
-		"TURNING_WHILE_MOVING"
-	};
-
-	enum EShipRollState
-	{
-		NO_ROLLING,
-		ROLLING,
-		ROLL_TO_ZERO
-	};
-	static constexpr char* EShipRollStateStr[] =
-	{
-		"NO_ROLLING",
-		"ROLLING",
-		"ROLL_TO_ZERO"
-	};
-
-public:
-	
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
 	int Mass = 100;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
@@ -89,6 +135,20 @@ public:
 	float MinTurnRadius = 100;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
 	FRotator RotationRate = FRotator(15, 15, 15);
+
+	FVector PointMoveTo;
+	// Normalized direction vector to shift this frame
+	FVector InputVector = FVector(0, 0, 0);
+	FRotator Rotator;
+	TArray<MovementComponent::FLineSegment*> LineSegments;
+	MovementComponent::FLineSegment* CurrentLine = nullptr;
+	MovementComponent::EShipAccelerationState AccelerationState = MovementComponent::EShipAccelerationState::FULL_STOP;
+	MovementComponent::EShipYawState TurnState = MovementComponent::EShipYawState::NO_TURNING;
+	MovementComponent::EShipRollState RollState = MovementComponent::EShipRollState::NO_ROLLING;
+	
+	bool bShouldMove = false;
+	bool bRequestedMove = false;
+	bool bInitialMove = false;
 	
 	TArray<FVector> NavPathCoords;
 	UPROPERTY()
@@ -98,89 +158,9 @@ public:
 	UPROPERTY()
 	ARTSAIController* RTSAIController {nullptr};
 	
-private:
-	enum ELineSegment
-	{
-		STRAIGHT_LINE,
-		ARC_LINE,
-		None
-	};
-	static constexpr char* ELineSegmentStr[] =
-	{
-		"StraightLine",
-		"ArcLine",
-		"None"
-	};
-	class FLineSegment
-	{
-	public:
-		FLineSegment(const FVector StartPosition, const FVector EndPosition, const float Length, const bool bClockwiseRotation) :
-			StartPosition(StartPosition),
-			EndPosition(EndPosition),
-			Length(Length),
-			bClockwiseRotation(bClockwiseRotation)
-		{
-			LineType = ELineSegment::None;
-		}
-		
-		ELineSegment LineType;
-		FVector StartPosition = FVector::ZeroVector;
-		FVector EndPosition = FVector::ZeroVector;
-		float Length = 0;
-		bool bClockwiseRotation = true;
-	};
-	class FStraightLine : public FLineSegment
-	{
-	public:
-		FStraightLine(const FVector StartPosition, const FVector EndPosition, const float Length, const bool bClockwiseRotation, const float Angle) :
-			FLineSegment(StartPosition, EndPosition, Length, bClockwiseRotation),
-			Angle(Angle)
-		{
-			LineType = STRAIGHT_LINE;
-		}
-		
-		float Angle = 0;
-	};
-	class FArcLine : public FLineSegment
-	{
-	public:
-		FArcLine(const FVector StartPosition, const FVector EndPosition, const float Length, const bool bClockwiseRotation, const FVector2D CircleCenter, const float StartingAngle, float TotalRadiansCover) :
-			FLineSegment(StartPosition, EndPosition, Length, bClockwiseRotation),
-			CircleCenter(CircleCenter),
-			StartingAngle(StartingAngle),
-			TotalRadiansCover(TotalRadiansCover)
-		{
-			LineType = ARC_LINE;
-		}
-
-		FVector2D CircleCenter = FVector2D::ZeroVector;
-		float StartingAngle = 0;
-		float TotalRadiansCover = 0;
-	};
-
-	
-	TArray<FLineSegment*> LineSegments;
-	FLineSegment* CurrentLine = nullptr;
-
-	// Normalized direction vector to shift this frame
-	FVector InputVector = FVector(0, 0, 0);
-	FRotator Rotator;
-	
-	FVector PointMoveTo;
-
-	EShipAccelerationState AccelerationState = FULL_STOP;
-	EShipYawState TurnState = NO_TURNING;
-	EShipRollState RollState = NO_ROLLING;
-	
-	bool bShouldMove = false;
-	bool bRequestedMove = false;
-	bool bInitialMove = false;
-
 public:
-	
 	UShipMovementComponent(const FObjectInitializer& ObjectInitializer);
 	virtual void InitializeComponent() override;
-	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
@@ -192,8 +172,7 @@ public:
 	bool RequestNavMoving(const FVector TargetLocation);
 	void TurnOnCapsuleCollision(const bool TurnOn) const;
 
-private:
-	
+protected:
 	inline void ProcessStraightLine(float DeltaTime);
 	inline void ProcessArcLine(float DeltaTime);
 	
