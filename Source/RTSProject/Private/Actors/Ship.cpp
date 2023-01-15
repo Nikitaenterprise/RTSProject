@@ -178,8 +178,7 @@ bool AShip::RequestMove(const FVector TargetLocation)
 		UE_LOG(LogTemp, Error, TEXT("MovementComponent in AShip->Move() is null"));
 		return false;
 	}
-	if (!MovementComponent->RequestNavMoving(TargetLocation)) return false;
-	NavPathCoords = MovementComponent->GetNavPathCoords();
+	MovementComponent->MoveTo(TargetLocation);
 	//DrawNavLine();
 	return true;
 }
