@@ -21,8 +21,9 @@ public:
 	virtual bool IsUsingCapsuleCollision() = 0;
 	virtual bool ShouldMove() = 0;
 	virtual bool IsMovingInPlane() = 0;
+	virtual void CalculatePosition(float DeltaTime) = 0;
 
 protected:
 	virtual void MakePath() = 0;
-	virtual void CalculatePosition(float DeltaTime) = 0;
+	
 };

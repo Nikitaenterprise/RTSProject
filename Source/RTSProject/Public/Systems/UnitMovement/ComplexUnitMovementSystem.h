@@ -24,12 +24,12 @@ public:
 	virtual bool IsUsingCapsuleCollision() override;
 	virtual bool ShouldMove() override { return bShouldMove; }
 	virtual bool IsMovingInPlane() override { return true; }
+	virtual void CalculatePosition(float DeltaTime) override;
 	// IUnitMovementSystem End
 	
 protected:
 	// IUnitMovementSystem Begin
 	virtual void MakePath() override;
-	virtual void CalculatePosition(float DeltaTime) override;
 	// IUnitMovementSystem End
 	
 	bool RequestNavMoving(const FVector& TargetLocation);
