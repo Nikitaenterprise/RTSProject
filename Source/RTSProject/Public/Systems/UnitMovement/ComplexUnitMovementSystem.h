@@ -17,7 +17,7 @@ public:
 	UComplexUnitMovementSystem(const FObjectInitializer& ObjectInitializer);
 	
 	// IUnitMovementSystem Begin
-	virtual void Initialize(AActor* InOwnerActor, UPawnMovementComponent* InMovementComponent) override;
+	virtual void InitializeMovementSystem(AActor* InOwnerActor, UPawnMovementComponent* InMovementComponent) override;
 	virtual const FRotator& GetRotatorForTick() override { return Rotator; }
 	virtual const FVector& GetLocationForTick() override { return LocationForTick; }
 	virtual bool RequestMoveTo(const FVector& Location) override;
@@ -89,7 +89,7 @@ protected:
 	FLineSegment* CurrentLine = nullptr;
 	EShipAccelerationState AccelerationState = EShipAccelerationState::FULL_STOP;
 	EShipYawState TurnState = EShipYawState::NO_TURNING;
-	EShipRollState RollState = EShipRollState::NO_ROLLING;
+	EShipRollState1 RollState = EShipRollState1::NO_ROLLING;
 	
 	bool bShouldMove = false;
 	bool bRequestedMove = false;

@@ -14,7 +14,7 @@ class RTSPROJECT_API IUnitMovementSystem
 	GENERATED_BODY()
 
 public:
-	virtual void Initialize(AActor* InOwnerActor, UPawnMovementComponent* InMovementComponent) = 0;
+	virtual void InitializeMovementSystem(AActor* InOwnerActor, UPawnMovementComponent* InMovementComponent) = 0;
 	virtual const FRotator& GetRotatorForTick() = 0;
 	virtual const FVector& GetLocationForTick() = 0;
 	virtual bool RequestMoveTo(const FVector& Location) = 0;

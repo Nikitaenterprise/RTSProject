@@ -1,5 +1,5 @@
 ﻿#include "GAS/AbilityTask_GatherResource.h"
-#include "Actors/Ship.h"
+#include "Actors/Units/Ship.h"
 #include "TimerManager.h"
 #include "GAS/ResourceGathererAttributeSet.h"
 #include "GAS/ResourceSourceAttributeSet.h"

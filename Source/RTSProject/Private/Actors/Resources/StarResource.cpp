@@ -1,4 +1,4 @@
-﻿#include "Actors/StarResource.h"
+﻿#include "Actors/Resources/StarResource.h"
 #include "AbilitySystemComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"

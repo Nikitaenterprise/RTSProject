@@ -1,4 +1,4 @@
-#include "Components/TurretMovementComponent.h"
+#include "Components/Movement/TurretMovementComponent.h"
 
 UTurretMovementComponent::UTurretMovementComponent(const FObjectInitializer& ObjectInitializer)
 {

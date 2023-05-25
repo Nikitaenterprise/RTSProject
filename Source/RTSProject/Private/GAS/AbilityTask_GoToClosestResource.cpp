@@ -1,7 +1,7 @@
 ﻿#include "GAS/AbilityTask_GoToClosestResource.h"
 
-#include "Actors/ResourceManager.h"
-#include "Actors/Ship.h"
+#include "Actors/Resources/ResourceManager.h"
+#include "Actors/Units/Ship.h"
 #include "Core/RTSPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 

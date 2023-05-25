@@ -1,4 +1,4 @@
-#include "Actors/Building.h"
+#include "Actors/Buildings/Building.h"
 
 #include "AbilitySystemComponent.h"
 #include "Miscellaneous/FactoriesFunctionLibrary.h"
@@ -7,7 +7,7 @@
 #include "UI/HealthShieldWidget.h"
 #include "Components/MiniMapIconComponent.h"
 #include "Components/MiniMapInfluencerComponent.h"
-#include "Actors/Ship.h"
+#include "Actors/Units/Ship.h"
 #include "UI/GameHUD.h"
 #include "UI/SelectionRectangleWidget.h"
 #include "AttributeSet.h"

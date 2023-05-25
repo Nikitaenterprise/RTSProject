@@ -1,28 +1,29 @@
-#include "Actors/Ship.h"
-#include "Components/AttackComponent.h"
-#include "Core/RTSPlayerController.h"
-#include "Actors/Turret.h"
-#include "Components/ShipMovementComponent.h"
-#include "Actors/Camera.h"
-#include "Components/FogOfWarInfluencerComponent.h"
+#include "Actors/Units/Ship.h"
+
 #include "AbilitySystemComponent.h"
-#include "Components/StaticMeshComponent.h"
+#include "Actors/Camera.h"
+#include "Actors/Units/Turret.h"
+#include "AttributeSet.h"
+#include "Components/AttackComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/FogOfWarInfluencerComponent.h"
 #include "Components/HealthShieldWidgetComponent.h"
 #include "Components/InputComponent.h"
-#include "Perception/PawnSensingComponent.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "DrawDebugHelpers.h"
-#include "GAS/ShipAttributeSet.h"
-#include "GAS/AttackAbility.h"
 #include "Components/MiniMapIconComponent.h"
 #include "Components/MiniMapInfluencerComponent.h"
-#include "UI/GameHUD.h"
-#include "AttributeSet.h"
+#include "Components/Movement/ShipMovementComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Core/RTSPlayerController.h"
+#include "DrawDebugHelpers.h"
+#include "GAS/AttackAbility.h"
 #include "GAS/HealthShieldAttributeSet.h"
+#include "GAS/ShipAttributeSet.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Perception/PawnSensingComponent.h"
+#include "UI/GameHUD.h"
 
 AShip::AShip(const FObjectInitializer& OI)
-	: Super(OI.SetDefaultSubobjectClass<UShipMovementComponent>(FName("ShipMovementComponent")))
+	: Super(OI.SetDefaultSubobjectClass<UShipMovementComponent>(TEXT("PawnMovementComponent")))
 {
 	PrimaryActorTick.bCanEverTick = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
@@ -44,8 +45,10 @@ AShip::AShip(const FObjectInitializer& OI)
 	HealthShieldWidgetComponent = CreateDefaultSubobject<UHealthShieldWidgetComponent>(TEXT("HealthShieldWidgetComponent"));
 	HealthShieldWidgetComponent->SetupAttachment(GetRootComponent());
 	
-	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 	MovementComponent = CreateDefaultSubobject<UShipMovementComponent>(TEXT("ShipMovementComponent"));
+	MovementComponent->SetUpdatedComponent(RootComponent);
+
+	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 	AttackComponent = CreateDefaultSubobject<UAttackComponent>(TEXT("AttackComponent"));
 	FOWInfluencerComponent = CreateDefaultSubobject<UFogOfWarInfluencerComponent>(TEXT("FOWInfluencerComponent"));
 	MiniMapInfluencerComponent = CreateDefaultSubobject<UMiniMapInfluencerComponent>(TEXT("MiniMapInfluencerComponent"));
@@ -178,7 +181,7 @@ bool AShip::RequestMove(const FVector TargetLocation)
 		UE_LOG(LogTemp, Error, TEXT("MovementComponent in AShip->Move() is null"));
 		return false;
 	}
-	MovementComponent->MoveTo(TargetLocation);
+	//MovementComponent->MoveTo(TargetLocation);
 	//DrawNavLine();
 	return true;
 }

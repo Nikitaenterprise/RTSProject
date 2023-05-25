@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Actors/Ship.h"
+#include "Actors/Units/Ship.h"
 #include "Blueprint/UserWidget.h"
 #include "EngineUtils.h"
 #include "Core/RTSPlayerController.h"
 #include "GameFramework/HUD.h"
 
 #include "DrawDebugHelpers.h"
-#include "Actors/Building.h"
+#include "Actors/Buildings/Building.h"
 #include "Actors/Camera.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 

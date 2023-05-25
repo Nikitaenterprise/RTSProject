@@ -1,6 +1,7 @@
-#include "Components//ResourceComponent.h"
+#include "Components/ResourceComponent.h"
+
 #include "Kismet/GameplayStatics.h"
-#include "Actors/ResourceManager.h"
+#include "Actors/Resources/ResourceManager.h"
 #include "GAS/ResourceSourceAttributeSet.h"
 
 UResourceComponent::UResourceComponent()

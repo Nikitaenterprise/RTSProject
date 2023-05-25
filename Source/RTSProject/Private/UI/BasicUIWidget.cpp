@@ -1,8 +1,8 @@
 #include "UI/BasicUIWidget.h"
 
 #include "Core/RTSPlayerController.h"
-#include "Actors/Ship.h"
-#include "Actors/Building.h"
+#include "Actors/Units/Ship.h"
+#include "Actors/Buildings/Building.h"
 
 void UBasicUIWidget::NativeConstruct()
 {

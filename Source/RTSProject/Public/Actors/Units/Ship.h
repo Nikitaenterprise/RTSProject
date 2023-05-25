@@ -2,6 +2,7 @@
 
 #include "AbilitySystemInterface.h"
 #include "Abilities/GameplayAbility.h"
+#include "Components/Movement/ShipMovementComponent.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/AttackInterface.h"
 #include "Interfaces/Selectable.h"
@@ -32,6 +33,53 @@ class RTSPROJECT_API AShip : public APawn,
 	public IAttackInterface
 {
 	GENERATED_BODY()
+
+public:
+	AShip(const FObjectInitializer& ObjectInitializer);
+	virtual void PreInitializeComponents() override;
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	virtual UAttackComponent* GetAttackComponent() const override { return AttackComponent; }
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+	UCapsuleComponent* GetCapsuleComponent() const { return CapsuleComponent; }
+	UStaticMeshComponent* GetStaticMeshComponent() const { return StaticMesh; }
+	virtual UPawnMovementComponent* GetMovementComponent() const override { return MovementComponent; }
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
+	void Selected(bool _bIsSelected);
+	virtual void Selected_Implementation(bool _bIsSelected) override;
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
+	void Highlighted(bool _bIsHighlighted);
+	virtual void Highlighted_Implementation(bool _bIsHighlighted) override;
+	
+	UHealthShieldAttributeSet* GetHealthShieldAttributeSet() const { return HealthShieldAttributeSet; }
+	TArray<UAttributeSet*> GetAdditionalAttributeSets() const { return AdditionalAttributeSets; }
+	virtual TArray<ATurret*>& GetTurrets() override { return Turrets; }
+	ARTSPlayerController* GetPlayerController() const { return PlayerController; }
+	bool GetHasWorkingTurrets() const { return bHasWorkingTurrets; }
+	void SetHasWorkingTurrets( bool NewHasWorkingTurrets) { bHasWorkingTurrets = NewHasWorkingTurrets; }
+	bool GetIsSelected() const { return bIsSelected; }
+	void SetJustCreated(bool NewJustCreated) { bJustCreated = NewJustCreated; }
+	// Moving
+	UFUNCTION(BlueprintCallable, Category = "Moving")
+	bool RequestMove(const FVector TargetLocation);
+
+	void DrawNavLine();
+	void UpdatePositionWhenCreated();
+
+	// Mouse wheel
+	void RotateWhenCreatedPositive();
+	void RotateWhenCreatedNegative();
+	void MouseYPositiveStart();
+	void MouseYPositiveEnd();
+	void MouseYNegativeStart();
+	void MouseYNegativeEnd();
+
+	void LMBPressed();
+	void LMBReleased();
+	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	USceneComponent* SceneComponent = nullptr;
@@ -46,7 +94,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UPawnSensingComponent* PawnSensing = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
-	UShipMovementComponent* MovementComponent = nullptr;
+	UPawnMovementComponent* MovementComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAttackComponent* AttackComponent = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
@@ -109,48 +157,4 @@ protected:
 	bool bHasWorkingTurrets = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Turret")
 	TArray<ATurret*> Turrets;
-public:
-	AShip(const FObjectInitializer& ObjectInitializer);
-	virtual void PreInitializeComponents() override;
-	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaTime) override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
-	virtual UAttackComponent* GetAttackComponent() const override { return AttackComponent; }
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
-	UCapsuleComponent* GetCapsuleComponent() const { return CapsuleComponent; }
-	UStaticMeshComponent* GetStaticMeshComponent() const { return StaticMesh; }
-	
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
-	void Selected(bool _bIsSelected);
-	virtual void Selected_Implementation(bool _bIsSelected) override;
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
-	void Highlighted(bool _bIsHighlighted);
-	virtual void Highlighted_Implementation(bool _bIsHighlighted) override;
-	
-	UHealthShieldAttributeSet* GetHealthShieldAttributeSet() const { return HealthShieldAttributeSet; }
-	TArray<UAttributeSet*> GetAdditionalAttributeSets() const { return AdditionalAttributeSets; }
-	virtual TArray<ATurret*>& GetTurrets() override { return Turrets; }
-	ARTSPlayerController* GetPlayerController() const { return PlayerController; }
-	bool GetHasWorkingTurrets() const { return bHasWorkingTurrets; }
-	void SetHasWorkingTurrets( bool NewHasWorkingTurrets) { bHasWorkingTurrets = NewHasWorkingTurrets; }
-	bool GetIsSelected() const { return bIsSelected; }
-	void SetJustCreated(bool NewJustCreated) { bJustCreated = NewJustCreated; }
-	// Moving
-	UFUNCTION(BlueprintCallable, Category = "Moving")
-	bool RequestMove(const FVector TargetLocation);
-
-	void DrawNavLine();
-	void UpdatePositionWhenCreated();
-
-	// Mouse wheel
-	void RotateWhenCreatedPositive();
-	void RotateWhenCreatedNegative();
-	void MouseYPositiveStart();
-	void MouseYPositiveEnd();
-	void MouseYNegativeStart();
-	void MouseYNegativeEnd();
-
-	void LMBPressed();
-	void LMBReleased();
 };

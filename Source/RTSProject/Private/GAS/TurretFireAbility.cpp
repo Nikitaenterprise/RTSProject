@@ -1,5 +1,5 @@
 ﻿#include "GAS/TurretFireAbility.h"
-#include "Actors/Turret.h"
+#include "Actors/Units/Turret.h"
 #include "GAS/TurretAttributeSet.h"
 
 void UTurretFireAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,

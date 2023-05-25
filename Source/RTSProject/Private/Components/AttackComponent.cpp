@@ -1,6 +1,6 @@
 #include "Components/AttackComponent.h"
 #include "Interfaces/AttackInterface.h"
-#include "Actors/Turret.h"
+#include "Actors/Units/Turret.h"
 
 UAttackComponent::UAttackComponent()
 {

@@ -1,4 +1,4 @@
-﻿#include "Actors/Worker.h"
+﻿#include "Actors/Units/Worker.h"
 
 #include "AbilitySystemComponent.h"
 #include "GAS/GatherResourceAbility.h"

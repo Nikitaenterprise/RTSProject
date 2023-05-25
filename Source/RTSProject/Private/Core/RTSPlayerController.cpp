@@ -1,13 +1,15 @@
 #include "Core/RTSPlayerController.h"
 
+#include "AIController.h"
 #include "Components/AttackComponent.h"
-#include "Actors/Ship.h"
-#include "Actors/Building.h"
+#include "Actors/Units/Ship.h"
+#include "Actors/Buildings/Building.h"
 #include "Actors/Camera.h"
 #include "Core/FactoryAssets.h"
 #include "UI/GameHUD.h"
 #include "DrawDebugHelpers.h"
 #include "Actors/FogOfWar.h"
+#include "AI/Orders/OrdersProcessor.h"
 #include "Kismet/GameplayStatics.h"
 #include "Math/UnitConversion.h"
 
@@ -74,17 +76,10 @@ void ARTSPlayerController::BeginPlay()
 	const FInputModeGameAndUI InputMode;
 	SetInputMode(InputMode);
 
+	OrdersProcessor = NewObject<UOrdersProcessor>();
+	OrdersProcessor->Initialize(this);
+
 	UE_LOG(LogTemp, Display, TEXT("Success of ARTSPlayerController::BeginPlay()"));
-}
-
-void ARTSPlayerController::Tick(float mainDeltaTime)
-{
-	Super::Tick(mainDeltaTime);
-}
-
-void ARTSPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	Super::EndPlay(EndPlayReason);
 }
 
 void ARTSPlayerController::SetupInputComponent()
@@ -102,9 +97,16 @@ void ARTSPlayerController::RMBReleased()
 	{
 		if (This.IsValid())
 		{
-			return This->MoveSelectedActors(Args...);
+			FHitResult Hit;
+			This->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
+			return This->OrdersProcessor->ProcessOrder(EOrderType::MoveOrder, Hit.Location);
 		}
 		return false;
+		// if (This.IsValid())
+		// {
+		// 	return This->MoveSelectedActors(Args...);
+		// }
+		// return false;
 	});
 	ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
 	{

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "EngineUtils.h"
-#include "Actors/Ship.h"
+#include "Actors/Units/Ship.h"
 #include "GameFramework/HUD.h"
 #include "Kismet/KismetSystemLibrary.h"
 

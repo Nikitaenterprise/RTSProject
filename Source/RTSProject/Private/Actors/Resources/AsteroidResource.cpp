@@ -1,7 +1,6 @@
-#include "Actors/AsteroidResource.h"
+#include "Actors/Resources/AsteroidResource.h"
 
-#include <functional>
-#include "Actors/AsteroidField.h"
+#include "Actors/Resources/AsteroidField.h"
 #include "GAS/ResourceSourceAttributeSet.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "GeneratedMeshDeformersLibrary.h"

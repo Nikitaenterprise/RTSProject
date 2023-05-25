@@ -11,6 +11,7 @@ class UShipHUD;
 class UBuildingHUD;
 class UBasicButtonsHUD;
 class UFactoryAssets;
+class UOrdersProcessor;
 class AFogOfWar;
 
 
@@ -18,38 +19,9 @@ UCLASS()
 class RTSPROJECT_API ARTSPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-protected:
-	UPROPERTY(BlueprintReadOnly, Category = "Camera")
-	ACamera* CameraRef {nullptr};
-
-	// True if FogOfWar was placed on level in editor
-	// Checked in GameMode class
-	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
-	bool bIsFOWPlacedOnLevel {false};
-	// True if FogOfWarBoundsVolume was placed on level in editor
-	// Checked in GameMode class
-	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
-	bool bIsFOWBoundsVolumePlacedOnLevel {false};
-	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
-	AFogOfWar* FogOfWar {nullptr};
-
-	// Units selection
-	// Array of currently selected actors for this controller
-	UPROPERTY(BlueprintReadOnly, Category = "Selection")
-	TArray<AActor*> SelectedActors;
-	// Array of all created and owned by this controller actors
-	UPROPERTY(BlueprintReadOnly, Category = "Selection")
-	TArray<AActor*> PlayersActors;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Factory")
-	UFactoryAssets* FactoryAssets {nullptr};
-
-	UPROPERTY(BlueprintReadOnly, Category = "HUD")
-	AGameHUD* GameHUD {nullptr};
+	
 public:
 	virtual void BeginPlay() override;
-	virtual void Tick(float mainDeltaTime) override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void SetupInputComponent() override; //(class UInputComponent* PlayerInputComponent)
 
 	void AddToSelectedActors(AActor* ActorToAdd) { SelectedActors.AddUnique(ActorToAdd); }
@@ -90,6 +62,38 @@ public:
 	UFactoryAssets* GetFactoryAssets() const { return FactoryAssets; }
 	UFUNCTION(BlueprintCallable, Category = "Getters")
 	AFogOfWar* GetFOWManager() const { return FogOfWar; }
+	
+protected:
+	UPROPERTY(BlueprintReadOnly, Category = "Camera")
+	ACamera* CameraRef {nullptr};
+
+	// True if FogOfWar was placed on level in editor
+	// Checked in GameMode class
+	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
+	bool bIsFOWPlacedOnLevel {false};
+	// True if FogOfWarBoundsVolume was placed on level in editor
+	// Checked in GameMode class
+	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
+	bool bIsFOWBoundsVolumePlacedOnLevel {false};
+	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
+	AFogOfWar* FogOfWar {nullptr};
+
+	// Units selection
+	// Array of currently selected actors for this controller
+	UPROPERTY(BlueprintReadOnly, Category = "Selection")
+	TArray<AActor*> SelectedActors;
+	// Array of all created and owned by this controller actors
+	UPROPERTY(BlueprintReadOnly, Category = "Selection")
+	TArray<AActor*> PlayersActors;
+
+	UPROPERTY(Transient)
+	UOrdersProcessor* OrdersProcessor {nullptr};
+
+	UPROPERTY(BlueprintReadOnly, Category = "Factory")
+	UFactoryAssets* FactoryAssets {nullptr};
+
+	UPROPERTY(BlueprintReadOnly, Category = "HUD")
+	AGameHUD* GameHUD {nullptr};
 };
 
 template <class ActorType>

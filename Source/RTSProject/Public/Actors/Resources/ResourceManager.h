@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Actors/AsteroidField.h"
+#include "Actors/Resources/AsteroidField.h"
 #include "GameFramework/Actor.h"
 #include "ResourceManager.generated.h"
 

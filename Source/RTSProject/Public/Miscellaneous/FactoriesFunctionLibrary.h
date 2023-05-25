@@ -5,6 +5,8 @@
 
 class ARTSPlayerController;
 class AShip;
+class AFighter;
+class ASquad;
 class ATurret;
 class AProjectile;
 class ABuilding;
@@ -14,7 +16,6 @@ class AAsteroidField;
 UCLASS()
 class RTSPROJECT_API UFactoriesFunctionLibrary : public UBlueprintFunctionLibrary
 {
-
 	GENERATED_BODY()
 
 public:
@@ -22,6 +23,14 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContext"))
 	static AShip* NewShip(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
 	static AShip* NewShip(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContext"))
+	static AFighter* NewFighter(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, ASquad* Squadron, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
+	static AFighter* NewFighter(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, ASquad* Squadron, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContext"))
+	static ASquad* NewFighterSquadron(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
+	static ASquad* NewFighterSquadron(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
 
 	UFUNCTION(BlueprintCallable)
 	static void AddTurretsToShip(AShip* Ship);

@@ -1,7 +1,7 @@
 #include "GAS/BuildUnitAbility.h"
 
-#include "Actors/Building.h"
-#include "Actors/Ship.h"
+#include "Actors/Buildings/Building.h"
+#include "Actors/Units/Ship.h"
 #include "GAS/BuildingAttributeSet.h"
 #include "Miscellaneous/FactoriesFunctionLibrary.h"
 

@@ -1,7 +1,7 @@
 #include "Core/RTSGameMode.h"
 #include "Core/RTSPlayerController.h"
 #include "Actors/FogOfWar.h"
-#include "Actors/ResourceManager.h"
+#include "Actors/Resources/ResourceManager.h"
 #include "Volumes/FogOfWarBoundsVolume.h"
 #include "UI/GameHUD.h"
 

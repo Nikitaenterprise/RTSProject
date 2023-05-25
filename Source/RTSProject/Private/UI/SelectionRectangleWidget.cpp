@@ -1,6 +1,6 @@
 #include "UI/SelectionRectangleWidget.h"
 
-#include "Actors/Building.h"
+#include "Actors/Buildings/Building.h"
 #include "Core/RTSPlayerController.h"
 #include "UI/GameHUD.h"
 

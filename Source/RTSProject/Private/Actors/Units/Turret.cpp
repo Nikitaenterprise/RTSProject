@@ -1,7 +1,8 @@
-#include "Actors/Turret.h"
+#include "Actors/Units/Turret.h"
+
 #include "AbilitySystemComponent.h"
 #include "Core/RTSPlayerController.h"
-#include "Actors/Ship.h"
+#include "Actors/Units/Ship.h"
 #include "Miscellaneous/AnglesFunctions.h"
 #include "Core/FactoryAssets.h"
 #include "GAS/HealthShieldAttributeSet.h"

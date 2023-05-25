@@ -23,7 +23,7 @@ enum class EShipYawState : uint8
 };
 
 UENUM()
-enum class EShipRollState : uint8
+enum class EShipRollState1 : uint8
 {
 	NO_ROLLING,
 	ROLLING,

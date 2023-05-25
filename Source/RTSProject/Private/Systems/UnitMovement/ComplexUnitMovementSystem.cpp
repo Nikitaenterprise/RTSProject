@@ -3,7 +3,7 @@
 #include "DrawDebugHelpers.h"
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
-#include "Actors/Ship.h"
+#include "Actors/Units/Ship.h"
 #include "Components/CapsuleComponent.h"
 #include "Core/RTSPlayerController.h"
 #include "GameFramework/PawnMovementComponent.h"
@@ -15,7 +15,7 @@ UComplexUnitMovementSystem::UComplexUnitMovementSystem(const FObjectInitializer&
 {
 }
 
-void UComplexUnitMovementSystem::Initialize(AActor* InOwnerActor, UPawnMovementComponent* InMovementComponent)
+void UComplexUnitMovementSystem::InitializeMovementSystem(AActor* InOwnerActor, UPawnMovementComponent* InMovementComponent)
 {
 	OwnerActor = InOwnerActor;
 	MovementComponent = InMovementComponent;
@@ -77,7 +77,7 @@ void UComplexUnitMovementSystem::CalculatePosition(float DeltaTime)
 	default:																	checkNoEntry();
 	}
 	
-	if (RollState == EShipRollState::ROLL_TO_ZERO)
+	if (RollState == EShipRollState1::ROLL_TO_ZERO)
 	{
 		// If ship has some roll angle then it should be counter-rolled
 		const float CurrentRoll = OwnerActor->GetActorRotation().Roll;
@@ -90,7 +90,7 @@ void UComplexUnitMovementSystem::CalculatePosition(float DeltaTime)
 		else
 		{
 			Rotator.Roll = 0;
-			RollState = EShipRollState::NO_ROLLING;
+			RollState = EShipRollState1::NO_ROLLING;
 		}
 	}
 	
@@ -174,7 +174,7 @@ void UComplexUnitMovementSystem::ProcessStraightLine(float DeltaTime)
 			AccelerationState = EShipAccelerationState::CONSTANT_VELOCITY;
 		}
 		TurnState = EShipYawState::TURNING_WHILE_MOVING;
-		RollState = EShipRollState::ROLLING;
+		RollState = EShipRollState1::ROLLING;
 	}
 	else if (YawToDestination <= 1)
 	{
@@ -192,7 +192,7 @@ void UComplexUnitMovementSystem::ProcessStraightLine(float DeltaTime)
 		}
 
 		TurnState = EShipYawState::NO_TURNING;
-		RollState = EShipRollState::ROLL_TO_ZERO;
+		RollState = EShipRollState1::ROLL_TO_ZERO;
 		DeltaYaw = 0;
 	}
 
@@ -210,7 +210,7 @@ void UComplexUnitMovementSystem::ProcessStraightLine(float DeltaTime)
 	{
 		AccelerationState = EShipAccelerationState::FULL_STOP;
 		TurnState = EShipYawState::NO_TURNING;
-		RollState = EShipRollState::ROLL_TO_ZERO;
+		RollState = EShipRollState1::ROLL_TO_ZERO;
 	}
 }
 
@@ -246,7 +246,7 @@ void UComplexUnitMovementSystem::ProcessArcLine(float DeltaTime)
 	// Determine acceleration state
 	AccelerationState = EShipAccelerationState::ACCELERATING;
 	TurnState = EShipYawState::TURNING_WHILE_MOVING;
-	RollState = EShipRollState::ROLLING;
+	RollState = EShipRollState1::ROLLING;
 
 	DrawDebugCircle(
 		World,
@@ -433,7 +433,7 @@ void UComplexUnitMovementSystem::CalculateRoll()
 {
 	switch (RollState)
 	{
-	case EShipRollState::NO_ROLLING:
+	case EShipRollState1::NO_ROLLING:
 		if (CurrentRollSpeed > 0)
 		{
 			CurrentRollSpeed -= AccelerationRollRate;
@@ -443,9 +443,9 @@ void UComplexUnitMovementSystem::CalculateRoll()
 			CurrentRollSpeed = 0;
 		}
 		break;
-	case EShipRollState::ROLL_TO_ZERO:
+	case EShipRollState1::ROLL_TO_ZERO:
 		break;
-	case EShipRollState::ROLLING:
+	case EShipRollState1::ROLLING:
 		if (CurrentRollSpeed < MaxRollSpeed)
 		{
 			CurrentRollSpeed += AccelerationRollRate;

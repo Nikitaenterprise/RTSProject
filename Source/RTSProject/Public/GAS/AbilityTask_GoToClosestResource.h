@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "Abilities/Tasks/AbilityTask.h"
-#include "Actors/AsteroidField.h"
+#include "Actors/Resources/AsteroidField.h"
 #include "Components/ResourceComponent.h"
 #include "AbilityTask_GoToClosestResource.generated.h"
 
