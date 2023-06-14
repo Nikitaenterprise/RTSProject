@@ -1,9 +1,15 @@
 #include "Core/RTSGameMode.h"
-#include "Core/RTSPlayerController.h"
+
+#include "AIController.h"
 #include "Actors/FogOfWar.h"
+#include "Actors/RTSPlayer.h"
 #include "Actors/Resources/ResourceManager.h"
-#include "Volumes/FogOfWarBoundsVolume.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Core/RTSPlayerController.h"
+#include "GameFramework/PlayerStart.h"
+#include "Systems/RTSPlayerState.h"
 #include "UI/GameHUD.h"
+#include "Volumes/FogOfWarBoundsVolume.h"
 
 ARTSGameMode::ARTSGameMode() : Super()
 {
@@ -30,4 +36,51 @@ void ARTSGameMode::StartPlay()
 
 	GetWorld()->SpawnActor<AResourceManager>(FActorSpawnParameters());
 	Super::StartPlay();
+}
+
+void ARTSGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Get real player start position
+	FVector PlayerLocation;
+	for (TActorIterator<ARTSPlayer> It(GetWorld()); It; ++It)
+	{
+		if (const ARTSPlayer* Player = *It)
+		{
+			PlayerLocation = Player->GetActorLocation();
+			// Setup team for real player
+			if (auto* RTSPlayerState = Cast<ARTSPlayerState>(Player->GetPlayerState()))
+			{
+				FGenericTeamId TeamId(0);
+				RTSPlayerState->SetGenericTeamId(TeamId);
+			}
+		}
+	}
+	
+	for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
+	{
+		if (const APlayerStart* PlayerStart = *It)
+		{
+			if (PlayerStart->GetActorLocation().Equals(PlayerLocation, 0.01) == false)
+			{
+				if (auto* Bot = Cast<ARTSPlayer>(UAIBlueprintHelperLibrary::SpawnAIFromClass(GetWorld(), DefaultPawnClass, nullptr, PlayerStart->GetActorLocation())))
+				{
+					// We need to spawn PlayerState for this bot
+					// TODO: remove this when network is done
+					FActorSpawnParameters SpawnInfo;
+					SpawnInfo.Owner = this;
+					SpawnInfo.Instigator = GetInstigator();
+					SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+					SpawnInfo.ObjectFlags |= RF_Transient;	// We never want player states to save into a map
+					ARTSPlayerState* PlayerState = GetWorld()->SpawnActor<ARTSPlayerState>(PlayerStateClass, SpawnInfo);
+					Bot->SetPlayerState(PlayerState);
+					
+					// Setup team for bot
+					FGenericTeamId TeamId(1);
+					PlayerState->SetGenericTeamId(TeamId);
+				}
+			}
+		}
+	}
 }

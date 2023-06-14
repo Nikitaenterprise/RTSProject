@@ -5,7 +5,6 @@
 class ABuilding;
 class AShip;
 class UInputController;
-class ACamera;
 class AGameHUD;
 class UShipHUD;
 class UBuildingHUD;
@@ -33,7 +32,6 @@ public:
 	const TArray<AActor*>& GetPlayersActors() const { return PlayersActors; }
 	TArray<AActor*>& GetPlayersActorsRef() { return PlayersActors; }
 	AGameHUD* GetGameHUD() const { return GameHUD; }
-	ACamera* GetCamera() const {return CameraRef; }
 	AFogOfWar* GetFogOfWar() const { return FogOfWar; }
 	
 	// Mouse clicks
@@ -64,9 +62,6 @@ public:
 	AFogOfWar* GetFOWManager() const { return FogOfWar; }
 	
 protected:
-	UPROPERTY(BlueprintReadOnly, Category = "Camera")
-	ACamera* CameraRef {nullptr};
-
 	// True if FogOfWar was placed on level in editor
 	// Checked in GameMode class
 	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")

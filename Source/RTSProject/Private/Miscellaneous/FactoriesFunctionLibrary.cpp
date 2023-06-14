@@ -16,6 +16,7 @@
 #include "Actors/Projectile.h"
 #include "Actors/Units/Fighter.h"
 #include "Actors/Units/Squad.h"
+#include "Systems/RTSPlayerState.h"
 #include "Systems/UnitMovement/BoidsMovementSystem.h"
 
 
@@ -63,6 +64,10 @@ AShip* UFactoriesFunctionLibrary::NewShip(UWorld* World, UClass* ClassType, ARTS
 	}
 	Controller->AddToPlayersActors(SpawnedShip);
 	SpawnedShip->SetJustCreated(true);
+	if (const auto* PlayerState = Controller->GetPlayerState<ARTSPlayerState>())
+	{
+		SpawnedShip->SetGenericTeamId(PlayerState->GetGenericTeamId());
+	}
 
 	return SpawnedShip;
 }

@@ -8,7 +8,7 @@
 
 #include "DrawDebugHelpers.h"
 #include "Actors/Buildings/Building.h"
-#include "Actors/Camera.h"
+#include "Actors/RTSPlayer.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 
 #include "SelectionRectangleWidget.generated.h"

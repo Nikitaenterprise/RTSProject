@@ -19,5 +19,6 @@ class RTSPROJECT_API ARTSAIController : public AAIController
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
 	void ChangeOrder(EOrderType InOrder) const;
 };

@@ -4,6 +4,7 @@
 #include "Abilities/GameplayAbility.h"
 #include "Components/Movement/ShipMovementComponent.h"
 #include "GameFramework/Character.h"
+#include "GenericTeamAgentInterface.h"
 #include "Interfaces/AttackInterface.h"
 #include "Interfaces/Selectable.h"
 #include "Ship.generated.h"
@@ -27,10 +28,12 @@ class UHealthShieldAttributeSet;
 class UAttackAbility;
 
 UCLASS()
-class RTSPROJECT_API AShip : public APawn,
-	public ISelectable,
-	public IAbilitySystemInterface,
-	public IAttackInterface
+class RTSPROJECT_API AShip
+	: public APawn,
+	  public ISelectable,
+	  public IAbilitySystemInterface,
+	  public IAttackInterface,
+	  public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -46,13 +49,20 @@ public:
 	UCapsuleComponent* GetCapsuleComponent() const { return CapsuleComponent; }
 	UStaticMeshComponent* GetStaticMeshComponent() const { return StaticMesh; }
 	virtual UPawnMovementComponent* GetMovementComponent() const override { return MovementComponent; }
-	
+
+	// Begin ISelectable override
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Selected(bool _bIsSelected);
 	virtual void Selected_Implementation(bool _bIsSelected) override;
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Highlighted(bool _bIsHighlighted);
 	virtual void Highlighted_Implementation(bool _bIsHighlighted) override;
+	// End ISelectable override
+
+	// Begin IGenericTeamAgentInterface override
+	virtual void SetGenericTeamId(const FGenericTeamId& InTeamID) override { TeamId = InTeamID; }
+	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
+	// End IGenericTeamAgentInterface override
 	
 	UHealthShieldAttributeSet* GetHealthShieldAttributeSet() const { return HealthShieldAttributeSet; }
 	TArray<UAttributeSet*> GetAdditionalAttributeSets() const { return AdditionalAttributeSets; }
@@ -62,6 +72,7 @@ public:
 	void SetHasWorkingTurrets( bool NewHasWorkingTurrets) { bHasWorkingTurrets = NewHasWorkingTurrets; }
 	bool GetIsSelected() const { return bIsSelected; }
 	void SetJustCreated(bool NewJustCreated) { bJustCreated = NewJustCreated; }
+	
 	// Moving
 	UFUNCTION(BlueprintCallable, Category = "Moving")
 	bool RequestMove(const FVector TargetLocation);
@@ -151,6 +162,8 @@ protected:
 	bool bMouseWheelYNegative = false;
 
 	bool bLMBPressed = false;
+
+	FGenericTeamId TeamId;
 
 	// Turrets
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Turret")

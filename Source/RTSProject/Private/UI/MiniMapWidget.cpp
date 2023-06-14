@@ -1,6 +1,6 @@
 #include "UI/MiniMapWidget.h"
 
-#include "Actors/Camera.h"
+#include "Actors/RTSPlayer.h"
 #include "Actors/FogOfWar.h"
 #include "Volumes/FogOfWarBoundsVolume.h"
 #include "Components/MiniMapIconComponent.h"
@@ -120,8 +120,11 @@ FReply UMiniMapWidget::NativeOnMouseMove(const FGeometry& MovieSceneBlends, cons
 		FVector2D HoldLocation = MovieSceneBlends.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
 		HoldLocation = HoldLocation / GetCachedGeometry().GetLocalSize();
 		HoldLocation = (HoldLocation - 0.5) * FOWBoundsVolume->GetVolumeWidth();
-		const FVector NewLocation = FVector(HoldLocation, PlayerController->GetCamera()->GetActorLocation().Z);
-		PlayerController->GetCamera()->SetActorLocation(NewLocation);
+		if (auto* CameraPlayer = Cast<ARTSPlayer>(PlayerController->GetPawn()))
+		{
+			const FVector NewLocation = FVector(HoldLocation, CameraPlayer->GetActorLocation().Z);
+			CameraPlayer->SetActorLocation(NewLocation);
+		}
 	}
 	return Super::NativeOnMouseMove(MovieSceneBlends, InMouseEvent);
 }

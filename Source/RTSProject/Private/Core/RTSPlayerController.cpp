@@ -4,7 +4,7 @@
 #include "Components/AttackComponent.h"
 #include "Actors/Units/Ship.h"
 #include "Actors/Buildings/Building.h"
-#include "Actors/Camera.h"
+#include "Actors/RTSPlayer.h"
 #include "Core/FactoryAssets.h"
 #include "UI/GameHUD.h"
 #include "DrawDebugHelpers.h"
@@ -16,17 +16,6 @@
 void ARTSPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
-	UE_LOG(LogTemp, Display, TEXT("Trying to find ACamera on level in ARTSPlayerController::BeginPlay()"));
-	ACamera* TestCamera = Cast<ACamera>(UGameplayStatics::GetPlayerPawn(this, 0));
-	if (!IsValid(TestCamera))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ACamera is nullptr in ARTSPlayerController::BeginPlay()"));
-		return;
-	}
-	CameraRef = TestCamera;
-	//CameraRef->Initialize(this);
-	CameraRef->SetOwner(this);
 
 	UE_LOG(LogTemp, Display, TEXT("Trying to find AGameHUD on level in ARTSPlayerController::BeginPlay()"));
 	AGameHUD* TestGameHUD = Cast<AGameHUD>(GetHUD());
@@ -95,12 +84,22 @@ void ARTSPlayerController::RMBReleased()
 {
 	ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
 	{
-		if (This.IsValid())
+		if (This.IsValid() == false)
 		{
-			FHitResult Hit;
-			This->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
-			return This->OrdersProcessor->ProcessOrder(EOrderType::MoveOrder, Hit.Location);
+			return false;
 		}
+		if (This->OrdersProcessor == nullptr)
+		{
+			return false;
+		}
+		
+		auto Order = [This](const AShip* InShip, const FHitResult& HitResult)
+		{
+			const FVector OrderLocation(HitResult.Location.X, HitResult.Location.Y, InShip->GetActorLocation().Z);
+			return This->OrdersProcessor->ProcessOrder(EOrderType::MoveOrder, OrderLocation);
+		};
+		Order(Args...);
+			
 		return false;
 		// if (This.IsValid())
 		// {

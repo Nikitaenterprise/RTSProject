@@ -1,7 +1,7 @@
 #include "Actors/Units/Ship.h"
 
 #include "AbilitySystemComponent.h"
-#include "Actors/Camera.h"
+#include "Actors/RTSPlayer.h"
 #include "Actors/Units/Turret.h"
 #include "AttributeSet.h"
 #include "Components/AttackComponent.h"
@@ -18,12 +18,12 @@
 #include "GAS/AttackAbility.h"
 #include "GAS/HealthShieldAttributeSet.h"
 #include "GAS/ShipAttributeSet.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Perception/PawnSensingComponent.h"
 #include "UI/GameHUD.h"
 
-AShip::AShip(const FObjectInitializer& OI)
-	: Super(OI.SetDefaultSubobjectClass<UShipMovementComponent>(TEXT("PawnMovementComponent")))
+AShip::AShip(const FObjectInitializer& OI) : Super(OI)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
@@ -32,11 +32,6 @@ AShip::AShip(const FObjectInitializer& OI)
 	
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMesh->SetupAttachment(GetRootComponent());
-
-	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
-	CapsuleComponent->SetRelativeRotation(FRotator(0, 90, 0));
-	CapsuleComponent->SetupAttachment(GetRootComponent());
-	CapsuleComponent->bDynamicObstacle = true;
 	
 	SelectionCircle = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SelectionCircle"));
 	SelectionCircle->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -44,9 +39,6 @@ AShip::AShip(const FObjectInitializer& OI)
 	
 	HealthShieldWidgetComponent = CreateDefaultSubobject<UHealthShieldWidgetComponent>(TEXT("HealthShieldWidgetComponent"));
 	HealthShieldWidgetComponent->SetupAttachment(GetRootComponent());
-	
-	MovementComponent = CreateDefaultSubobject<UShipMovementComponent>(TEXT("ShipMovementComponent"));
-	MovementComponent->SetUpdatedComponent(RootComponent);
 
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 	AttackComponent = CreateDefaultSubobject<UAttackComponent>(TEXT("AttackComponent"));
@@ -67,6 +59,9 @@ void AShip::PreInitializeComponents()
 		return;
 	}
 	PlayerController = TestController;
+
+	MovementComponent = Cast<UPawnMovementComponent>(GetComponentByClass(UPawnMovementComponent::StaticClass()));
+	CapsuleComponent = Cast<UCapsuleComponent>(GetComponentByClass(UCapsuleComponent::StaticClass()));
 	Super::PreInitializeComponents();
 }
 
@@ -117,18 +112,33 @@ void AShip::Tick(float DeltaTime)
 
 	if (bJustCreated && !bLMBPressed)
 	{
-		PlayerController->GetCamera()->bDisableZooming = true;
+		auto* PlayerPawn = Cast<ARTSPlayer>(PlayerController->GetPawn());
+		if (PlayerPawn == nullptr)
+		{
+			return;
+		}
+		
+		PlayerPawn->SetIsZoomDisabled(true);
 		if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->LockSelectionRectangle();
 		UpdatePositionWhenCreated();
 	}
 	else if (bLMBPressed)
 	{
-		PlayerController->GetCamera()->bDisableZooming = false;
+		auto* PlayerPawn = Cast<ARTSPlayer>(PlayerController->GetPawn());
+		if (PlayerPawn == nullptr)
+		{
+			return;
+		}
+		
+		PlayerPawn->SetIsZoomDisabled(false);
 		if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->UnlockSelectionRectangle();
 		bJustCreated = false;
 	}
 
-	bIsMoving = MovementComponent->Velocity.Size() > 0;
+	if (MovementComponent)
+	{
+		bIsMoving = MovementComponent->Velocity.Size() > 0;
+	}
 	//if (bIsMoving && UKismetMathLibrary::NearlyEqual_FloatFloat(PastTime, DrawNavLineOncePerThisSeconds)) DrawNavLine();
 }
 

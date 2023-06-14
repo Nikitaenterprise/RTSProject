@@ -4,8 +4,7 @@
 #include "GAS/GatherResourceAbility.h"
 #include "GAS/ResourceGathererAttributeSet.h"
 
-AWorker::AWorker(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.SetDefaultSubobjectClass<UShipMovementComponent>(FName("ShipMovementComponent")))
+AWorker::AWorker(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	ResourceGathererAttributeSet = CreateDefaultSubobject<UResourceGathererAttributeSet>(TEXT("ResourceGathererAttributeSet"));

@@ -48,6 +48,15 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	{
 		return;
 	}
+
+	if (FMath::IsNearlyZero(GetOwner()->GetActorRotation().Roll) == false)
+	{
+		RollState = EShipRollState::Roll_To_Zero;
+		FRotator RotatorToSet = GetOwner()->GetActorRotation();
+		CalculateRoll(RotatorToSet, GetOwner()->GetActorLocation(), DeltaTime);
+		FHitResult Hit;
+		SafeMoveUpdatedComponent(ConsumeInputVector(), RotatorToSet, true, Hit);
+	}
 	
 	if (PathFollowingComponent == nullptr || PathFollowingComponent->HasValidPath() == false)
 	{
@@ -55,8 +64,7 @@ void UShipMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	}
 
 	const FVector& CurrentLocation = GetOwner()->GetActorLocation();
-	FVector DestinationLocation = PathFollowingComponent->GetPathDestination();
-	DestinationLocation.Z = CurrentLocation.Z;
+	const FVector& DestinationLocation = PathFollowingComponent->GetPathDestination();
 	const float DistanceToTarget = FVector::Dist(CurrentLocation, DestinationLocation);
 	
 	CalculateSpeed(DistanceToTarget, DeltaTime);
@@ -100,8 +108,7 @@ void UShipMovementComponent::StartMoving()
 	case EPathFollowingStatus::Moving:
 	{
 		const FVector& CurrentLocation = GetOwner()->GetActorLocation();
-		FVector DestinationLocation = PathFollowingComponent->GetPathDestination();
-		DestinationLocation.Z = CurrentLocation.Z;
+		const FVector& DestinationLocation = PathFollowingComponent->GetPathDestination();
 		if (FVector::Dist(CurrentLocation, DestinationLocation) > DecelerationDistance)
 		{
 			MovementState = EShipMovementState::Accelerate;
@@ -218,10 +225,10 @@ void UShipMovementComponent::CalculateRoll(FRotator& NextRotator, const FVector&
 			RollState = EShipRollState::No_Rolling;
 			return;
 		}
-		
-		Rotator.Roll = CurrentActorRoll + CurrentRollSpeed * DeltaTime * CurrentActorRoll > 0 ? -1.f : 1.f;
-		NextRotator.Roll = Rotator.Roll;
-		
+
+		CurrentRollSpeed = FMath::Max(CurrentRollSpeed - AccelerationRollRate * DeltaTime, 0.f);
+		Rotator.Roll = CurrentRollSpeed * DeltaTime * CurrentActorRoll > 0 ? 1.f : -1.f;
+		NextRotator.Roll = CurrentActorRoll - Rotator.Roll;
 		break;
 	}
 	
@@ -241,7 +248,7 @@ void UShipMovementComponent::CalculateRoll(FRotator& NextRotator, const FVector&
 		float DesiredRoll = UKismetMathLibrary::DegAtan(CurrentSpeed * CurrentSpeed / MaxTurnRadius / 9.81);
 		DesiredRoll = FMath::Clamp(DesiredRoll, -MaxRollAngle, MaxRollAngle);
 		
-		const float DeltaRoll = CurrentRollSpeed * DeltaTime * RotationAngle > 0 ? -1.f : 1.f;
+		const float DeltaRoll = CurrentRollSpeed * DeltaTime;
 		// Set roll value in between +-DesiredRoll
 		Rotator.Roll = FMath::Clamp(CurrentActorRoll + DeltaRoll, -DesiredRoll, DesiredRoll);
 		NextRotator.Roll = Rotator.Roll;
