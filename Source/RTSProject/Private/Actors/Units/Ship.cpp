@@ -21,6 +21,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Perception/PawnSensingComponent.h"
+#include "Systems/RTSPlayerState.h"
 #include "UI/GameHUD.h"
 
 AShip::AShip(const FObjectInitializer& OI) : Super(OI)
@@ -52,13 +53,19 @@ AShip::AShip(const FObjectInitializer& OI) : Super(OI)
 
 void AShip::PreInitializeComponents()
 {
-	ARTSPlayerController* TestController = Cast<ARTSPlayerController>(GetOwner());
-	if (!IsValid(TestController))
+	PlayerController = Cast<ARTSPlayerController>(GetOwner());
+	if (IsValid(PlayerController) == false)
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr in AShip::BeginPlay()"));
-		return;
 	}
-	PlayerController = TestController;
+
+	if (const auto* RTSPlayerController = Cast<AController>(GetOwner()))
+	{
+		if (const auto* PlayerPawn = RTSPlayerController->GetPawn())
+		{
+			RTSPlayerState = PlayerPawn->GetPlayerState<ARTSPlayerState>();
+		}
+	}
 
 	MovementComponent = Cast<UPawnMovementComponent>(GetComponentByClass(UPawnMovementComponent::StaticClass()));
 	CapsuleComponent = Cast<UCapsuleComponent>(GetComponentByClass(UCapsuleComponent::StaticClass()));
@@ -70,20 +77,24 @@ void AShip::BeginPlay()
 	Super::BeginPlay();
 
 	AbilitySystemComponent->AddSet<UShipAttributeSet>();
-	
-	DebugInputComponent = PlayerController->InputComponent;
-	if (!IsValid(DebugInputComponent))
+
+	if (PlayerController)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Initialize() is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("InputComponent in AShip->Initialize() is nullptr"));
-		return;
+		DebugInputComponent = PlayerController->InputComponent;
+		if (!IsValid(DebugInputComponent))
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Initialize() is nullptr"));
+			UE_LOG(LogTemp, Error, TEXT("InputComponent in AShip->Initialize() is nullptr"));
+			return;
+		}
+		DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Pressed, this, &AShip::MouseYPositiveStart);
+		DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Released, this, &AShip::MouseYPositiveEnd);
+		DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
+		DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Released, this, &AShip::MouseYNegativeEnd);
+		DebugInputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &AShip::LMBPressed);
+		DebugInputComponent->BindAction(TEXT("LMB"), IE_Released, this, &AShip::LMBReleased);
 	}
-	DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Pressed, this, &AShip::MouseYPositiveStart);
-	DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Released, this, &AShip::MouseYPositiveEnd);
-	DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
-	DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Released, this, &AShip::MouseYNegativeEnd);
-	DebugInputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &AShip::LMBPressed);
-	DebugInputComponent->BindAction(TEXT("LMB"), IE_Released, this, &AShip::LMBReleased);
+	
 
 	if (HealthShieldWidgetComponent)
 	{
@@ -110,29 +121,33 @@ void AShip::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bJustCreated && !bLMBPressed)
+	if (PlayerController)
 	{
-		auto* PlayerPawn = Cast<ARTSPlayer>(PlayerController->GetPawn());
-		if (PlayerPawn == nullptr)
+		if (bJustCreated && !bLMBPressed)
 		{
-			return;
-		}
 		
-		PlayerPawn->SetIsZoomDisabled(true);
-		if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->LockSelectionRectangle();
-		UpdatePositionWhenCreated();
-	}
-	else if (bLMBPressed)
-	{
-		auto* PlayerPawn = Cast<ARTSPlayer>(PlayerController->GetPawn());
-		if (PlayerPawn == nullptr)
+			auto* PlayerPawn = Cast<ARTSPlayer>(PlayerController->GetPawn());
+			if (PlayerPawn == nullptr)
+			{
+				return;
+			}
+		
+			PlayerPawn->SetIsZoomDisabled(true);
+			if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->LockSelectionRectangle();
+			UpdatePositionWhenCreated();
+		}
+		else if (bLMBPressed)
 		{
-			return;
-		}
+			auto* PlayerPawn = Cast<ARTSPlayer>(PlayerController->GetPawn());
+			if (PlayerPawn == nullptr)
+			{
+				return;
+			}
 		
-		PlayerPawn->SetIsZoomDisabled(false);
-		if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->UnlockSelectionRectangle();
-		bJustCreated = false;
+			PlayerPawn->SetIsZoomDisabled(false);
+			if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->UnlockSelectionRectangle();
+			bJustCreated = false;
+		}	
 	}
 
 	if (MovementComponent)
@@ -144,8 +159,15 @@ void AShip::Tick(float DeltaTime)
 
 void AShip::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	PlayerController->RemoveFromPlayersActors(this);
-	PlayerController->RemoveFromSelectedActors(this);
+	if (RTSPlayerState)
+	{
+		RTSPlayerState->RemoveFromPlayersUnits(this);
+	}
+	
+	if (PlayerController)
+	{
+		PlayerController->RemoveFromSelectedActors(this);
+	}
 	Turrets.Empty();
 	Super::EndPlay(EndPlayReason);
 }

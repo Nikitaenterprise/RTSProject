@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AbilitySystemInterface.h"
+#include "GenericTeamAgentInterface.h"
 #include "Abilities/GameplayAbility.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/Selectable.h"
@@ -19,7 +20,11 @@ class UBuildingAttributeSet;
 class UHealthShieldAttributeSet;
 
 UCLASS()
-class RTSPROJECT_API ABuilding : public AActor, public ISelectable, public IAbilitySystemInterface
+class RTSPROJECT_API ABuilding
+	: public AActor,
+	  public ISelectable,
+	  public IAbilitySystemInterface,
+	  public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 protected:
@@ -83,6 +88,11 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Highlighted(bool _bIsHighlighted);
 	virtual void Highlighted_Implementation(bool _bIsHighlighted) override;
+
+	// Begin IGenericTeamAgentInterface override
+	virtual void SetGenericTeamId(const FGenericTeamId& InTeamID) override { TeamId = InTeamID; }
+	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
+	// End IGenericTeamAgentInterface override
 
 	void UpdatePositionWhenCreated();
 	UFUNCTION(BlueprintCallable, Category = "Building")

@@ -66,16 +66,9 @@ void ARTSGameMode::BeginPlay()
 			{
 				if (auto* Bot = Cast<ARTSPlayer>(UAIBlueprintHelperLibrary::SpawnAIFromClass(GetWorld(), DefaultPawnClass, nullptr, PlayerStart->GetActorLocation())))
 				{
-					// We need to spawn PlayerState for this bot
+					// We need to use PlayerState for this bot
 					// TODO: remove this when network is done
-					FActorSpawnParameters SpawnInfo;
-					SpawnInfo.Owner = this;
-					SpawnInfo.Instigator = GetInstigator();
-					SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-					SpawnInfo.ObjectFlags |= RF_Transient;	// We never want player states to save into a map
-					ARTSPlayerState* PlayerState = GetWorld()->SpawnActor<ARTSPlayerState>(PlayerStateClass, SpawnInfo);
-					Bot->SetPlayerState(PlayerState);
-					
+					auto* PlayerState = Cast<ARTSPlayerState>(Bot->GetPlayerState());
 					// Setup team for bot
 					FGenericTeamId TeamId(1);
 					PlayerState->SetGenericTeamId(TeamId);

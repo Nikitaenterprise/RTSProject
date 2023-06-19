@@ -9,6 +9,7 @@
 #include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Miscellaneous/AnglesFunctions.h"
+#include "Systems/RTSPlayerState.h"
 
 UComplexUnitMovementSystem::UComplexUnitMovementSystem(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -319,7 +320,7 @@ bool UComplexUnitMovementSystem::RequestNavMoving(const FVector& TargetLocation)
 
 void UComplexUnitMovementSystem::TurnOnCapsuleCollision(const bool TurnOn) const
 {
-	for (auto& Actor : Cast<AShip>(OwnerActor)->GetPlayerController()->GetPlayersActors())
+	for (auto& Actor : Cast<AShip>(OwnerActor)->GetPlayerState<ARTSPlayerState>()->GetPlayersUnits())
 	{
 		AShip* Ship = Cast<AShip>(Actor);
 		if (Ship && Ship != OwnerActor)

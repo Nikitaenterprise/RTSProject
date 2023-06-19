@@ -2,6 +2,7 @@
 
 #include "Actors/Buildings/Building.h"
 #include "Core/RTSPlayerController.h"
+#include "Systems/RTSPlayerState.h"
 #include "UI/GameHUD.h"
 
 void USelectionRectangleWidget::NativeConstruct()
@@ -216,7 +217,7 @@ void USelectionRectangleWidget::EndRectangleSelection(const FGeometry& MovieScen
 	}
 	for (const auto& Actor : ShouldBeSelected)
 	{
-		if (PlayerController->GetPlayersActors().Contains(Actor))
+		if (PlayerController->GetPlayerState<ARTSPlayerState>()->GetPlayersUnits().Contains(Actor))
 		{
 			// If SelectedActors has no actors then add first
 			if (SelectedActors.Num() == 0)
@@ -268,7 +269,7 @@ void USelectionRectangleWidget::ClearSelection()
 
 	// All actors should be deselected unless shift is pressed
 	// in this case SelectedActors won't be deselected
-	for (auto& Actor : PlayerController->GetPlayersActors())
+	for (auto& Actor : PlayerController->GetPlayerState<ARTSPlayerState>()->GetPlayersUnits())
 	{
 		if (!SelectedActors.Contains(Actor))
 		{
@@ -311,7 +312,7 @@ void USelectionRectangleWidget::SelectActorUnderCursor()
 	if (bHit)
 	{
 		AActor* Actor = Hit.GetActor();
-		if (PlayerController->GetPlayersActors().Contains(Actor))
+		if (PlayerController->GetPlayerState<ARTSPlayerState>()->GetPlayersUnits().Contains(Actor))
 		{
 			ShouldBeSelected.AddUnique(Actor);
 			SelectedActors.AddUnique(Actor);

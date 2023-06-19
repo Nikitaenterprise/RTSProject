@@ -27,10 +27,7 @@ public:
 	void RemoveFromSelectedActors(AActor* ActorToRemove) { SelectedActors.Remove(ActorToRemove); }
 	const TArray<AActor*>& GetSelectedActors() const { return SelectedActors; }
 	TArray<AActor*>& GetSelectedActorsRef() { return SelectedActors; }
-	void AddToPlayersActors(AActor* ActorToAdd) { PlayersActors.AddUnique(ActorToAdd); }
-	void RemoveFromPlayersActors(AActor* ActorToRemove) { PlayersActors.Remove(ActorToRemove); }
-	const TArray<AActor*>& GetPlayersActors() const { return PlayersActors; }
-	TArray<AActor*>& GetPlayersActorsRef() { return PlayersActors; }
+	
 	AGameHUD* GetGameHUD() const { return GameHUD; }
 	AFogOfWar* GetFogOfWar() const { return FogOfWar; }
 	

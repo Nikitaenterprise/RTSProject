@@ -16,6 +16,7 @@
 #include "Components/WidgetComponent.h"
 #include "GAS/BuildingAttributeSet.h"
 #include "GAS/HealthShieldAttributeSet.h"
+#include "Systems/RTSPlayerState.h"
 #include "UI/SelectionRectangleWidget.h"
 
 ABuilding::ABuilding()
@@ -52,7 +53,6 @@ void ABuilding::BeginPlay()
 		return;
 	}
 	PlayerController = TestController;
-	PlayerController->AddToPlayersActors(this);
 
 	if (HealthShieldWidgetComponent)
 	{
@@ -101,7 +101,21 @@ void ABuilding::Tick(float DeltaTime)
 
 void ABuilding::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	PlayerController->RemoveFromPlayersActors(this);
+	const auto* Controller = Cast<AController>(GetOwner());
+	if (Controller == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("ABuilding::EndPlay() Controller is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("ABuilding::EndPlay() Controller is nullptr"));
+	}
+	
+	auto* PlayerState = Controller->GetPlayerState<ARTSPlayerState>();
+	if (PlayerState == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("ABuilding::EndPlay() Controller is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("ABuilding::EndPlay() Controller is nullptr"));
+	}
+	
+	PlayerState->RemoveFromPlayersUnits(this);
 	//SpawnEmitterAtLocation()
 	Super::EndPlay(EndPlayReason);
 }

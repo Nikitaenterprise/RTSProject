@@ -9,6 +9,7 @@
 #include "Interfaces/Selectable.h"
 #include "Ship.generated.h"
 
+class ARTSPlayerState;
 class UMiniMapIconComponent;
 class UFogOfWarInfluencerComponent;
 class UShipMovementComponent;
@@ -72,6 +73,7 @@ public:
 	void SetHasWorkingTurrets( bool NewHasWorkingTurrets) { bHasWorkingTurrets = NewHasWorkingTurrets; }
 	bool GetIsSelected() const { return bIsSelected; }
 	void SetJustCreated(bool NewJustCreated) { bJustCreated = NewJustCreated; }
+	void SetPlayerController(ARTSPlayerController* InPlayerController) { PlayerController = InPlayerController; }
 	
 	// Moving
 	UFUNCTION(BlueprintCallable, Category = "Moving")
@@ -128,6 +130,8 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Base")
 	ARTSPlayerController* PlayerController = nullptr;
+	UPROPERTY(BlueprintReadOnly, Category = "Base")
+	ARTSPlayerState* RTSPlayerState = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "Input")
 	UInputComponent* DebugInputComponent = nullptr;
 
