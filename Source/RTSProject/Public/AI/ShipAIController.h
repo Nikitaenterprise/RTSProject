@@ -21,6 +21,8 @@ public:
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
 
+	virtual void ObtainPlayerState() override;
+	
 	UPROPERTY()
 	AShip* Ship {nullptr};
 

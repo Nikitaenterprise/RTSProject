@@ -53,23 +53,10 @@ AShip::AShip(const FObjectInitializer& OI) : Super(OI)
 
 void AShip::PreInitializeComponents()
 {
-	PlayerController = Cast<ARTSPlayerController>(GetOwner());
-	if (IsValid(PlayerController) == false)
-	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr in AShip::BeginPlay()"));
-	}
-
-	if (const auto* RTSPlayerController = Cast<AController>(GetOwner()))
-	{
-		if (const auto* PlayerPawn = RTSPlayerController->GetPawn())
-		{
-			RTSPlayerState = PlayerPawn->GetPlayerState<ARTSPlayerState>();
-		}
-	}
+	Super::PreInitializeComponents();
 
 	MovementComponent = Cast<UPawnMovementComponent>(GetComponentByClass(UPawnMovementComponent::StaticClass()));
 	CapsuleComponent = Cast<UCapsuleComponent>(GetComponentByClass(UCapsuleComponent::StaticClass()));
-	Super::PreInitializeComponents();
 }
 
 void AShip::BeginPlay()
@@ -88,11 +75,8 @@ void AShip::BeginPlay()
 			return;
 		}
 		DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Pressed, this, &AShip::MouseYPositiveStart);
-		DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Released, this, &AShip::MouseYPositiveEnd);
 		DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
-		DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Released, this, &AShip::MouseYNegativeEnd);
 		DebugInputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &AShip::LMBPressed);
-		DebugInputComponent->BindAction(TEXT("LMB"), IE_Released, this, &AShip::LMBReleased);
 	}
 	
 
@@ -115,66 +99,33 @@ void AShip::BeginPlay()
 			This->Destroy();
 		}
 	});
+
+	if (RTSPlayer)
+	{
+		RTSPlayer->SetIsZoomDisabled(true);
+	}
+	
+	if (PlayerController->GetGameHUD())
+	{
+		PlayerController->GetGameHUD()->LockSelectionRectangle();
+	}
 }
 
 void AShip::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (PlayerController)
-	{
-		if (bJustCreated && !bLMBPressed)
-		{
-		
-			auto* PlayerPawn = Cast<ARTSPlayer>(PlayerController->GetPawn());
-			if (PlayerPawn == nullptr)
-			{
-				return;
-			}
-		
-			PlayerPawn->SetIsZoomDisabled(true);
-			if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->LockSelectionRectangle();
-			UpdatePositionWhenCreated();
-		}
-		else if (bLMBPressed)
-		{
-			auto* PlayerPawn = Cast<ARTSPlayer>(PlayerController->GetPawn());
-			if (PlayerPawn == nullptr)
-			{
-				return;
-			}
-		
-			PlayerPawn->SetIsZoomDisabled(false);
-			if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->UnlockSelectionRectangle();
-			bJustCreated = false;
-		}	
-	}
-
-	if (MovementComponent)
-	{
-		bIsMoving = MovementComponent->Velocity.Size() > 0;
-	}
-	//if (bIsMoving && UKismetMathLibrary::NearlyEqual_FloatFloat(PastTime, DrawNavLineOncePerThisSeconds)) DrawNavLine();
 }
 
 void AShip::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (RTSPlayerState)
-	{
-		RTSPlayerState->RemoveFromPlayersUnits(this);
-	}
-	
-	if (PlayerController)
-	{
-		PlayerController->RemoveFromSelectedActors(this);
-	}
 	Turrets.Empty();
+	
 	Super::EndPlay(EndPlayReason);
 }
 
-void AShip::Selected_Implementation(bool _bIsSelected)
+void AShip::Selected_Implementation(bool bInIsSelected)
 {
-	bIsSelected = _bIsSelected;
+	bIsSelected = bInIsSelected;
 	if (bIsSelected)
 	{
 		HealthShieldWidgetComponent->SetVisibility(true);
@@ -187,11 +138,11 @@ void AShip::Selected_Implementation(bool _bIsSelected)
 	}
 }
 
-void AShip::Highlighted_Implementation(bool _bIsHighlighted)
+void AShip::Highlighted_Implementation(bool bInIsHighlighted)
 {
 	if (!bIsSelected)
 	{
-		bIsHighlighted = _bIsHighlighted;
+		bIsHighlighted = bInIsHighlighted;
 		if (bIsHighlighted)
 		{
 			HealthShieldWidgetComponent->SetVisibility(true);
@@ -202,36 +153,6 @@ void AShip::Highlighted_Implementation(bool _bIsHighlighted)
 			HealthShieldWidgetComponent->SetVisibility(false);
 			SelectionCircle->SetVisibility(false);
 		}
-	}
-}
-
-bool AShip::RequestMove(const FVector TargetLocation)
-{
-	if (!MovementComponent)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("MovementComponent in AShip->Move() is null"));
-		UE_LOG(LogTemp, Error, TEXT("MovementComponent in AShip->Move() is null"));
-		return false;
-	}
-	//MovementComponent->MoveTo(TargetLocation);
-	//DrawNavLine();
-	return true;
-}
-
-void AShip::DrawNavLine()
-{
-	if (NavPathCoords.Num() < 2) return;
-	
-	for (size_t i = 0; i < NavPathCoords.Num() - 1; i++)
-	{
-		DrawDebugLine(GetWorld(),
-			NavPathCoords[i],
-			NavPathCoords[i + 1],
-			FColor::Red,
-			false,
-			DrawNavLineOncePerThisSeconds,
-			0,
-			5);
 	}
 }
 
@@ -251,48 +172,37 @@ void AShip::UpdatePositionWhenCreated()
 	SetActorLocation(Location, false, nullptr, ETeleportType::None);*/
 }
 
-void AShip::RotateWhenCreatedPositive()
+void AShip::MouseYPositiveStart()
 {
-	if (!bJustCreated) return;
+	if (bJustCreated == false)
+	{
+		return;
+	}
 	SetActorRotation(FRotator(0, GetActorRotation().Yaw - 10, 0));
 	GEngine->AddOnScreenDebugMessage(-1, 0.1, FColor::White, GetActorForwardVector().Rotation().ToString());
 }
 
-void AShip::RotateWhenCreatedNegative()
+void AShip::MouseYNegativeStart()
 {
-	if (!bJustCreated) return;
+	if (bJustCreated == false)
+	{
+		return;
+	}
 	SetActorRotation(FRotator(0, GetActorRotation().Yaw + 10, 0));
 	GEngine->AddOnScreenDebugMessage(-1, 0.1, FColor::White, GetActorForwardVector().Rotation().ToString());
 }
 
-void AShip::MouseYPositiveStart()
-{
-	bMouseWheelYPositive = true;
-	RotateWhenCreatedPositive();
-}
-
-void AShip::MouseYPositiveEnd()
-{
-	bMouseWheelYPositive = false;
-}
-
-void AShip::MouseYNegativeStart()
-{
-	bMouseWheelYNegative = true;
-	RotateWhenCreatedNegative();
-}
-
-void AShip::MouseYNegativeEnd()
-{
-	bMouseWheelYNegative = false;
-}
-
 void AShip::LMBPressed()
 {
-	bLMBPressed = true;
-}
-
-void AShip::LMBReleased()
-{
-	bLMBPressed = false;
+	if (RTSPlayer)
+	{
+		RTSPlayer->SetIsZoomDisabled(false);
+	}
+	
+	if (PlayerController->GetGameHUD())
+	{
+		PlayerController->GetGameHUD()->UnlockSelectionRectangle();
+	}
+	
+	bJustCreated = false;
 }

@@ -13,7 +13,9 @@ class RTSPROJECT_API UAbstractOrder : public UObject
 	GENERATED_BODY()
 
 public:
-	virtual void Initialize(const TArray<AActor*>& InSelectedActors, FVector InOrderLocation = FVector::ZeroVector);
+	virtual void Initialize(const TArray<AActor*>& InSelectedActors,
+		const FVector& InOrderLocation,
+		const FHitResult& InHitResult);
 
 	virtual bool Execute();
 	virtual void ProcessOrder(ARTSAIController* InRTSAIController, UBlackboardComponent* InBlackboard);
@@ -23,4 +25,5 @@ protected:
 	TArray<AActor*> SelectedActors;
 
 	FVector OrderLocation;
+	FHitResult HitResultUnderCursor;
 };

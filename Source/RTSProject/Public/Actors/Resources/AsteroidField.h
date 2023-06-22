@@ -5,7 +5,6 @@
 #include "AsteroidField.generated.h"
 
 class AAsteroidResource;
-class ARTSPlayerController;
 class UBoxComponent;
 class UWidgetComponent;
 
@@ -19,8 +18,6 @@ protected:
 	USceneComponent* SceneComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UBoxComponent* BoxCollision = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
-	ARTSPlayerController* PlayerController = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UWidgetComponent* WidgetComponent = nullptr;
 	UPROPERTY(EditAnywhere, Category = "GAS")
@@ -49,7 +46,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	int32 GetNumberOfAsteroidsInField();
 	UFUNCTION(BlueprintCallable)
-	void AddRandomNumberOfAsteroidsToField(int MinValue = 5, int MaxValue = 20);
+	void AddRandomNumberOfAsteroidsToField(int MinValue = 2, int MaxValue = 7);
 	UFUNCTION(BlueprintCallable)
 	void CreateAsteroidAndAddItToField();
 	UFUNCTION(BlueprintCallable)

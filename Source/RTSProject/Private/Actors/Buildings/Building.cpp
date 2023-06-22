@@ -19,7 +19,8 @@
 #include "Systems/RTSPlayerState.h"
 #include "UI/SelectionRectangleWidget.h"
 
-ABuilding::ABuilding()
+ABuilding::ABuilding(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
@@ -43,17 +44,7 @@ ABuilding::ABuilding()
 void ABuilding::BeginPlay()
 {
 	Super::BeginPlay();
-
-	bJustCreated = true;
 	
-	ARTSPlayerController* TestController = Cast<ARTSPlayerController>(GetOwner());
-	if (!IsValid(TestController))
-	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr in ABuilding::BeginPlay()"));
-		return;
-	}
-	PlayerController = TestController;
-
 	if (HealthShieldWidgetComponent)
 	{
 		HealthShieldWidgetComponent->SetHealthShieldAttributeSet(HealthShieldAttributeSet);
@@ -101,22 +92,8 @@ void ABuilding::Tick(float DeltaTime)
 
 void ABuilding::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	const auto* Controller = Cast<AController>(GetOwner());
-	if (Controller == nullptr)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("ABuilding::EndPlay() Controller is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("ABuilding::EndPlay() Controller is nullptr"));
-	}
+	//SpawnEmitterAtLocation();
 	
-	auto* PlayerState = Controller->GetPlayerState<ARTSPlayerState>();
-	if (PlayerState == nullptr)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("ABuilding::EndPlay() Controller is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("ABuilding::EndPlay() Controller is nullptr"));
-	}
-	
-	PlayerState->RemoveFromPlayersUnits(this);
-	//SpawnEmitterAtLocation()
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -130,9 +107,9 @@ void ABuilding::LMBReleased()
 	bLMBPressed = false;
 }
 
-void ABuilding::Selected_Implementation(bool _bIsSelected)
+void ABuilding::Selected_Implementation(bool bInIsSelected)
 {
-	bIsSelected = _bIsSelected;
+	bIsSelected = bInIsSelected;
 	if (bIsSelected)
 	{
 		HealthShieldWidgetComponent->SetVisibility(true);
@@ -145,11 +122,11 @@ void ABuilding::Selected_Implementation(bool _bIsSelected)
 	}
 }
 
-void ABuilding::Highlighted_Implementation(bool _bIsHighlighted)
+void ABuilding::Highlighted_Implementation(bool bInIsHighlighted)
 {
 	if (!bIsSelected)
 	{
-		bIsHighlighted = _bIsHighlighted;
+		bIsHighlighted = bInIsHighlighted;
 		if (bIsHighlighted)
 		{
 			HealthShieldWidgetComponent->SetVisibility(true);

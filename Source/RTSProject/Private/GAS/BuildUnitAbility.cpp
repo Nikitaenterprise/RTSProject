@@ -1,5 +1,6 @@
 #include "GAS/BuildUnitAbility.h"
 
+#include "ToolContextInterfaces.h"
 #include "Actors/Buildings/Building.h"
 #include "Actors/Units/Ship.h"
 #include "GAS/BuildingAttributeSet.h"
@@ -46,11 +47,10 @@ void UBuildUnitAbility::BuildUnit()
 	// Add height to spawn location
 	const FVector SpawnLocation = Building->GetSpawnPointLocation() + FVector(0, 0, 150);
 	// First the ship is created in a place outside the borders
-	AShip* SpawnedShip = UFactoriesFunctionLibrary::NewShip(
-		GetWorld(), ClassType, Building->GetPlayerController(), SpawnLocation);
+	AShip* SpawnedShip = UFactoriesFunctionLibrary::NewShip(GetWorld(), ClassType, Building->GetPlayerController(), SpawnLocation);
 	if (IsValid(SpawnedShip))
 	{
-		UFactoriesFunctionLibrary::AddTurretsToShip(SpawnedShip);
+		UFactoriesFunctionLibrary::AddTurretsToShip(GetWorld(), SpawnedShip);
 	}
 	FinishBuildingUnit();
 }

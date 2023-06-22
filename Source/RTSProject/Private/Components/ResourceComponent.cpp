@@ -2,6 +2,7 @@
 
 #include "Kismet/GameplayStatics.h"
 #include "Actors/Resources/ResourceManager.h"
+#include "Core/RTSGameMode.h"
 #include "GAS/ResourceSourceAttributeSet.h"
 
 UResourceComponent::UResourceComponent()
@@ -12,8 +13,8 @@ UResourceComponent::UResourceComponent()
 void UResourceComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	const auto TestResourceManager = Cast<AResourceManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AResourceManager::StaticClass()));
+	
+	auto* TestResourceManager = ARTSGameMode::GetRTSGameMode(GetWorld())->GetResourceManager();
 	if (!IsValid(TestResourceManager))
 	{
 		UE_LOG(LogTemp, Error, TEXT("AResourceManager is nullptr in AResource::BeginPlay()"));

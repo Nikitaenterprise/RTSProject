@@ -10,7 +10,28 @@ UCLASS()
 class RTSPROJECT_API AAsteroidResource : public ADynamicSDMCActor
 {
 	GENERATED_BODY()
+	
+public:
+	AAsteroidResource();
+	virtual void PostLoad() override;
+	virtual void Tick(float DeltaTime) override;
+	
+	UFUNCTION(BlueprintCallable)
+	UAbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
+	void SetAbilitySystemComponent(UAbilitySystemComponent* NewAbilitySystemComponent) { AbilitySystemComponent = NewAbilitySystemComponent; }
+	UFUNCTION(BlueprintCallable)
+	UResourceComponent* GetResourceComponent() const { return ResourceComponent; }
+	
+	float GetRotationSpeed() const { return RotationSpeed; }
+	void SetRotationSpeed(float NewRotationSpeed) { RotationSpeed = NewRotationSpeed; }
+	bool GetIsInAsteroidField() const { return bIsInAsteroidField; }
+	void SetIsInAsteroidField(bool bNewIsInAsteroidField) { bIsInAsteroidField = bNewIsInAsteroidField; }
+	
 protected:
+	virtual void BeginPlay() override;
+	virtual void CheckCapacity(const FOnAttributeChangeData& Data);
+	void Deform();
+	
 	UPROPERTY(EditAnywhere, Category = "GAS")
 	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
 	UPROPERTY(EditAnywhere)
@@ -32,23 +53,4 @@ protected:
 	bool bShouldDistortCavityWithSinWave = false;
 	
 	bool bIsInAsteroidField = false;
-public:
-	AAsteroidResource();
-	virtual void PostLoad() override;
-	virtual void Tick(float DeltaTime) override;
-	
-	UFUNCTION(BlueprintCallable)
-	UAbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
-	void SetAbilitySystemComponent(UAbilitySystemComponent* NewAbilitySystemComponent) { AbilitySystemComponent = NewAbilitySystemComponent; }
-	UFUNCTION(BlueprintCallable)
-	UResourceComponent* GetResourceComponent() const { return ResourceComponent; }
-	
-	float GetRotationSpeed() const { return RotationSpeed; }
-	void SetRotationSpeed(float NewRotationSpeed) { RotationSpeed = NewRotationSpeed; }
-	bool GetIsInAsteroidField() const { return bIsInAsteroidField; }
-	void SetIsInAsteroidField(bool bNewIsInAsteroidField) { bIsInAsteroidField = bNewIsInAsteroidField; }
-protected:
-	virtual void BeginPlay() override;
-	virtual void CheckCapacity(const FOnAttributeChangeData& Data);
-	void Deform();
 };

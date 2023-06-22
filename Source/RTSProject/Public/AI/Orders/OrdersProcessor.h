@@ -12,7 +12,10 @@ enum class EOrderType : uint8
 	AttackOrder,
 	MoveAndAttackOrder,
 	StopOrder,
-	HoldPositionOrder
+	HoldPositionOrder,
+
+	GatherResource,
+	ReturnResource
 };
 
 class UAbstractOrder;
@@ -26,8 +29,8 @@ class RTSPROJECT_API UOrdersProcessor : public UObject
 public:
 	void Initialize(ARTSPlayerController* InRTSPlayerController);
 
-	bool ProcessOrder(EOrderType Order, const FVector& OrderLocation);
-
+	bool ProcessOrder(EOrderType Order, const FVector& OrderLocation, const FHitResult& HitResult);
+	
 protected:
 	UPROPERTY()
 	ARTSPlayerController* RTSPlayerController = nullptr;

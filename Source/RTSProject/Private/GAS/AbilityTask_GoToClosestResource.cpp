@@ -2,6 +2,8 @@
 
 #include "Actors/Resources/ResourceManager.h"
 #include "Actors/Units/Ship.h"
+#include "AI/ShipAIController.h"
+#include "Core/RTSGameMode.h"
 #include "Core/RTSPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -15,28 +17,26 @@ UAbilityTask_GoToClosestResource* UAbilityTask_GoToClosestResource::GoToClosestR
 void UAbilityTask_GoToClosestResource::Activate()
 {
 	Super::Activate();
-	auto Ship = Cast<AShip>(GetOwnerActor());
+	const auto* Ship = Cast<AShip>(GetOwnerActor());
 	if (!Ship)
 	{
 		EndTask();
+		return;
 	}
-	auto Controller = Cast<ARTSPlayerController>(Ship->GetController());
-	if (!Controller)
-	{
-		EndTask();
-	}
-	auto ResourceManager = Cast<AResourceManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AResourceManager::StaticClass()));
+	auto* ResourceManager = ARTSGameMode::GetRTSGameMode(GetWorld())->GetResourceManager();
 	if (!ResourceManager)
 	{
 		EndTask();
+		return;
 	}
 	ClosestAsteroidField = ResourceManager->GetClosestAsteroidField(Ship->GetActorLocation());
 	if (!ClosestAsteroidField)
 	{
 		NoAdjacentResourceFound.Broadcast();
 		EndTask();
+		return;
 	}
-	Ship->RequestMove(ClosestAsteroidField->GetActorLocation());
+	OnDestinationReached.Broadcast(ClosestAsteroidField);
 }
 
 void UAbilityTask_GoToClosestResource::OnDestroy(bool AbilityEnded)

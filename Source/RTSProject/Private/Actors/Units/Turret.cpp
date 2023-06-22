@@ -13,6 +13,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/ArrowComponent.h"
 #include "Components/SceneComponent.h"
+#include "Core/RTSGameMode.h"
+#include "Kismet/GameplayStatics.h"
 #include "Miscellaneous/FactoriesFunctionLibrary.h"
 
 ATurret::ATurret()
@@ -75,21 +77,14 @@ void ATurret::BeginPlay()
 	// If no rocket is set in turret blueprint then set first from FactoryAssets
 	if (ProjectileClass.Get() == nullptr)
 	{
-		if (PlayerController->GetFactoryAssets())
+		const auto* GameMode = Cast<ARTSGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+		if (GameMode == nullptr)
 		{
-			if (PlayerController->GetFactoryAssets()->GetRocketClass(0))
-			{
-				ProjectileClass = PlayerController->GetFactoryAssets()->GetRocketClass(0);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("RocketClass in FactoryAssets is empty"));
-			}
+			GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("ATurret::BeginPlay ARTSGameMode is nullptr"));
+			UE_LOG(LogTemp, Error, TEXT("ATurret::BeginPlay ARTSGameMode is nullptr"));
+			return;
 		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("FactoryAssets in PlayerController is nullptr"));
-		}
+		ProjectileClass = GameMode->GetFactoryAssets()->GetRocketClass(0);
 	}
 	OwnerShip->GetTurrets().AddUnique(this);
 }

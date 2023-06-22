@@ -17,10 +17,10 @@ void UAbilityTask_GatherResource::Activate()
 	Super::Activate();
 
 	bool HasGatherAttribute = false;
-	auto Actor = Cast<AShip>(GetOwnerActor());
+	const auto* Actor = Cast<AShip>(GetOwnerActor());
 	if (Actor)
 	{
-		for (const auto Attribute : Actor->GetAdditionalAttributeSets())
+		for (const auto Attribute : Actor->GetAbilitySystemComponent()->GetSpawnedAttributes())
 		{
 			ResourceGatherAttributeSet = Cast<UResourceGathererAttributeSet>(Attribute);
 			if (ResourceGatherAttributeSet)
@@ -33,13 +33,15 @@ void UAbilityTask_GatherResource::Activate()
 	if (!HasGatherAttribute)
 	{
 		EndTask();
+		return;
 	}
 
-	auto TestResourceComponent = Actor->FindComponentByClass<UResourceComponent>();
+	auto* TestResourceComponent = ResourceToGather->FindComponentByClass<UResourceComponent>();
 	if (!TestResourceComponent)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Actor %s has no UResourceComponent"), *Actor->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("Actor %s has no UResourceComponent"), *ResourceToGather->GetName());
 		EndTask();
+		return;
 	}
 	ResourceComponent = TestResourceComponent;
 		
@@ -60,6 +62,7 @@ void UAbilityTask_GatherResource::Gather()
 	{
 		OnResourceConsumed.Broadcast();
 		EndTask();
+		return;
 	}
 	const auto Ship = Cast<AShip>(GetOwnerActor());
 	if (!Ship || !ResourceGatherAttributeSet)
@@ -79,8 +82,8 @@ void UAbilityTask_GatherResource::Gather()
 	ToSourceGameplayModifierInfo.Attribute = ResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacityAttribute();
 	ToSourceGameplayModifierInfo.ModifierOp = EGameplayModOp::Override;
 
-	auto CurrentResourceCapacity = ResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacity();
-	auto CurrentStorageCapacity = ResourceGatherAttributeSet->GetCargoStorage();
+	const float CurrentResourceCapacity = ResourceComponent->GetResourceSourceAttributeSet()->GetResourceCapacity();
+	const float CurrentStorageCapacity = ResourceGatherAttributeSet->GetCargoStorage();
 	auto TryGatherAmount = ResourceGatherAttributeSet->GetResourceGatheringSpeed();
 	bool bIsCargoFull = false;
 	bool bIsSourceEmpty = false;
@@ -105,10 +108,12 @@ void UAbilityTask_GatherResource::Gather()
 	{
 		OnCargoFull.Broadcast();
 		EndTask();
+		return;
 	}
 	if (bIsSourceEmpty)
 	{
 		OnResourceConsumed.Broadcast();
+		return;
 	}
 }
 

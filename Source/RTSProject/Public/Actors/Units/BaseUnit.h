@@ -5,6 +5,10 @@
 #include "Interfaces/Selectable.h"
 #include "BaseUnit.generated.h"
 
+class ARTSPlayerController;
+class ARTSPlayer;
+class ARTSPlayerState;
+
 UCLASS()
 class RTSPROJECT_API ABaseUnit
 	: public APawn,
@@ -14,12 +18,15 @@ class RTSPROJECT_API ABaseUnit
 	GENERATED_BODY()
 
 public:
-	ABaseUnit();
-	void PreInitializeComponents() override;
-	void BeginPlay() override;
-	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	ABaseUnit(const FObjectInitializer& ObjectInitializer);
+	virtual void PreInitializeComponents() override;
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	void SetPlayerController(ARTSPlayerController* InPlayerController) { PlayerController = InPlayerController; }
+	void SetJustCreated(bool bInJustCreated) { bJustCreated = bInJustCreated; }
+	
+	ARTSPlayerState* GetRTSPlayerState() const { return RTSPlayerState; }
 	
 	// Begin ISelectable override
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
@@ -37,10 +44,13 @@ public:
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "BaseUnit")
-	ARTSPlayerController* PlayerController = nullptr;
+	ARTSPlayerController* PlayerController {nullptr};
 	
 	UPROPERTY(BlueprintReadOnly, Category = "BaseUnit")
-	ARTSPlayerState* RTSPlayerState = nullptr;
+	ARTSPlayerState* RTSPlayerState {nullptr};
+
+	UPROPERTY(BlueprintReadOnly, Category = "BaseUnit")
+	ARTSPlayer* RTSPlayer {nullptr};
 
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsSelected = false;

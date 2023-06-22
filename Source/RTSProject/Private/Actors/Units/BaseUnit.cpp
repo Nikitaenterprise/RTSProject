@@ -1,10 +1,12 @@
 ﻿#include "Actors/Units/BaseUnit.h"
 
+#include "Actors/RTSPlayer.h"
 #include "Core/RTSPlayerController.h"
 #include "Systems/RTSPlayerState.h"
 
 
-ABaseUnit::ABaseUnit()
+ABaseUnit::ABaseUnit(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
@@ -19,8 +21,9 @@ void ABaseUnit::PreInitializeComponents()
 
 	if (const auto* RTSPlayerController = Cast<AController>(GetOwner()))
 	{
-		if (const auto* PlayerPawn = RTSPlayerController->GetPawn())
+		if (auto* PlayerPawn = RTSPlayerController->GetPawn())
 		{
+			RTSPlayer = Cast<ARTSPlayer>(PlayerPawn);
 			RTSPlayerState = PlayerPawn->GetPlayerState<ARTSPlayerState>();
 		}
 	}
@@ -31,6 +34,8 @@ void ABaseUnit::PreInitializeComponents()
 void ABaseUnit::BeginPlay()
 {
 	Super::BeginPlay();
+
+	bJustCreated = true;
 }
 
 void ABaseUnit::EndPlay(const EEndPlayReason::Type EndPlayReason)

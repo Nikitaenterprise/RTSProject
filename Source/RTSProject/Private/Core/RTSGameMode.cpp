@@ -33,8 +33,12 @@ void ARTSGameMode::StartPlay()
 	//TestFogOfWar->DispatchBeginPlay();
 	FindOnLevel<AFogOfWarBoundsVolume>(FogOfWarBoundsVolume, AFogOfWarBoundsVolume::StaticClass());
     //TestFogOfWarBoundsVolume->DispatchBeginPlay();
-
-	GetWorld()->SpawnActor<AResourceManager>(FActorSpawnParameters());
+	
+	if (FindOnLevel<AResourceManager>(ResourceManager, AResourceManager::StaticClass()) == false)
+	{
+		ResourceManager = GetWorld()->SpawnActor<AResourceManager>(FActorSpawnParameters());
+	}
+	
 	Super::StartPlay();
 }
 
@@ -76,4 +80,10 @@ void ARTSGameMode::BeginPlay()
 			}
 		}
 	}
+}
+
+ARTSGameMode* ARTSGameMode::GetRTSGameMode(const UObject* WorldContextObject)
+{
+	const auto* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+	return World ? Cast<ThisClass>(World->GetAuthGameMode()) : nullptr;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AbilitySystemInterface.h"
+#include "BaseUnit.h"
 #include "Abilities/GameplayAbility.h"
 #include "Components/Movement/ShipMovementComponent.h"
 #include "GameFramework/Character.h"
@@ -30,11 +31,9 @@ class UAttackAbility;
 
 UCLASS()
 class RTSPROJECT_API AShip
-	: public APawn,
-	  public ISelectable,
+	: public ABaseUnit,
 	  public IAbilitySystemInterface,
-	  public IAttackInterface,
-	  public IGenericTeamAgentInterface
+	  public IAttackInterface
 {
 	GENERATED_BODY()
 
@@ -52,18 +51,9 @@ public:
 	virtual UPawnMovementComponent* GetMovementComponent() const override { return MovementComponent; }
 
 	// Begin ISelectable override
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
-	void Selected(bool _bIsSelected);
-	virtual void Selected_Implementation(bool _bIsSelected) override;
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
-	void Highlighted(bool _bIsHighlighted);
-	virtual void Highlighted_Implementation(bool _bIsHighlighted) override;
+	virtual void Selected_Implementation(bool bInIsSelected) override;
+	virtual void Highlighted_Implementation(bool bInIsHighlighted) override;
 	// End ISelectable override
-
-	// Begin IGenericTeamAgentInterface override
-	virtual void SetGenericTeamId(const FGenericTeamId& InTeamID) override { TeamId = InTeamID; }
-	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
-	// End IGenericTeamAgentInterface override
 	
 	UHealthShieldAttributeSet* GetHealthShieldAttributeSet() const { return HealthShieldAttributeSet; }
 	TArray<UAttributeSet*> GetAdditionalAttributeSets() const { return AdditionalAttributeSets; }
@@ -71,27 +61,14 @@ public:
 	ARTSPlayerController* GetPlayerController() const { return PlayerController; }
 	bool GetHasWorkingTurrets() const { return bHasWorkingTurrets; }
 	void SetHasWorkingTurrets( bool NewHasWorkingTurrets) { bHasWorkingTurrets = NewHasWorkingTurrets; }
-	bool GetIsSelected() const { return bIsSelected; }
-	void SetJustCreated(bool NewJustCreated) { bJustCreated = NewJustCreated; }
-	void SetPlayerController(ARTSPlayerController* InPlayerController) { PlayerController = InPlayerController; }
 	
-	// Moving
-	UFUNCTION(BlueprintCallable, Category = "Moving")
-	bool RequestMove(const FVector TargetLocation);
-
-	void DrawNavLine();
 	void UpdatePositionWhenCreated();
 
 	// Mouse wheel
-	void RotateWhenCreatedPositive();
-	void RotateWhenCreatedNegative();
 	void MouseYPositiveStart();
-	void MouseYPositiveEnd();
 	void MouseYNegativeStart();
-	void MouseYNegativeEnd();
 
 	void LMBPressed();
-	void LMBReleased();
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
@@ -128,46 +105,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "GAS")
 	TArray<UAttributeSet*> AdditionalAttributeSets;
 	
-	UPROPERTY(BlueprintReadOnly, Category = "Base")
-	ARTSPlayerController* PlayerController = nullptr;
-	UPROPERTY(BlueprintReadOnly, Category = "Base")
-	ARTSPlayerState* RTSPlayerState = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "Input")
 	UInputComponent* DebugInputComponent = nullptr;
-
-	UPROPERTY(BlueprintReadOnly)
-	bool bJustCreated = false;
-	UPROPERTY(BlueprintReadOnly)
-	bool bIsSelected = false;
-	UPROPERTY(BlueprintReadOnly)
-	bool bIsHighlighted = false;
-
+	
 	UPROPERTY(BlueprintReadWrite)
 	float TimeToBuild = 5.0;
-
-	// Moving
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
-	bool bIsMoving = false;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
-	bool bShouldMove = false;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
-	float ForwardSpeed = 500;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
-	float TurnAngleSpeed = 5;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Moving")
-	float TurnForwardSpeed = ForwardSpeed * 0.3;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Moving")
-	float DrawNavLineOncePerThisSeconds = 1;
-	UPROPERTY(BlueprintReadOnly, Category = "Moving")
-	TArray<FVector> NavPathCoords;
-
-	// Mouse wheel
-	bool bMouseWheelYPositive = false;
-	bool bMouseWheelYNegative = false;
-
-	bool bLMBPressed = false;
-
-	FGenericTeamId TeamId;
 
 	// Turrets
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Turret")

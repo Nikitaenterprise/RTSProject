@@ -54,7 +54,8 @@ void AAsteroidResource::BeginPlay()
 	{
 		if (This.IsValid())
 		{
-			This->Deform();
+			//TODO: there is a crash when deforming asteroid
+			//This->Deform();
 		}
 	});
 	
@@ -81,9 +82,9 @@ void AAsteroidResource::BeginPlay()
 		return 0;
 	});
 	// Bind resource capacity check
-	const auto ResourceCapacityDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		AttributeSet->GetResourceCapacityAttribute()).AddUObject(this, &ThisClass::CheckCapacity);
-	ResourceComponent->SetResourceCapacityDelegateHandle(ResourceCapacityDelegateHandle);
+	ResourceComponent->SetResourceCapacityDelegateHandle(
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+			AttributeSet->GetResourceCapacityAttribute()).AddUObject(this, &ThisClass::CheckCapacity));
 	
 	// Set rotation speed
 	RotationSpeed = UKismetMathLibrary::RandomFloatInRange(10, 50);

@@ -1,5 +1,7 @@
 ﻿#include "Actors/Resources/ResourceManager.h"
 
+#include "Field/FieldSystem.h"
+
 AResourceManager::AResourceManager()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -13,7 +15,7 @@ void AResourceManager::BeginPlay()
 
 void AResourceManager::AddAsteroidField(AAsteroidField* AsteroidFieldToAdd)
 {
-	AsteroidFieldsOnMap.Add(GetActorLocation() + AsteroidFieldToAdd->GetActorLocation(), AsteroidFieldToAdd);
+	AsteroidFieldsOnMap.Add(AsteroidFieldToAdd->GetActorLocation(), AsteroidFieldToAdd);
 }
 
 void AResourceManager::RemoveAsteroidField(AAsteroidField* AsteroidFieldToRemove)
@@ -27,12 +29,12 @@ void AResourceManager::RemoveAsteroidField(AAsteroidField* AsteroidFieldToRemove
 
 void AResourceManager::AddResource(AActor* ResourceToAdd)
 {
-	ResourcesOnMap.Add(GetActorLocation() + ResourceToAdd->GetActorLocation(), ResourceToAdd);
+	ResourcesOnMap.Add(ResourceToAdd->GetActorLocation(), ResourceToAdd);
 }
 
 void AResourceManager::RemoveResource(AActor* ResourceToRemove)
 {
-	auto Num = AsteroidFieldsOnMap.Remove(GetActorLocation() + ResourceToRemove->GetActorLocation());
+	auto Num = AsteroidFieldsOnMap.Remove(ResourceToRemove->GetActorLocation());
 	if (Num == -1)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Couldn't remove resource from manager"));
@@ -41,7 +43,18 @@ void AResourceManager::RemoveResource(AActor* ResourceToRemove)
 
 AAsteroidField* AResourceManager::GetClosestAsteroidField(const FVector& Position)
 {
-	return *AsteroidFieldsOnMap.Find(GetActorLocation() - Position);
+	float ClosestDistance = 0;
+	AAsteroidField* ClosestField = nullptr;
+	for (auto& Field : AsteroidFieldsOnMap)
+	{
+		const float NewClosestDistance = FVector::DistSquared(Position, Field.Key);
+		if (ClosestDistance == 0 || NewClosestDistance < ClosestDistance)
+		{
+			ClosestDistance = NewClosestDistance;
+			ClosestField = Field.Value;
+		}
+	}
+	return ClosestField;
 }
 
 AActor* AResourceManager::GetClosestResource(const FVector& Position)

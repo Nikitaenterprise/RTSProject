@@ -42,3 +42,10 @@ void AShipAIController::OnPossess(APawn* InPawn)
 	Ship = Cast<AShip>(GetPawn());
 	ShipMovementComponent = Cast<UShipMovementComponent>(Ship->GetMovementComponent());
 }
+
+void AShipAIController::ObtainPlayerState()
+{
+	Super::ObtainPlayerState();
+
+	RTSPlayerState = Ship ? Ship->GetRTSPlayerState() : nullptr;
+}

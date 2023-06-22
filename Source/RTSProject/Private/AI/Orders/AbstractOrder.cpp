@@ -5,10 +5,13 @@
 
 #include "AI/RTSAIController.h"
 
-void UAbstractOrder::Initialize(const TArray<AActor*>& InSelectedActors, FVector InOrderLocation)
+void UAbstractOrder::Initialize(const TArray<AActor*>& InSelectedActors,
+	const FVector& InOrderLocation,
+	const FHitResult& InHitResult)
 {
 	SelectedActors = InSelectedActors;
 	OrderLocation = InOrderLocation;
+	HitResultUnderCursor = InHitResult;
 }
 
 bool UAbstractOrder::Execute()
@@ -32,13 +35,13 @@ bool UAbstractOrder::Execute()
 			continue;
 		}
 
-		UBlackboardComponent* SquadBlackboard = ActorController->GetBlackboardComponent();
-		if (!SquadBlackboard)
+		UBlackboardComponent* Blackboard = ActorController->GetBlackboardComponent();
+		if (!Blackboard)
 		{
 			continue;
 		}
 
-		ProcessOrder(ActorController, SquadBlackboard);
+		ProcessOrder(ActorController, Blackboard);
 	}
 	
 	return true;
