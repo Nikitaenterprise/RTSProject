@@ -7,8 +7,10 @@
 #include "Actors/RTSPlayer.h"
 #include "Core/FactoryAssets.h"
 #include "UI/GameHUD.h"
+#include "Core/RTSGameMode.h"
 #include "DrawDebugHelpers.h"
 #include "Actors/FogOfWar.h"
+#include "Actors/Units/Worker.h"
 #include "AI/Orders/OrdersProcessor.h"
 #include "Kismet/GameplayStatics.h"
 #include "Math/UnitConversion.h"
@@ -45,20 +47,24 @@ void ARTSPlayerController::BeginPlay()
 	}
 
 	// If no AFogOfWar found then create one
-	if (!IsValid(FogOfWar))
+	if (IsValid(FogOfWar) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Couldn't find AFogOfWar on level, trying to spawn one"));
 		FActorSpawnParameters Params;
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		Params.Owner = this;
-		UClass* SpawnClass = FactoryAssets->GetFogOfWarClass().Get();
-		AFogOfWar* TestFogOfWar = GetWorld()->SpawnActor<AFogOfWar>(SpawnClass, FVector(0, 0, 0), FRotator(0, 0, 0), Params);
-		if (!IsValid(TestFogOfWar))
+
+		if (const auto* GameMode = ARTSGameMode::GetRTSGameMode(GetWorld()))
 		{
-			UE_LOG(LogTemp, Error, TEXT("AFogOfWar is nullptr in ARTSPlayerController::BeginPlay()"));
-			return;
+			UClass* SpawnClass = GameMode->GetFactoryAssets()->GetFogOfWarClass().Get();
+			AFogOfWar* TestFogOfWar = GetWorld()->SpawnActor<AFogOfWar>(SpawnClass, FVector(0, 0, 0), FRotator(0, 0, 0), Params);
+			if (!IsValid(TestFogOfWar))
+			{
+				UE_LOG(LogTemp, Error, TEXT("AFogOfWar is nullptr in ARTSPlayerController::BeginPlay()"));
+				return;
+			}
+			FogOfWar = TestFogOfWar;
 		}
-		FogOfWar = TestFogOfWar;
 	}
 	//FogOfWar->Initialize(this);
 
@@ -82,39 +88,52 @@ void ARTSPlayerController::SetupInputComponent()
 
 void ARTSPlayerController::RMBReleased()
 {
-	ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
+	ExecuteCommandToSelectedActors<AWorker>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
 	{
 		if (This.IsValid() == false)
 		{
-			return false;
+			return false;  
 		}
 		if (This->OrdersProcessor == nullptr)
 		{
 			return false;
 		}
-		
+
 		auto Order = [This](const AShip* InShip, const FHitResult& HitResult)
 		{
 			const FVector OrderLocation(HitResult.Location.X, HitResult.Location.Y, InShip->GetActorLocation().Z);
-			return This->OrdersProcessor->ProcessOrder(EOrderType::MoveOrder, OrderLocation);
+			return This->OrdersProcessor->ProcessOrder(EOrderType::GatherResource, OrderLocation, HitResult);
 		};
-		Order(Args...);
-			
-		return false;
-		// if (This.IsValid())
-		// {
-		// 	return This->MoveSelectedActors(Args...);
-		// }
-		// return false;
+
+		return Order(Args...);
 	});
-	ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
-	{
-		if (This.IsValid())
-		{
-			return This->AttackBySelectedActors(Args...);
-		}
-		return false;
-	});
+	// ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
+	// {
+	// 	if (This.IsValid() == false)
+	// 	{
+	// 		return false;  
+	// 	}
+	// 	if (This->OrdersProcessor == nullptr)
+	// 	{
+	// 		return false;
+	// 	}
+	// 	
+	// 	auto Order = [This](const AShip* InShip, const FHitResult& HitResult)
+	// 	{
+	// 		const FVector OrderLocation(HitResult.Location.X, HitResult.Location.Y, InShip->GetActorLocation().Z);
+	// 		return This->OrdersProcessor->ProcessOrder(EOrderType::MoveOrder, OrderLocation, HitResult);
+	// 	};
+	// 	
+	// 	return Order(Args...);
+	// });
+	// ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
+	// {
+	// 	if (This.IsValid())
+	// 	{
+	// 		return This->AttackBySelectedActors(Args...);
+	// 	}
+	// 	return false;
+	// });
 	ExecuteCommandToSelectedActors<ABuilding>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
 	{
 		if (This.IsValid())
@@ -137,12 +156,6 @@ TArray<ABuilding*> ARTSPlayerController::GetSelectedBuildings()
 TArray<AShip*> ARTSPlayerController::GetSelectedShips()
 {
 	return GetSelectedActorsByType<AShip>();
-}
-
-bool ARTSPlayerController::MoveSelectedActors(AShip* Ship, FHitResult HitResult)
-{
-	Ship->RequestMove(FVector(HitResult.Location.X, HitResult.Location.Y, Ship->GetActorLocation().Z));
-	return true;
 }
 
 bool ARTSPlayerController::AttackBySelectedActors(AShip* Ship, FHitResult HitResult)

@@ -66,15 +66,15 @@ void AAsteroidResource::BeginPlay()
 	RotationSpeed *= UKismetMathLibrary::RandomBool() ? 1 : -1;
 	RandomRotator = UKismetMathLibrary::RandomRotator(false) * RotationSpeed;
 
-	const auto AttributeSet = GetAbilitySystemComponent()->GetSet<UResourceSourceAttributeSet>();
-	if (AttributeSet)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No UResourceSourceAttributeSet in AAsteroidResource::BeginPlay()"));
-		return;
-	}
+	// const auto AttributeSet = AbilitySystemComponent->GetSet<UResourceSourceAttributeSet>();
+	// if (AttributeSet)
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("No UResourceSourceAttributeSet in AAsteroidResource::BeginPlay()"));
+	// 	return;
+	// }
 	ResourceComponent->InitializeCapacity([&]()->float
 	{
-		const int SquaredSizeOfMesh = UKismetMathLibrary::VSizeSquared(GetActorScale3D());
+		const int SquaredSizeOfMesh = UKismetMathLibrary::RandomFloatInRange(1000, 5000);//UKismetMathLibrary::VSizeSquared(GetActorScale3D());
 		if (UKismetMathLibrary::Round(SquaredSizeOfMesh) != 0)
 		{
 			return UKismetMathLibrary::FTrunc(SquaredSizeOfMesh * InitialCapacityModifier);	
@@ -82,9 +82,7 @@ void AAsteroidResource::BeginPlay()
 		return 0;
 	});
 	// Bind resource capacity check
-	ResourceComponent->SetResourceCapacityDelegateHandle(
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-			AttributeSet->GetResourceCapacityAttribute()).AddUObject(this, &ThisClass::CheckCapacity));
+	ResourceComponent->GetResourceCapacityDelegate().AddUObject(this, &ThisClass::CheckCapacity);
 	
 	// Set rotation speed
 	RotationSpeed = UKismetMathLibrary::RandomFloatInRange(10, 50);

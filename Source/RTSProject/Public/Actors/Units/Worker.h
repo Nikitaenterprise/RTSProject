@@ -3,6 +3,7 @@
 #include "Ship.h"
 #include "Worker.generated.h"
 
+class ABuilding;
 class UGatherResourceAbility;
 class UResourceGathererAttributeSet;
 
@@ -13,6 +14,9 @@ class RTSPROJECT_API AWorker : public AShip
 
 public:
 	AWorker(const FObjectInitializer& ObjectInitializer);
+	void SetResourceContainerBuilding(ABuilding* InResourceContainerBuilding) { ResourceContainerBuilding = InResourceContainerBuilding; }
+	UFUNCTION(BlueprintCallable)
+	ABuilding* GetResourceContainerBuilding() const { return ResourceContainerBuilding; } 
 	
 protected:
 	virtual void BeginPlay() override;
@@ -22,4 +26,7 @@ protected:
 	FGameplayAbilitySpecHandle GatherResourceAbilityHandle;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
 	UResourceGathererAttributeSet* ResourceGathererAttributeSet {nullptr};
+
+	UPROPERTY()
+	ABuilding* ResourceContainerBuilding {nullptr};
 };

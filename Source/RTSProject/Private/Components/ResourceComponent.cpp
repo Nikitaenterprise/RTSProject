@@ -1,5 +1,6 @@
 #include "Components/ResourceComponent.h"
 
+#include "AbilitySystemInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Actors/Resources/ResourceManager.h"
 #include "Core/RTSGameMode.h"
@@ -14,30 +15,32 @@ void UResourceComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	auto* TestResourceManager = ARTSGameMode::GetRTSGameMode(GetWorld())->GetResourceManager();
-	if (!IsValid(TestResourceManager))
+	ResourceManager = ARTSGameMode::GetRTSGameMode(GetWorld())->GetResourceManager();
+	if (IsValid(ResourceManager) == false)
 	{
-		UE_LOG(LogTemp, Error, TEXT("AResourceManager is nullptr in AResource::BeginPlay()"));
+		UE_LOG(LogTemp, Error, TEXT("AResourceManager is nullptr in UResourceComponent::BeginPlay()"));
 		return;
 	}
-	ResourceManager = TestResourceManager;
 	ResourceManager->AddResource(GetOwner());
 	switch (ResourceType)
 	{
 	case EResourceType::AsteroidField:
 		ResourceManager->AddAsteroidField(Cast<AAsteroidField>(GetOwner()));
 		break;
+	case EResourceType::Asteroid:
+		break;
 	default:
 		break;
 	}
 
-	const auto TestAbilitySystemComponent = GetOwner()->FindComponentByClass<UAbilitySystemComponent>();
-	if (!TestAbilitySystemComponent)
+	UAbilitySystemComponent* OwnerAbilitySystem = GetOwnerAbilitySystemComponent();
+	if (OwnerAbilitySystem == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Actor %s has no UAbilitySystemComponent"), *GetOwner()->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("UResourceComponent::BeginPlay OwnerAbilitySystem is nullptr"));
+		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, "UResourceComponent::BeginPlay OwnerAbilitySystem is nullptr");
 		return;
 	}
-	AbilitySystemComponent = TestAbilitySystemComponent;
+	
 	ResourceSourceAttributeSet = NewObject<UResourceSourceAttributeSet>(this);
 	ResourceSourceAttributeSet->OnResourceCapacityZeroed.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()
 	{
@@ -51,7 +54,8 @@ void UResourceComponent::BeginPlay()
 			This->GetOwner()->Destroy();
 		}
 	});
-	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(ResourceSourceAttributeSet);
+	ResourceCapacityDelegate = OwnerAbilitySystem->GetGameplayAttributeValueChangeDelegate(ResourceSourceAttributeSet->GetResourceCapacityAttribute());
+	OwnerAbilitySystem->GetSpawnedAttributes_Mutable().AddUnique(ResourceSourceAttributeSet);
 }
 
 void UResourceComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -71,24 +75,28 @@ void UResourceComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void UResourceComponent::InitializeCapacity(TFunction<float()> CalculationFunction)
+void UResourceComponent::InitializeCapacity(const TFunction<float()>& CalculationFunction)
 {
 	ModifyResource(CalculationFunction);
 	bCapacityWasInitialized = true;
 }
 
-void UResourceComponent::ModifyResource(TFunction<float()> CalculationFunction)
+void UResourceComponent::ModifyResource(const TFunction<float()>& CalculationFunction)
 {
 	if (!CalculationFunction)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("CalculationFunction is nullptr in UResourceComponent::CalculateResource()"));
 		return;
 	}
-	if (!IsValid(AbilitySystemComponent))
+
+	UAbilitySystemComponent* OwnerAbilitySystem = GetOwnerAbilitySystemComponent();
+	if (OwnerAbilitySystem == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AbilitySystemComponent is nullptr in UResourceComponent::CalculateResource()"));
+		UE_LOG(LogTemp, Warning, TEXT("UResourceComponent::ModifyResource OwnerAbilitySystem is nullptr"));
+		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, "UResourceComponent::ModifyResource OwnerAbilitySystem is nullptr");
 		return;
 	}
+	
 	UGameplayEffect* GameplayEffect = NewObject<UGameplayEffect>();
 	GameplayEffect->DurationPolicy = EGameplayEffectDurationType::Instant;
 	FGameplayModifierInfo GameplayModifierInfo;
@@ -96,5 +104,24 @@ void UResourceComponent::ModifyResource(TFunction<float()> CalculationFunction)
 	GameplayModifierInfo.ModifierOp = EGameplayModOp::Override;
 	GameplayModifierInfo.ModifierMagnitude = FScalableFloat(CalculationFunction());
 	GameplayEffect->Modifiers.Add(GameplayModifierInfo);
-	AbilitySystemComponent->ApplyGameplayEffectToSelf(GameplayEffect, 0, AbilitySystemComponent->MakeEffectContext());
+	OwnerAbilitySystem->ApplyGameplayEffectToSelf(GameplayEffect, 0, OwnerAbilitySystem->MakeEffectContext());
+}
+
+UAbilitySystemComponent* UResourceComponent::GetOwnerAbilitySystemComponent() const
+{
+	auto* Owner = GetOwner();
+	if (Owner == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UResourceComponent::GetOwnerAbilitySystemComponent owner is nullptr"));
+		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, "UResourceComponent::GetOwnerAbilitySystemComponent owner is nullptr");
+		return nullptr;
+	}
+	
+	if (Cast<IAbilitySystemInterface>(Owner) == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UResourceComponent::GetOwnerAbilitySystemComponent owner doesn't implement IAbilitySystemInterface"));
+		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, "UResourceComponent::GetOwnerAbilitySystemComponent owner doesn't implement IAbilitySystemInterface");
+		return nullptr;
+	}
+	return Cast<IAbilitySystemInterface>(Owner)->GetAbilitySystemComponent();
 }

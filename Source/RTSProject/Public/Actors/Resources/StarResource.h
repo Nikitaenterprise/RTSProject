@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "AbilitySystemInterface.h"
 #include "Components/ResourceComponent.h"
 #include "Interfaces/Selectable.h"
 #include "StarResource.generated.h"
@@ -8,7 +9,10 @@ class USphereComponent;
 class UWidgetComponent;
 
 UCLASS()
-class RTSPROJECT_API AStarResource : public AActor, public ISelectable
+class RTSPROJECT_API AStarResource
+	: public AActor,
+	  public ISelectable,
+	  public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 protected:
@@ -36,8 +40,8 @@ public:
 	float GetRotationSpeed() const { return RotationSpeed; }
 	void SetRotationSpeed(float NewRotationSpeed) { RotationSpeed = NewRotationSpeed; }
 	UFUNCTION(BlueprintCallable)
-	UAbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
-	void SetAbilitySystemComponent(UAbilitySystemComponent* NewAbilitySystemComponent) { AbilitySystemComponent = NewAbilitySystemComponent; }
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+
 	UFUNCTION(BlueprintCallable)
 	UResourceComponent* GetResourceComponent() const { return ResourceComponent; }
 	

@@ -47,7 +47,7 @@ void UAbilityTask_GatherResource::Activate()
 		
 	FTimerDelegate TimerDelegate;
 	TimerDelegate.BindUObject(this, &ThisClass::Gather);
-	GetWorld()->GetTimerManager().SetTimer(ResourceGatherTimerHandle, TimerDelegate, 1.0, false, false);
+	GetWorld()->GetTimerManager().SetTimer(ResourceGatherTimerHandle, TimerDelegate, 1.0, true, false);
 }
 
 void UAbilityTask_GatherResource::OnDestroy(bool AbilityEnded)
@@ -113,6 +113,7 @@ void UAbilityTask_GatherResource::Gather()
 	if (bIsSourceEmpty)
 	{
 		OnResourceConsumed.Broadcast();
+		EndTask();
 		return;
 	}
 }

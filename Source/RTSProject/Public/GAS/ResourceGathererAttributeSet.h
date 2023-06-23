@@ -23,13 +23,13 @@ protected:
 
 	// Current amount in storage
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData CargoStorage = 100.0f;
+	FGameplayAttributeData CargoStorage = 0.f;
 	// Max storage capacity
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData CargoStorageLimit = 100.0f;
+	FGameplayAttributeData CargoStorageLimit = 300.0f;
 	// How much resource is gathered per cycle (tick, timer, etc.)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData ResourceGatheringSpeed = 100.0f;
+	FGameplayAttributeData ResourceGatheringSpeed = 50.0f;
 	
 	
 };

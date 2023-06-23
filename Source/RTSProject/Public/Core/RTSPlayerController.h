@@ -21,7 +21,7 @@ class RTSPROJECT_API ARTSPlayerController : public APlayerController
 	
 public:
 	virtual void BeginPlay() override;
-	virtual void SetupInputComponent() override; //(class UInputComponent* PlayerInputComponent)
+	virtual void SetupInputComponent() override;
 
 	void AddToSelectedActors(AActor* ActorToAdd) { SelectedActors.AddUnique(ActorToAdd); }
 	void RemoveFromSelectedActors(AActor* ActorToRemove) { SelectedActors.Remove(ActorToRemove); }
@@ -46,15 +46,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TArray<AShip*> GetSelectedShips(); 
 
-	bool MoveSelectedActors(AShip* Ship, FHitResult HitResult);
 	bool AttackBySelectedActors(AShip* Ship, FHitResult HitResult);
 	bool SetSpawnPointForSelectedBuildings(ABuilding* Building,FHitResult HitResult);
 	template <typename ActorType>
 	bool ExecuteCommandToSelectedActors(TFunction<bool(ActorType* Actor, FHitResult HitResult)> Function);
 
 	// FactoryAssets	
-	UFUNCTION(BlueprintCallable, Category = "Getters")
-	UFactoryAssets* GetFactoryAssets() const { return FactoryAssets; }
 	UFUNCTION(BlueprintCallable, Category = "Getters")
 	AFogOfWar* GetFOWManager() const { return FogOfWar; }
 	
@@ -80,10 +77,7 @@ protected:
 
 	UPROPERTY(Transient)
 	UOrdersProcessor* OrdersProcessor {nullptr};
-
-	UPROPERTY(BlueprintReadOnly, Category = "Factory")
-	UFactoryAssets* FactoryAssets {nullptr};
-
+	
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	AGameHUD* GameHUD {nullptr};
 };

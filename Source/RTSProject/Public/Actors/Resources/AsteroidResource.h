@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AbilitySystemInterface.h"
 #include "Components/ResourceComponent.h"
 #include "MeshProcessingPlugin/Public/DynamicSDMCActor.h"
 #include "AsteroidResource.generated.h"
@@ -7,7 +8,9 @@
 class AAsteroidField;
 
 UCLASS()
-class RTSPROJECT_API AAsteroidResource : public ADynamicSDMCActor
+class RTSPROJECT_API AAsteroidResource
+	: public ADynamicSDMCActor,
+	  public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 	
@@ -17,10 +20,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	
 	UFUNCTION(BlueprintCallable)
-	UAbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
-	void SetAbilitySystemComponent(UAbilitySystemComponent* NewAbilitySystemComponent) { AbilitySystemComponent = NewAbilitySystemComponent; }
-	UFUNCTION(BlueprintCallable)
 	UResourceComponent* GetResourceComponent() const { return ResourceComponent; }
+
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 	
 	float GetRotationSpeed() const { return RotationSpeed; }
 	void SetRotationSpeed(float NewRotationSpeed) { RotationSpeed = NewRotationSpeed; }

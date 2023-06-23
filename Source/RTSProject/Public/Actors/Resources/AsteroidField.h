@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AbilitySystemInterface.h"
 #include "Components/ResourceComponent.h"
 #include "Interfaces/Selectable.h"
 #include "AsteroidField.generated.h"
@@ -9,7 +10,10 @@ class UBoxComponent;
 class UWidgetComponent;
 
 UCLASS()
-class RTSPROJECT_API AAsteroidField : public AActor, public ISelectable
+class RTSPROJECT_API AAsteroidField
+	: public AActor,
+	  public ISelectable,
+	  public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 protected:
@@ -33,8 +37,7 @@ public:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable)
-	UAbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
-	void SetAbilitySystemComponent(UAbilitySystemComponent* NewAbilitySystemComponent) { AbilitySystemComponent = NewAbilitySystemComponent; }
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Selected(bool bIsSelected);
