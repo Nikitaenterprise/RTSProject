@@ -15,6 +15,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GAS/BuildingAttributeSet.h"
+#include "GAS/BuildUnitAbility.h"
 #include "GAS/HealthShieldAttributeSet.h"
 #include "Systems/RTSPlayerState.h"
 #include "UI/SelectionRectangleWidget.h"
@@ -33,9 +34,6 @@ ABuilding::ABuilding(const FObjectInitializer& ObjectInitializer)
 	HealthShieldWidgetComponent->SetupAttachment(GetRootComponent());
 
 	FOWInfluencerComponent = CreateDefaultSubobject<UFogOfWarInfluencerComponent>(TEXT("FOWInfluencerComponent"));
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	BuildingAttributeSet = CreateDefaultSubobject<UBuildingAttributeSet>(TEXT("BuildingAttributeSet"));
-	HealthShieldAttributeSet = CreateDefaultSubobject<UHealthShieldAttributeSet>(TEXT("HealthShieldAttributeSet"));
 	SpawnPoint = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SpawnPoint"));
 	MiniMapInfluencerComponent = CreateDefaultSubobject<UMiniMapInfluencerComponent>(TEXT("MiniMapInfluencerComponent"));
 	MiniMapIconComponent = CreateDefaultSubobject<UMiniMapIconComponent>(TEXT("MiniMapIconComponent"));
@@ -62,16 +60,7 @@ void ABuilding::BeginPlay()
 	SpawnPoint->SetRelativeLocation(FVector(150, 0, 0));
 	SpawnPoint->SetVisibility(false);
 	
-	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(BuildingAttributeSet);
-	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(HealthShieldAttributeSet);
-	BuildingUnitHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(BuildUnitAbility, 1, INDEX_NONE, this));
-	HealthShieldAttributeSet->OnHealthZeroed.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()
-	{
-		if (This.IsValid())
-		{
-			This->Destroy();
-		}
-	});
+	BuildingUnitHandle = GetAbilityByClass<UBuildUnitAbility>();
 }
 
 void ABuilding::Tick(float DeltaTime)

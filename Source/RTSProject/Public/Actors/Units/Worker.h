@@ -21,12 +21,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	
-	UPROPERTY(EditAnywhere, Category = "GAS")
-	TSubclassOf<UGatherResourceAbility> GatherResourceAbility;
 	FGameplayAbilitySpecHandle GatherResourceAbilityHandle;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
-	UResourceGathererAttributeSet* ResourceGathererAttributeSet {nullptr};
-
+	
 	UPROPERTY()
 	ABuilding* ResourceContainerBuilding {nullptr};
 };

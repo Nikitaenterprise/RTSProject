@@ -46,9 +46,6 @@ AShip::AShip(const FObjectInitializer& OI) : Super(OI)
 	FOWInfluencerComponent = CreateDefaultSubobject<UFogOfWarInfluencerComponent>(TEXT("FOWInfluencerComponent"));
 	MiniMapInfluencerComponent = CreateDefaultSubobject<UMiniMapInfluencerComponent>(TEXT("MiniMapInfluencerComponent"));
 	MiniMapIconComponent = CreateDefaultSubobject<UMiniMapIconComponent>(TEXT("MiniMapIconComponent"));
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	ShipAttributeSet = CreateDefaultSubobject<UShipAttributeSet>(TEXT("ShipAttributeSet"));
-	HealthShieldAttributeSet = CreateDefaultSubobject<UHealthShieldAttributeSet>(TEXT("HealthShieldAttributeSet"));
 }
 
 void AShip::PreInitializeComponents()
@@ -85,20 +82,6 @@ void AShip::BeginPlay()
 		HealthShieldWidgetComponent->SetHealthShieldAttributeSet(HealthShieldAttributeSet);
 	}
 	SelectionCircle->SetVisibility(false);
-
-	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(ShipAttributeSet);
-	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(HealthShieldAttributeSet);
-	if (IsValid(AttackAbility.Get()))
-	{
-		AttackAbilityHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AttackAbility, 1, INDEX_NONE, this));
-	}
-	HealthShieldAttributeSet->OnHealthZeroed.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()
-	{
-		if(This.IsValid())
-		{
-			This->Destroy();
-		}
-	});
 
 	if (RTSPlayer)
 	{

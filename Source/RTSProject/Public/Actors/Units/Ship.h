@@ -1,13 +1,8 @@
 #pragma once
 
-#include "AbilitySystemInterface.h"
-#include "BaseUnit.h"
-#include "Abilities/GameplayAbility.h"
+#include "Actors/Units/BaseUnitWithAbility.h"
 #include "Components/Movement/ShipMovementComponent.h"
-#include "GameFramework/Character.h"
-#include "GenericTeamAgentInterface.h"
 #include "Interfaces/AttackInterface.h"
-#include "Interfaces/Selectable.h"
 #include "Ship.generated.h"
 
 class ARTSPlayerState;
@@ -31,8 +26,7 @@ class UAttackAbility;
 
 UCLASS()
 class RTSPROJECT_API AShip
-	: public ABaseUnit,
-	  public IAbilitySystemInterface,
+	: public ABaseUnitWithAbility,
 	  public IAttackInterface
 {
 	GENERATED_BODY()
@@ -45,7 +39,6 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	virtual UAttackComponent* GetAttackComponent() const override { return AttackComponent; }
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 	UCapsuleComponent* GetCapsuleComponent() const { return CapsuleComponent; }
 	UStaticMeshComponent* GetStaticMeshComponent() const { return StaticMesh; }
 	virtual UPawnMovementComponent* GetMovementComponent() const override { return MovementComponent; }
@@ -56,7 +49,6 @@ public:
 	// End ISelectable override
 	
 	UHealthShieldAttributeSet* GetHealthShieldAttributeSet() const { return HealthShieldAttributeSet; }
-	TArray<UAttributeSet*> GetAdditionalAttributeSets() const { return AdditionalAttributeSets; }
 	virtual TArray<ATurret*>& GetTurrets() override { return Turrets; }
 	ARTSPlayerController* GetPlayerController() const { return PlayerController; }
 	bool GetHasWorkingTurrets() const { return bHasWorkingTurrets; }
@@ -93,17 +85,6 @@ protected:
 	UMiniMapInfluencerComponent* MiniMapInfluencerComponent = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
 	UMiniMapIconComponent* MiniMapIconComponent = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
-	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
-	UPROPERTY(EditAnywhere, Category = "GAS")
-	TSubclassOf<UAttackAbility> AttackAbility;
-	FGameplayAbilitySpecHandle AttackAbilityHandle;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
-	UShipAttributeSet* ShipAttributeSet = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
-	UHealthShieldAttributeSet* HealthShieldAttributeSet = nullptr;
-	UPROPERTY(EditAnywhere, Category = "GAS")
-	TArray<UAttributeSet*> AdditionalAttributeSets;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Input")
 	UInputComponent* DebugInputComponent = nullptr;

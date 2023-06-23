@@ -1,11 +1,6 @@
 #pragma once
 
-#include "AbilitySystemInterface.h"
-#include "GenericTeamAgentInterface.h"
-#include "Abilities/GameplayAbility.h"
-#include "Actors/Units/BaseUnit.h"
-#include "GameFramework/Actor.h"
-#include "Interfaces/Selectable.h"
+#include "Actors/Units/BaseUnitWithAbility.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Building.generated.h"
 
@@ -22,8 +17,7 @@ class UHealthShieldAttributeSet;
 
 UCLASS()
 class RTSPROJECT_API ABuilding
-	: public ABaseUnit,
-	  public IAbilitySystemInterface
+	: public ABaseUnitWithAbility
 {
 	GENERATED_BODY()
 
@@ -32,9 +26,7 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
-	UBuildingAttributeSet* GetBuildingAttributeSet() const { return BuildingAttributeSet; }
+	
 	ARTSPlayerController* GetPlayerController() const { return PlayerController; }
 	TArray<TSubclassOf<AActor>>* GetBuildingQueue() { return &BuildingQueue; }
 	FVector GetSpawnPointLocation() const { return SpawnPoint->GetComponentLocation(); }
@@ -80,15 +72,7 @@ protected:
 	bool bLMBPressed = false;
 
 	FVector LocationToSpawnOutsideTheBorders = FVector(0, 0, -10000);
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
-	UAbilitySystemComponent* AbilitySystemComponent = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
-	TSubclassOf<UGameplayAbility> BuildUnitAbility;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
-	UBuildingAttributeSet* BuildingAttributeSet = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
-	UHealthShieldAttributeSet* HealthShieldAttributeSet = nullptr;
+	
 	TArray<TSubclassOf<AActor>> BuildingQueue;
 	FGameplayAbilitySpecHandle BuildingUnitHandle;
 	bool bIsBuildingUnit = false;

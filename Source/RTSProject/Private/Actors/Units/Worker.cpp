@@ -7,16 +7,11 @@
 AWorker::AWorker(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
-	ResourceGathererAttributeSet = CreateDefaultSubobject<UResourceGathererAttributeSet>(TEXT("ResourceGathererAttributeSet"));
 }
 
 void AWorker::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (IsValid(GatherResourceAbility.Get()))
-	{
-		GatherResourceAbilityHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(GatherResourceAbility, 1, INDEX_NONE, this));
-	}
-	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(ResourceGathererAttributeSet);
+	
+	GatherResourceAbilityHandle = GetAbilityByClass<UGatherResourceAbility>();
 }

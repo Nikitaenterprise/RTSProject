@@ -3,6 +3,8 @@
 #include "ToolContextInterfaces.h"
 #include "Actors/Buildings/Building.h"
 #include "Actors/Units/Ship.h"
+#include "Actors/Units/Worker.h"
+#include "Core/RTSPlayerController.h"
 #include "GAS/BuildingAttributeSet.h"
 #include "Miscellaneous/FactoriesFunctionLibrary.h"
 
@@ -31,11 +33,17 @@ void UBuildUnitAbility::EndAbility(FGameplayAbilitySpecHandle Handle, const FGam
 
 void UBuildUnitAbility::PrepareBuildingUnit()
 {
-	if ((*BuildingQueue).Num() == 0)
+	if ((*BuildingQueue).Num() == 0 && Building)
 	{
 		return;
 	}
-	const float TimeToBuild = Building->GetBuildingAttributeSet()->GetBuildingSpeed();
+
+	float TimeToBuild = 1;
+	if (auto* AttributeSet = Building->GetAbilitySystemComponent()->GetSet<UBuildingAttributeSet>())
+	{
+		TimeToBuild = AttributeSet->GetBuildingSpeed();
+	}
+	
 	BuildUnitTimerDelegate.BindUObject(this, &ThisClass::BuildUnit);
 	GetWorld()->GetTimerManager().SetTimer(BuildUnitTimerHandle, BuildUnitTimerDelegate, TimeToBuild, false);
 }
@@ -47,10 +55,19 @@ void UBuildUnitAbility::BuildUnit()
 	// Add height to spawn location
 	const FVector SpawnLocation = Building->GetSpawnPointLocation() + FVector(0, 0, 150);
 	// First the ship is created in a place outside the borders
-	AShip* SpawnedShip = UFactoriesFunctionLibrary::NewShip(GetWorld(), ClassType, Building->GetPlayerController(), SpawnLocation);
+	AShip* SpawnedShip = UFactoriesFunctionLibrary::NewShip(
+		GetWorld(),
+		ClassType,
+		Cast<ARTSPlayerController>(Building->GetPlayerController()),
+		SpawnLocation);
 	if (IsValid(SpawnedShip))
 	{
 		UFactoriesFunctionLibrary::AddTurretsToShip(GetWorld(), SpawnedShip);
+	}
+	
+	if (auto* Worker = Cast<AWorker>(SpawnedShip))
+	{
+		Worker->SetResourceContainerBuilding(Building);
 	}
 	FinishBuildingUnit();
 }
