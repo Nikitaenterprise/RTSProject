@@ -67,15 +67,18 @@ void ABuilding::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bJustCreated && !bLMBPressed)
+	if (HasAnyFlags(RF_WasLoaded) == false)
 	{
-		if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->LockSelectionRectangle();
-		UpdatePositionWhenCreated();
-	}
-	else if (bLMBPressed)
-	{
-		bJustCreated = false;
-		if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->UnlockSelectionRectangle();
+		if (bJustCreated && !bLMBPressed)
+		{
+			if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->LockSelectionRectangle();
+			UpdatePositionWhenCreated();
+		}
+		else if (bLMBPressed)
+		{
+			bJustCreated = false;
+			if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->UnlockSelectionRectangle();
+		}
 	}
 }
 

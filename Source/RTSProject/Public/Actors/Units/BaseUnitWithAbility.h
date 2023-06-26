@@ -29,7 +29,7 @@ protected:
 	template <typename AbilityClass>
 	FGameplayAbilitySpecHandle GetAbilityByClass() const;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	UAbilitySystemComponent* AbilitySystemComponent {nullptr};
 
 	UPROPERTY(EditAnywhere, Category = "GAS")

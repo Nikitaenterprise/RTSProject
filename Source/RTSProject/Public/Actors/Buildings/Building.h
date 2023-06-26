@@ -15,6 +15,14 @@ class UAbilitySystemComponent;
 class UBuildingAttributeSet;
 class UHealthShieldAttributeSet;
 
+UENUM()
+enum class EBuildingType : uint8
+{
+	Main,
+	ResourceStorage,
+	UnitFactory
+};
+
 UCLASS()
 class RTSPROJECT_API ABuilding
 	: public ABaseUnitWithAbility
@@ -31,6 +39,8 @@ public:
 	TArray<TSubclassOf<AActor>>* GetBuildingQueue() { return &BuildingQueue; }
 	FVector GetSpawnPointLocation() const { return SpawnPoint->GetComponentLocation(); }
 	void SetSpawnPointLocation(const FVector& Location) const { SpawnPoint->SetWorldLocation(Location); }
+
+	EBuildingType GetBuildingType() const { return BuildingType; }
 
 	UFUNCTION(BlueprintCallable)
 	void SetIsBuildingUnit(bool NewIsBuildingUnit) { bIsBuildingUnit = NewIsBuildingUnit;}
@@ -50,20 +60,20 @@ protected:
 	void LMBPressed();
 	void LMBReleased();
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base")
 	USceneComponent* SceneComponent = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base")
 	UHealthShieldWidgetComponent* HealthShieldWidgetComponent = nullptr;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base")
 	UParticleSystemComponent* SpawnPoint = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FOW")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FOW")
 	UFogOfWarInfluencerComponent* FOWInfluencerComponent;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UMiniMapInfluencerComponent* MiniMapInfluencerComponent = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UMiniMapIconComponent* MiniMapIconComponent = nullptr;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Input")
@@ -76,4 +86,7 @@ protected:
 	TArray<TSubclassOf<AActor>> BuildingQueue;
 	FGameplayAbilitySpecHandle BuildingUnitHandle;
 	bool bIsBuildingUnit = false;
+
+	UPROPERTY(EditDefaultsOnly)
+	EBuildingType BuildingType;
 };

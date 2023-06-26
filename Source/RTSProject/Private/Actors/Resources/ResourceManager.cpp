@@ -1,63 +1,38 @@
 ﻿#include "Actors/Resources/ResourceManager.h"
 
-#include "Field/FieldSystem.h"
+#include "Actors/Resources/Resource.h"
 
 AResourceManager::AResourceManager()
 {
 	PrimaryActorTick.bCanEverTick = false;
 }
 
-void AResourceManager::BeginPlay()
+void AResourceManager::AddResource(AResource* ResourceToAdd)
 {
-	Super::BeginPlay();
-	
+	ResourcesOnMap.AddUnique(ResourceToAdd);
 }
 
-void AResourceManager::AddAsteroidField(AAsteroidField* AsteroidFieldToAdd)
+void AResourceManager::RemoveResource(AResource* ResourceToRemove)
 {
-	AsteroidFieldsOnMap.Add(AsteroidFieldToAdd->GetActorLocation(), AsteroidFieldToAdd);
-}
-
-void AResourceManager::RemoveAsteroidField(AAsteroidField* AsteroidFieldToRemove)
-{
-	auto Num = AsteroidFieldsOnMap.Remove(GetActorLocation() + AsteroidFieldToRemove->GetActorLocation());
-	if (Num == -1)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Couldn't remove asteroid field from manager"));
-	}
-}
-
-void AResourceManager::AddResource(AActor* ResourceToAdd)
-{
-	ResourcesOnMap.Add(ResourceToAdd->GetActorLocation(), ResourceToAdd);
-}
-
-void AResourceManager::RemoveResource(AActor* ResourceToRemove)
-{
-	auto Num = AsteroidFieldsOnMap.Remove(ResourceToRemove->GetActorLocation());
+	const int32 Num = ResourcesOnMap.Remove(ResourceToRemove);
 	if (Num == -1)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Couldn't remove resource from manager"));
 	}
 }
 
-AAsteroidField* AResourceManager::GetClosestAsteroidField(const FVector& Position)
+AResource* AResourceManager::GetClosestResource(const FVector& Position)
 {
 	float ClosestDistance = 0;
-	AAsteroidField* ClosestField = nullptr;
-	for (auto& Field : AsteroidFieldsOnMap)
+	AResource* ClosestResource {nullptr};
+	for (const auto& Field : ResourcesOnMap)
 	{
-		const float NewClosestDistance = FVector::DistSquared(Position, Field.Key);
+		const float NewClosestDistance = FVector::DistSquared(Position, Field->GetActorLocation());
 		if (ClosestDistance == 0 || NewClosestDistance < ClosestDistance)
 		{
 			ClosestDistance = NewClosestDistance;
-			ClosestField = Field.Value;
+			ClosestResource = Field;
 		}
 	}
-	return ClosestField;
-}
-
-AActor* AResourceManager::GetClosestResource(const FVector& Position)
-{
-	return *ResourcesOnMap.Find(GetActorLocation() - Position);
+	return ClosestResource;
 }

@@ -14,14 +14,14 @@ class RTSPROJECT_API AWorker : public AShip
 
 public:
 	AWorker(const FObjectInitializer& ObjectInitializer);
+	
 	void SetResourceContainerBuilding(ABuilding* InResourceContainerBuilding) { ResourceContainerBuilding = InResourceContainerBuilding; }
+
 	UFUNCTION(BlueprintCallable)
 	ABuilding* GetResourceContainerBuilding() const { return ResourceContainerBuilding; } 
 	
 protected:
 	virtual void BeginPlay() override;
-	
-	FGameplayAbilitySpecHandle GatherResourceAbilityHandle;
 	
 	UPROPERTY()
 	ABuilding* ResourceContainerBuilding {nullptr};

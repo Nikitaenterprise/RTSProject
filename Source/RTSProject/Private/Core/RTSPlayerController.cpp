@@ -82,8 +82,25 @@ void ARTSPlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 	
 	bShowMouseCursor = true;
-	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ARTSPlayerController::RMBReleased);
-	InputComponent->BindAction(TEXT("Damage"), IE_Released, this, &ARTSPlayerController::DamagePressed);
+
+	InputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &ThisClass::LMBPressed);
+	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ThisClass::RMBReleased);
+	InputComponent->BindAction(TEXT("Damage"), IE_Released, this, &ThisClass::DamagePressed);
+
+	InputComponent->BindAction(TEXT("SaveControlGroup0"), IE_Released, this, &ThisClass::SaveControlGroup0);
+	InputComponent->BindAction(TEXT("SaveControlGroup1"), IE_Released, this, &ThisClass::SaveControlGroup1);
+	InputComponent->BindAction(TEXT("SaveControlGroup2"), IE_Released, this, &ThisClass::SaveControlGroup2);
+
+	InputComponent->BindAction(TEXT("LoadControlGroup0"), IE_Released, this, &ThisClass::LoadControlGroup0);
+	InputComponent->BindAction(TEXT("LoadControlGroup1"), IE_Released, this, &ThisClass::LoadControlGroup1);
+	InputComponent->BindAction(TEXT("LoadControlGroup2"), IE_Released, this, &ThisClass::LoadControlGroup2);
+
+	// Setup control groups.
+	ControlGroups.SetNum(3);
+}
+
+void ARTSPlayerController::LMBPressed()
+{
 }
 
 void ARTSPlayerController::RMBReleased()
@@ -185,4 +202,37 @@ bool ARTSPlayerController::SetSpawnPointForSelectedBuildings(ABuilding* Building
 {
 	Building->SetSpawnPointLocation(FVector(HitResult.Location.X, HitResult.Location.Y, Building->GetActorLocation().Z));
 	return true;
+}
+
+void ARTSPlayerController::SaveControlGroup0() { SaveControlGroup(0); }
+void ARTSPlayerController::SaveControlGroup1() { SaveControlGroup(1); }
+void ARTSPlayerController::SaveControlGroup2() { SaveControlGroup(2); }
+
+void ARTSPlayerController::SaveControlGroup(int32 Index)
+{
+	if (Index < 0 || Index > 2)
+	{
+		return;
+	}
+
+	// Save control group.
+	ControlGroups[Index] = SelectedActors;
+
+	UE_LOG(LogTemp, Log, TEXT("Saved selection to control group %d."), Index);
+}
+
+void ARTSPlayerController::LoadControlGroup0() { LoadControlGroup(0); }
+void ARTSPlayerController::LoadControlGroup1() { LoadControlGroup(1); }
+void ARTSPlayerController::LoadControlGroup2() { LoadControlGroup(2); }
+
+void ARTSPlayerController::LoadControlGroup(int32 Index)
+{
+	if (Index < 0 || Index > 2)
+	{
+		return;
+	}
+	
+	SelectedActors = ControlGroups[Index];
+
+	UE_LOG(LogTemp, Log, TEXT("Loaded selection from control group %d."), Index);
 }

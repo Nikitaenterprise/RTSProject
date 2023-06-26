@@ -22,9 +22,6 @@ public:
 	virtual void PreInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
-	void SetPlayerController(ARTSPlayerController* InPlayerController) { PlayerController = InPlayerController; }
-	void SetJustCreated(bool bInJustCreated) { bJustCreated = bInJustCreated; }
 	
 	ARTSPlayerState* GetRTSPlayerState() const { return RTSPlayerState; }
 	
@@ -60,5 +57,6 @@ protected:
 	
 	bool bJustCreated = false;
 	
+	UPROPERTY(EditInstanceOnly)
 	FGenericTeamId TeamId;
 };

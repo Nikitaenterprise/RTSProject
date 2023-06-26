@@ -1,38 +1,28 @@
 ﻿#pragma once
 
-#include "Actors/Resources/AsteroidField.h"
 #include "GameFramework/Actor.h"
 #include "ResourceManager.generated.h"
+
+class AResource;
 
 UCLASS()
 class RTSPROJECT_API AResourceManager : public AActor
 {
 	GENERATED_BODY()
-protected:
 
-	UPROPERTY()
-	TMap<FVector, AActor*> ResourcesOnMap;
-	UPROPERTY()
-	TMap<FVector, AAsteroidField*> AsteroidFieldsOnMap;
-	
 public:
-	
 	AResourceManager();
+	
 	UFUNCTION(BlueprintCallable)
-	void AddAsteroidField(AAsteroidField* AsteroidFieldToAdd);
+	void AddResource(AResource* ResourceToAdd);
+
 	UFUNCTION(BlueprintCallable)
-	void RemoveAsteroidField(AAsteroidField* AsteroidFieldToRemove);
+	void RemoveResource(AResource* ResourceToRemove);
+
 	UFUNCTION(BlueprintCallable)
-	void AddResource(AActor* ResourceToAdd);
-	UFUNCTION(BlueprintCallable)
-	void RemoveResource(AActor* ResourceToRemove);
-	UFUNCTION(BlueprintCallable)
-	AAsteroidField* GetClosestAsteroidField(const FVector& Position);
-	UFUNCTION(BlueprintCallable)
-	AActor* GetClosestResource(const FVector& Position);
+	AResource* GetClosestResource(const FVector& Position);
 	
 protected:
-	
-	virtual void BeginPlay() override;
-	
+	UPROPERTY()
+	TArray<AResource*> ResourcesOnMap;	
 };

@@ -32,6 +32,7 @@ public:
 	AFogOfWar* GetFogOfWar() const { return FogOfWar; }
 	
 	// Mouse clicks
+	void LMBPressed();
 	void RMBReleased();
 
 	void DamagePressed();
@@ -56,6 +57,25 @@ public:
 	AFogOfWar* GetFOWManager() const { return FogOfWar; }
 	
 protected:
+	/** Saves the current selection to the specified control group. */
+	UFUNCTION(BlueprintCallable)
+	void SaveControlGroup(int32 Index);
+
+	UFUNCTION(BlueprintCallable) void SaveControlGroup0();
+	UFUNCTION(BlueprintCallable) void SaveControlGroup1();
+	UFUNCTION(BlueprintCallable) void SaveControlGroup2();
+
+	/** Restores the selection saved in the specified control group. */
+	UFUNCTION(BlueprintCallable)
+	void LoadControlGroup(int32 Index);
+
+	UFUNCTION(BlueprintCallable) void LoadControlGroup0();
+	UFUNCTION(BlueprintCallable) void LoadControlGroup1();
+	UFUNCTION(BlueprintCallable) void LoadControlGroup2();
+
+	/** Saved selections of this player. */
+	TArray<TArray<AActor*>> ControlGroups;
+	
 	// True if FogOfWar was placed on level in editor
 	// Checked in GameMode class
 	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")

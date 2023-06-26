@@ -1,6 +1,6 @@
 ﻿#include "AI/Orders/GatherResourceOrder.h"
 
-#include "Actors/Resources/AsteroidField.h"
+#include "Actors/Resources/Resource.h"
 #include "AI/RTSAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
@@ -9,7 +9,7 @@ void UGatherResourceOrder::ProcessOrder(ARTSAIController* InRTSAIController, UBl
 	Super::ProcessOrder(InRTSAIController, InBlackboard);
 
 	const TWeakObjectPtr<AActor> ActorUnderCursor = HitResultUnderCursor.Actor;
-	if (Cast<AAsteroidField>(ActorUnderCursor))
+	if (Cast<AResource>(ActorUnderCursor))
 	{
 		InRTSAIController->ChangeOrder(EOrderType::GatherResource);
 		InBlackboard->SetValueAsObject(FRTSBlackboardKeys::SelfActor, InRTSAIController->GetPawn());
