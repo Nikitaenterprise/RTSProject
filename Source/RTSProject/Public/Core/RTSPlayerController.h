@@ -91,9 +91,6 @@ protected:
 	// Array of currently selected actors for this controller
 	UPROPERTY(BlueprintReadOnly, Category = "Selection")
 	TArray<AActor*> SelectedActors;
-	// Array of all created and owned by this controller actors
-	UPROPERTY(BlueprintReadOnly, Category = "Selection")
-	TArray<AActor*> PlayersActors;
 
 	UPROPERTY(Transient)
 	UOrdersProcessor* OrdersProcessor {nullptr};

@@ -13,9 +13,7 @@ enum class EOrderType : uint8
 	MoveAndAttackOrder,
 	StopOrder,
 	HoldPositionOrder,
-
-	GatherResource,
-	ReturnResource
+	GatherResource
 };
 
 class UAbstractOrder;

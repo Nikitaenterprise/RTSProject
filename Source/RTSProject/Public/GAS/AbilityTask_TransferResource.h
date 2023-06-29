@@ -6,26 +6,29 @@
 class UResourceAttributeSet;
 class UResourceComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWaitForFullCargo);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWaitForConsumedResource);
 
 UCLASS()
 class RTSPROJECT_API UAbilityTask_TransferResource : public UAbilityTask
 {
 	GENERATED_BODY()
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCargoFull);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnResourceConsumed);
+	
 public:
 	UPROPERTY(BlueprintAssignable)
-	FWaitForFullCargo OnCargoFull;
+	FOnCargoFull OnCargoFull;
 
 	UPROPERTY(BlueprintAssignable)
-	FWaitForConsumedResource OnResourceConsumed;
+	FOnResourceConsumed OnResourceConsumed;
 	
-	UFUNCTION(BlueprintCallable, Category = "Ability|Tasks", meta = (HidePin = "OwningAbility", DefaultToSelf = "OwningAbility"))
+	UFUNCTION(BlueprintCallable, Category = "Ability|Tasks", meta = (HidePin = "OwningAbility", DefaultToSelf = "OwningAbility", BlueprintInternalUseOnly = "TRUE"))
 	static UAbilityTask_TransferResource* TransferResource(
 		UGameplayAbility* OwningAbility,
 		AActor* ActorToTransfer,
 		AActor* ActorFromTransfer);
 
+protected:
 	virtual void Activate() override;
 
 private:
@@ -40,6 +43,9 @@ private:
 	UPROPERTY()
 	AActor* ActorFromTransfer {nullptr};
 
+	UPROPERTY()
+	UAbilitySystemComponent* ActorToTransferAbilitySystemComponent {nullptr};
+	
 	UPROPERTY()
 	UAbilitySystemComponent* ActorFromTransferAbilitySystemComponent {nullptr};
 	

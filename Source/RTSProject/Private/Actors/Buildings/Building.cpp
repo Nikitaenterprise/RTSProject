@@ -11,8 +11,8 @@
 #include "UI/GameHUD.h"
 #include "UI/SelectionRectangleWidget.h"
 #include "AttributeSet.h"
-#include "Components/HealthShieldWidgetComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/UnitIndicatorComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GAS/BuildingAttributeSet.h"
 #include "GAS/BuildUnitAbility.h"
@@ -24,14 +24,9 @@ ABuilding::ABuilding(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
-	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
-	RootComponent = SceneComponent;
 
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMesh->SetupAttachment(GetRootComponent());
-
-	HealthShieldWidgetComponent = CreateDefaultSubobject<UHealthShieldWidgetComponent>(TEXT("HealthShieldWidgetComponent"));
-	HealthShieldWidgetComponent->SetupAttachment(GetRootComponent());
 
 	FOWInfluencerComponent = CreateDefaultSubobject<UFogOfWarInfluencerComponent>(TEXT("FOWInfluencerComponent"));
 	SpawnPoint = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SpawnPoint"));
@@ -42,12 +37,8 @@ ABuilding::ABuilding(const FObjectInitializer& ObjectInitializer)
 void ABuilding::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (HealthShieldWidgetComponent)
-	{
-		HealthShieldWidgetComponent->SetHealthShieldAttributeSet(HealthShieldAttributeSet);
-	}
 
+	bJustCreated = HasAnyFlags(RF_WasLoaded) == false;
 	DebugInputComponent = PlayerController->InputComponent;
 	if (!IsValid(DebugInputComponent))
 	{
@@ -97,37 +88,6 @@ void ABuilding::LMBPressed()
 void ABuilding::LMBReleased()
 {
 	bLMBPressed = false;
-}
-
-void ABuilding::Selected_Implementation(bool bInIsSelected)
-{
-	bIsSelected = bInIsSelected;
-	if (bIsSelected)
-	{
-		HealthShieldWidgetComponent->SetVisibility(true);
-		SpawnPoint->SetVisibility(true);
-	}
-	else
-	{
-		HealthShieldWidgetComponent->SetVisibility(false);
-		SpawnPoint->SetVisibility(false);
-	}
-}
-
-void ABuilding::Highlighted_Implementation(bool bInIsHighlighted)
-{
-	if (!bIsSelected)
-	{
-		bIsHighlighted = bInIsHighlighted;
-		if (bIsHighlighted)
-		{
-			HealthShieldWidgetComponent->SetVisibility(true);
-		}
-		else
-		{
-			HealthShieldWidgetComponent->SetVisibility(false);
-		}
-	}
 }
 
 void ABuilding::UpdatePositionWhenCreated()

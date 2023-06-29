@@ -19,7 +19,16 @@ void UAbilityTask_TransferResource::Activate()
 {
 	Super::Activate();
 
-	ToResourceAttributeSet = AbilitySystemComponent->GetSet<UResourceAttributeSet>();
+	ActorToTransferAbilitySystemComponent = ActorToTransfer->FindComponentByClass<UAbilitySystemComponent>();
+	if (ActorToTransferAbilitySystemComponent == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Actor %s has no UAbilitySystemComponent"), *ActorToTransfer->GetName());
+		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red, "UAbilityTask_TransferResource::Activate() UAbilitySystemComponent is nullptr");
+		EndTask();
+		return;
+	}
+	
+	ToResourceAttributeSet = ActorToTransferAbilitySystemComponent->GetSet<UResourceAttributeSet>();
 	if (ToResourceAttributeSet == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Actor %s has no ToResourceAttributeSet"), *ActorToTransfer->GetName());
@@ -84,20 +93,30 @@ void UAbilityTask_TransferResource::Transfer()
 	bool bIsCargoFull = false;
 	bool bIsSourceEmpty = false;
 
+	if (FromAmount <= 0)
+	{
+		OnResourceConsumed.Broadcast();
+		EndTask();
+		return;
+	}
+	
 	if (ToAmount + TryGatherAmount > ToCapacity)
 	{
 		TryGatherAmount = ToCapacity - ToAmount;
 		bIsCargoFull = true;
 	}
-	ToTransferGameplayModifierInfo.ModifierMagnitude = FScalableFloat(ToAmount + TryGatherAmount);
 
 	bIsSourceEmpty = FromAmount - TryGatherAmount <= 0;
+	
+	
+	ToTransferGameplayModifierInfo.ModifierMagnitude = FScalableFloat(ToAmount + TryGatherAmount);
 	FromTransferGameplayModifierInfo.ModifierMagnitude = FScalableFloat(FromAmount - TryGatherAmount);
 	
 	ToTransferResourceEffect->Modifiers.Add(ToTransferGameplayModifierInfo);
 	FromTransferResourceEffect->Modifiers.Add(FromTransferGameplayModifierInfo);
 	
-	AbilitySystemComponent->ApplyGameplayEffectToSelf(ToTransferResourceEffect, 0, AbilitySystemComponent->MakeEffectContext());
+	ActorToTransferAbilitySystemComponent->ApplyGameplayEffectToSelf(
+		ToTransferResourceEffect, 0, ActorToTransferAbilitySystemComponent->MakeEffectContext());
 	ActorFromTransferAbilitySystemComponent->ApplyGameplayEffectToSelf(
 		FromTransferResourceEffect, 0, ActorFromTransferAbilitySystemComponent->MakeEffectContext());
 

@@ -7,7 +7,6 @@
 class UMiniMapIconComponent;
 class UMiniMapInfluencerComponent;
 class UFogOfWarInfluencerComponent;
-class UHealthShieldWidgetComponent;
 class UHealthShield;
 class ARTSPlayerController;
 class UHealthShieldWidget;
@@ -40,15 +39,11 @@ public:
 	FVector GetSpawnPointLocation() const { return SpawnPoint->GetComponentLocation(); }
 	void SetSpawnPointLocation(const FVector& Location) const { SpawnPoint->SetWorldLocation(Location); }
 
+	UFUNCTION(BlueprintCallable)
 	EBuildingType GetBuildingType() const { return BuildingType; }
 
 	UFUNCTION(BlueprintCallable)
 	void SetIsBuildingUnit(bool NewIsBuildingUnit) { bIsBuildingUnit = NewIsBuildingUnit;}
-	
-	// Begin ISelectable override
-	virtual void Selected_Implementation(bool bInIsSelected) override;
-	virtual void Highlighted_Implementation(bool bInIsHighlighted) override;
-	// End ISelectable override
 	
 	void UpdatePositionWhenCreated();
 	UFUNCTION(BlueprintCallable, Category = "Building")
@@ -61,11 +56,7 @@ protected:
 	void LMBReleased();
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base")
-	USceneComponent* SceneComponent = nullptr;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base")
-	UHealthShieldWidgetComponent* HealthShieldWidgetComponent = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base")
 	UParticleSystemComponent* SpawnPoint = nullptr;

@@ -2,50 +2,49 @@
 #include "UMG/Public/Components/ProgressBar.h"
 #include "GAS/HealthShieldAttributeSet.h"
 
-void UHealthShieldWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
-{
-	Super::NativeTick(MyGeometry, InDeltaTime);
-	UpdateHealthShieldValues();
-}
 
-void UHealthShieldWidget::UpdateHealthShieldValues()
+void UHealthShieldWidget::BindAttributes()
 {
-	UpdateHealthValue();
-	UpdateShieldValue();
-}
+	Super::BindAttributes();
 
-void UHealthShieldWidget::UpdateHealthValue()
-{
-	if (IsValid(HealthShieldAttributeSet))
+	auto* HealthShieldAttributeSet = Cast<UHealthShieldAttributeSet>(AbilitySystemComponent->GetSet<UHealthShieldAttributeSet>());
+	if (HealthShieldAttributeSet == nullptr)
 	{
-		HealthPercent = HealthShieldAttributeSet->GetCurrentHealth() / HealthShieldAttributeSet->GetMaxHealth();
-		if (IsValid(HealthProgressBar))
-		{
-			HealthProgressBar->Percent = HealthPercent;
-		}
+		return;
 	}
+	
+	const auto MaxHealthAttribute = HealthShieldAttributeSet->GetMaxHealthAttribute();
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MaxHealthAttribute).AddUObject(this, &ThisClass::UpdateMaxHealthValue);
+	
+	const auto HealthAttribute = HealthShieldAttributeSet->GetCurrentHealthAttribute();
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(HealthAttribute).AddUObject(this, &ThisClass::UpdateHealthValue);
+
+	const auto MaxShieldAttribute = HealthShieldAttributeSet->GetMaxShieldAttribute();
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MaxShieldAttribute).AddUObject(this, &ThisClass::UpdateMaxShieldValue);
+
+	const auto ShieldAttribute = HealthShieldAttributeSet->GetCurrentShieldAttribute();
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(ShieldAttribute).AddUObject(this, &ThisClass::UpdateShieldValue);
+
+	HealthProgressBar->Percent = HealthShieldAttributeSet->GetCurrentHealth() / HealthShieldAttributeSet->GetMaxHealth();
+	ShieldProgressBar->Percent = HealthShieldAttributeSet->GetCurrentShield() / HealthShieldAttributeSet->GetMaxShield();
 }
 
-void UHealthShieldWidget::UpdateShieldValue()
+void UHealthShieldWidget::UpdateHealthValue(const FOnAttributeChangeData& Data)
 {
-	if (IsValid(HealthShieldAttributeSet))
-	{
-		ShieldPercent = HealthShieldAttributeSet->GetCurrentShield() / HealthShieldAttributeSet->GetMaxShield();
-		if (IsValid(ShieldProgressBar))
-		{
-			ShieldProgressBar->Percent = ShieldPercent;
-		}
-	}
+	HealthProgressBar->Percent = Data.NewValue / MaxHealth;
 }
 
-float UHealthShieldWidget::GetHealthPercent()
+void UHealthShieldWidget::UpdateMaxHealthValue(const FOnAttributeChangeData& Data)
 {
-	UpdateHealthValue();
-	return HealthPercent;
+	MaxHealth = Data.NewValue;
 }
 
-float UHealthShieldWidget::GetShieldPercent()
+void UHealthShieldWidget::UpdateShieldValue(const FOnAttributeChangeData& Data)
 {
-	UpdateShieldValue();
-	return ShieldPercent;
+	ShieldProgressBar->Percent = Data.NewValue / MaxShield;
+}
+
+void UHealthShieldWidget::UpdateMaxShieldValue(const FOnAttributeChangeData& Data)
+{
+	MaxShield = Data.NewValue;
 }

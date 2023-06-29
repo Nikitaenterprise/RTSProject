@@ -21,16 +21,22 @@ void ABaseUnitWithAbility::PostInitializeComponents()
 		AbilitySystemComponent->InitStats(Attribute, nullptr);
 	}
 	UnitAttributeSets = AbilitySystemComponent->GetSpawnedAttributes();
-}
-
-void ABaseUnitWithAbility::BeginPlay()
-{
-	Super::BeginPlay();
 
 	for (const auto UnitAbility : UnitAbilities)
 	{
 		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(UnitAbility, 1, INDEX_NONE, this));
 	}
+
+	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+	for (const auto DefaultGameplayEffect : DefaultGameplayEffects)
+	{
+		AbilitySystemComponent->ApplyGameplayEffectToSelf(DefaultGameplayEffect->GetDefaultObject<UGameplayEffect>(), 0.0f, Context);
+	}
+}
+
+void ABaseUnitWithAbility::BeginPlay()
+{
+	Super::BeginPlay();
 	
 	AbilitySystemComponent->GetSpawnedAttributes().FindItemByClass(&HealthShieldAttributeSet);
 	if (HealthShieldAttributeSet)
@@ -42,11 +48,5 @@ void ABaseUnitWithAbility::BeginPlay()
 				This->Destroy();
 			}
 		});
-	}
-	
-	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
-	for (const auto DefaultGameplayEffect : DefaultGameplayEffects)
-	{
-		AbilitySystemComponent->ApplyGameplayEffectToSelf(DefaultGameplayEffect->GetDefaultObject<UGameplayEffect>(), 0.0f, Context);
 	}
 }

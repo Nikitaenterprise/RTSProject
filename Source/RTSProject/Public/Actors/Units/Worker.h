@@ -14,7 +14,8 @@ class RTSPROJECT_API AWorker : public AShip
 
 public:
 	AWorker(const FObjectInitializer& ObjectInitializer);
-	
+
+	UFUNCTION(BlueprintCallable)
 	void SetResourceContainerBuilding(ABuilding* InResourceContainerBuilding) { ResourceContainerBuilding = InResourceContainerBuilding; }
 
 	UFUNCTION(BlueprintCallable)

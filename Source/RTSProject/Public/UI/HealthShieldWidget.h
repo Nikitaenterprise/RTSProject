@@ -1,37 +1,32 @@
 #pragma once
 
-#include "Blueprint/UserWidget.h"
+#include "UnitIndicatorAdditionalDescriptionWidget.h"
 #include "HealthShieldWidget.generated.h"
 
-class UHealthShieldAttributeSet;
 class UProgressBar;
 
 UCLASS()
-class RTSPROJECT_API UHealthShieldWidget : public UUserWidget
+class RTSPROJECT_API UHealthShieldWidget : public UUnitIndicatorAdditionalDescriptionWidget
 {
 	GENERATED_BODY()
+
 protected:
-	UPROPERTY(meta=(BindWidget))
-	UProgressBar* ShieldProgressBar{nullptr};
-	UPROPERTY(meta=(BindWidget))
-	UProgressBar* HealthProgressBar{nullptr};
+	virtual void BindAttributes() override;
 
-	UPROPERTY()
-	UHealthShieldAttributeSet* HealthShieldAttributeSet = nullptr;
-	float HealthPercent = 0;
-	float ShieldPercent = 0;
-public:
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
-	void SetHealthShieldAttributeSet(UHealthShieldAttributeSet* NewHealthShieldAttributeSet)
-	{
-		HealthShieldAttributeSet = NewHealthShieldAttributeSet;
-	}
+	void UpdateHealthValue(const FOnAttributeChangeData& Data);
+	void UpdateMaxHealthValue(const FOnAttributeChangeData& Data);
+	
+	void UpdateShieldValue(const FOnAttributeChangeData& Data);
+	void UpdateMaxShieldValue(const FOnAttributeChangeData& Data);
+	
+	UPROPERTY(meta=(BindWidget))
+	UProgressBar* ShieldProgressBar {nullptr};
+	
+	UPROPERTY(meta=(BindWidget))
+	UProgressBar* HealthProgressBar {nullptr};
 
-	void UpdateHealthShieldValues();
-	void UpdateHealthValue();
-	void UpdateShieldValue();
-	UFUNCTION(BlueprintCallable)
-	float GetHealthPercent();
-	UFUNCTION(BlueprintCallable)
-	float GetShieldPercent();
+	float Health = 0;
+	float Shield = 0;
+	float MaxHealth = 0;
+	float MaxShield = 0;
 };

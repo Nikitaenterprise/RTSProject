@@ -5,9 +5,12 @@
 #include "Interfaces/Selectable.h"
 #include "BaseUnit.generated.h"
 
+class UUnitIndicatorAdditionalDescriptionWidget;
 class ARTSPlayerController;
 class ARTSPlayer;
 class ARTSPlayerState;
+class USceneComponent;
+class UUnitIndicatorComponent;
 
 UCLASS()
 class RTSPROJECT_API ABaseUnit
@@ -28,10 +31,10 @@ public:
 	// Begin ISelectable override
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Selected(bool bInIsSelected);
-	virtual void Selected_Implementation(bool bInIsSelected) override {};
+	virtual void Selected_Implementation(bool bInIsSelected) override;
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")
 	void Highlighted(bool bInIsHighlighted);
-	virtual void Highlighted_Implementation(bool bInIsHighlighted) override {};
+	virtual void Highlighted_Implementation(bool bInIsHighlighted) override;
 	// End ISelectable override
 
 	// Begin IGenericTeamAgentInterface override
@@ -40,6 +43,12 @@ public:
 	// End IGenericTeamAgentInterface override
 
 protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base")
+	USceneComponent* SceneComponent = nullptr;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "BaseUnit")
+	UUnitIndicatorComponent* UnitIndicatorComponent {nullptr};
+	
 	UPROPERTY(BlueprintReadOnly, Category = "BaseUnit")
 	ARTSPlayerController* PlayerController {nullptr};
 	

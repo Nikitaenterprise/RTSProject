@@ -22,7 +22,11 @@ class RTSPROJECT_API ARTSAIController : public AAIController
 {
 	GENERATED_BODY()
 
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnOrederChanged, EOrderType);
+
 public:
+	FOnOrederChanged OnOrderChanged;
+	
 	virtual void BeginPlay() override; 
 	
 	UFUNCTION(BlueprintCallable)

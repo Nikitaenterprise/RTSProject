@@ -7,7 +7,6 @@
 #include "Components/AttackComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/FogOfWarInfluencerComponent.h"
-#include "Components/HealthShieldWidgetComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/MiniMapIconComponent.h"
 #include "Components/MiniMapInfluencerComponent.h"
@@ -28,8 +27,6 @@ AShip::AShip(const FObjectInitializer& OI) : Super(OI)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
-	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
-	RootComponent = SceneComponent;
 	
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMesh->SetupAttachment(GetRootComponent());
@@ -37,9 +34,6 @@ AShip::AShip(const FObjectInitializer& OI) : Super(OI)
 	SelectionCircle = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SelectionCircle"));
 	SelectionCircle->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SelectionCircle->SetupAttachment(GetRootComponent());
-	
-	HealthShieldWidgetComponent = CreateDefaultSubobject<UHealthShieldWidgetComponent>(TEXT("HealthShieldWidgetComponent"));
-	HealthShieldWidgetComponent->SetupAttachment(GetRootComponent());
 
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 	AttackComponent = CreateDefaultSubobject<UAttackComponent>(TEXT("AttackComponent"));
@@ -76,11 +70,7 @@ void AShip::BeginPlay()
 		DebugInputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &AShip::LMBPressed);
 	}
 	
-
-	if (HealthShieldWidgetComponent)
-	{
-		HealthShieldWidgetComponent->SetHealthShieldAttributeSet(HealthShieldAttributeSet);
-	}
+	
 	SelectionCircle->SetVisibility(false);
 
 	if (RTSPlayer)
@@ -108,32 +98,28 @@ void AShip::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void AShip::Selected_Implementation(bool bInIsSelected)
 {
-	bIsSelected = bInIsSelected;
+	Super::Selected_Implementation(bInIsSelected);
 	if (bIsSelected)
 	{
-		HealthShieldWidgetComponent->SetVisibility(true);
 		SelectionCircle->SetVisibility(true);
 	}
 	else
 	{
-		HealthShieldWidgetComponent->SetVisibility(false);
 		SelectionCircle->SetVisibility(false);
 	}
 }
 
 void AShip::Highlighted_Implementation(bool bInIsHighlighted)
 {
+	Super::Highlighted_Implementation(bInIsHighlighted);
 	if (!bIsSelected)
 	{
-		bIsHighlighted = bInIsHighlighted;
 		if (bIsHighlighted)
 		{
-			HealthShieldWidgetComponent->SetVisibility(true);
 			SelectionCircle->SetVisibility(true);
 		}
 		else
 		{
-			HealthShieldWidgetComponent->SetVisibility(false);
 			SelectionCircle->SetVisibility(false);
 		}
 	}

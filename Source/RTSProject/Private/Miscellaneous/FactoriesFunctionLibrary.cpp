@@ -280,7 +280,7 @@ ABuilding* UFactoriesFunctionLibrary::NewBuilding(UWorld* World, UClass* ClassTy
 	}
 
 	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	Params.Owner = PlayerController;
 
 	ABuilding* SpawnedBuilding = World->SpawnActor<ABuilding>(

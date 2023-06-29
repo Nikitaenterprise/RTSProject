@@ -1,6 +1,7 @@
 ﻿#include "Actors/Units/BaseUnit.h"
 
 #include "Actors/RTSPlayer.h"
+#include "Components/UnitIndicatorComponent.h"
 #include "Core/RTSPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Systems/RTSPlayerState.h"
@@ -10,6 +11,12 @@ ABaseUnit::ABaseUnit(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
+	RootComponent = SceneComponent;
+
+	UnitIndicatorComponent = CreateDefaultSubobject<UUnitIndicatorComponent>(TEXT("UnitIndicatorComponent"));
+	UnitIndicatorComponent->SetupAttachment(GetRootComponent());
 }
 
 void ABaseUnit::PreInitializeComponents()
@@ -37,8 +44,10 @@ void ABaseUnit::BeginPlay()
 	Super::BeginPlay();
 
 	bJustCreated = true;
+	UnitIndicatorComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	UnitIndicatorComponent->SetDrawSize(FVector2D(300, 100));
 	
-	if (HasAnyFlags(RF_WasLoaded))
+	if (HasAnyFlags(RF_WasLoaded | RF_Transactional))
 	{
 		// Properly initialize unit if added to level in editor
 		TArray<AActor*> Actors;
@@ -83,4 +92,37 @@ void ABaseUnit::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 	
 	Super::EndPlay(EndPlayReason);
+}
+
+void ABaseUnit::Selected_Implementation(bool bInIsSelected)
+{
+	ISelectable::Selected_Implementation(bInIsSelected);
+
+	bIsSelected = bInIsSelected;
+	if (bIsSelected)
+	{
+		UnitIndicatorComponent->SetVisibility(true);
+	}
+	else
+	{
+		UnitIndicatorComponent->SetVisibility(false);
+	}
+}
+
+void ABaseUnit::Highlighted_Implementation(bool bInIsHighlighted)
+{
+	ISelectable::Highlighted_Implementation(bInIsHighlighted);
+
+	if (!bIsSelected)
+	{
+		bIsHighlighted = bInIsHighlighted;
+		if (bIsHighlighted)
+		{
+			UnitIndicatorComponent->SetVisibility(true);
+		}
+		else
+		{
+			UnitIndicatorComponent->SetVisibility(false);
+		}
+	}
 }

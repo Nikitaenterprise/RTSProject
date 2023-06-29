@@ -10,7 +10,6 @@ class UMiniMapIconComponent;
 class UFogOfWarInfluencerComponent;
 class UShipMovementComponent;
 class UStaticMeshComponent;
-class UHealthShieldWidgetComponent;
 class UPawnSensingComponent;
 class ARTSPlayerController;
 class ATurret;
@@ -64,15 +63,11 @@ public:
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
-	USceneComponent* SceneComponent = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")
 	UCapsuleComponent* CapsuleComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UStaticMeshComponent* SelectionCircle = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget")
-	UHealthShieldWidgetComponent* HealthShieldWidgetComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")
 	UPawnSensingComponent* PawnSensing = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship")

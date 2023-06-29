@@ -27,6 +27,7 @@ void ARTSAIController::ChangeOrder(EOrderType InOrder) const
 	}
 	// Blackboard->SetValueAsObject(FRTSBlackboardKeys::EnemyTarget, nullptr);
 	// Blackboard->SetValueAsBool(FRTSBlackboardKeys::bMovementTargetLocation, false);
+	OnOrderChanged.Broadcast(InOrder);
 }
 
 void ARTSAIController::ClearAllBlackboardKeys() const
