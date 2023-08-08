@@ -7,6 +7,7 @@
 
 #include "GameHUD.generated.h"
 
+class UMouseCursorWidget;
 class USelectionRectangleWidget;
 class ARTSPlayerController;
 class UMiniMapWidget;
@@ -15,28 +16,46 @@ UCLASS()
 class RTSPROJECT_API AGameHUD : public AHUD
 {
 	GENERATED_BODY()
+	
 public:
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	ARTSPlayerController* PlayerController = nullptr;
+	UFUNCTION(BlueprintCallable)
+	void SetMinimapWidget(UMiniMapWidget* InMinimapWidget) { MiniMapWidget = InMinimapWidget; }
+	UMiniMapWidget* GetMiniMapWidget() const { return MiniMapWidget; }
 
-	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
-	TSubclassOf<UMiniMapWidget> MiniMapWidgetClass;
-	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	UMiniMapWidget* MiniMapWidget = nullptr;
+	UFUNCTION(BlueprintCallable)
+	void SetSelectionRectangleWidget(USelectionRectangleWidget* InSelectionRectangleWidget) { SelectionRectangleWidget = InSelectionRectangleWidget; }
+	USelectionRectangleWidget* GetSelectionRectangleWidget() const { return SelectionRectangleWidget; }
 
-	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
-	TSubclassOf<USelectionRectangleWidget> SelectionRectangleWidgetClass;
-	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	USelectionRectangleWidget* SelectionRectangleWidget = nullptr;
+	UFUNCTION(BlueprintCallable)
+	UMouseCursorWidget* GetMouseCursorWidget() const { return MouseCursorWidget; }
 
-public:
+protected:
 	virtual void BeginPlay() override;
-
-	void LockSelectionRectangle() const;
-	void UnlockSelectionRectangle() const;
 
 	template<class T>
 	bool SetupWidget(T*& WidgetReference, TSubclassOf<T>& WidgetTemplate);
+	
+	UPROPERTY(BlueprintReadOnly)
+	ARTSPlayerController* PlayerController {nullptr};
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UMiniMapWidget> MiniMapWidgetClass;
+
+	UPROPERTY(BlueprintReadOnly)
+	UMiniMapWidget* MiniMapWidget {nullptr};
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<USelectionRectangleWidget> SelectionRectangleWidgetClass;
+	
+	UPROPERTY(BlueprintReadOnly)
+	USelectionRectangleWidget* SelectionRectangleWidget {nullptr};
+
+	UPROPERTY(BlueprintReadOnly, Category = "Widgets")
+	UMouseCursorWidget* MouseCursorWidget {nullptr};
+
+public:
+	void LockSelectionRectangle() const;
+	void UnlockSelectionRectangle() const;
 };
 
 template<class T>

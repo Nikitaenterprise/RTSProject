@@ -1,7 +1,12 @@
 ﻿#include "Actors/Units/BaseUnitWithAbility.h"
 
 #include "AbilitySystemComponent.h"
+#include "Core/RTSPlayerController.h"
+#include "GAS/AbilityEntitlement.h"
+#include "GAS/EntitlementUIData.h"
 #include "GAS/HealthShieldAttributeSet.h"
+#include "UI/GameHUD.h"
+#include "UI/MouseCursorWidget.h"
 
 
 ABaseUnitWithAbility::ABaseUnitWithAbility(const FObjectInitializer& ObjectInitializer)
@@ -22,12 +27,28 @@ void ABaseUnitWithAbility::PostInitializeComponents()
 	}
 	UnitAttributeSets = AbilitySystemComponent->GetSpawnedAttributes();
 
-	for (const auto UnitAbility : UnitAbilities)
+	for (const auto SoftAbilityEntitlement : UnitAbilityEntitlements)
 	{
-		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(UnitAbility, 1, INDEX_NONE, this));
+		if (SoftAbilityEntitlement.Get() == nullptr)
+		{
+			SoftAbilityEntitlement.LoadSynchronous();
+		}
+		
+		if (auto* AbilityEntitlement = SoftAbilityEntitlement.Get())
+		{
+			for (const auto Ability : AbilityEntitlement->GameplayAbilities)
+			{
+				AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Ability, 1, INDEX_NONE, this));
+			}
+
+			for (const auto Ability : AbilityEntitlement->AdditionalAbilities)
+			{
+				AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Ability, 1, INDEX_NONE, this));
+			}
+		}
 	}
 
-	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+	const FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
 	for (const auto DefaultGameplayEffect : DefaultGameplayEffects)
 	{
 		AbilitySystemComponent->ApplyGameplayEffectToSelf(DefaultGameplayEffect->GetDefaultObject<UGameplayEffect>(), 0.0f, Context);
@@ -48,5 +69,28 @@ void ABaseUnitWithAbility::BeginPlay()
 				This->Destroy();
 			}
 		});
+	}
+}
+
+void ABaseUnitWithAbility::Selected_Implementation(bool bInIsSelected)
+{
+	Super::Selected_Implementation(bInIsSelected);
+	
+	if (bIsSelected)
+	{
+		for (const auto SoftAbilityEntitlement : UnitAbilityEntitlements)
+		{
+			if (auto* AbilityEntitlement = SoftAbilityEntitlement.Get())
+			{
+				for (const auto Ability : AbilityEntitlement->GameplayAbilities)
+				{
+					const FGameplayAbilitySpec* Spec = AbilitySystemComponent->FindAbilitySpecFromClass(Ability);
+					if (Spec && Spec->IsActive())
+					{
+						MouseCursorWidget->SetCursorFromAbility(AbilityEntitlement->CursorData.Get());
+					}
+				}
+			}
+		}
 	}
 }

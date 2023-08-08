@@ -47,6 +47,11 @@ bool UAbstractOrder::Execute()
 	return true;
 }
 
+bool UAbstractOrder::Undo()
+{
+	return true;
+}
+
 void UAbstractOrder::ProcessOrder(ARTSAIController* InRTSAIController, UBlackboardComponent* InBlackboard)
 {
 }

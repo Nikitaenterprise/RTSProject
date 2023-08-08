@@ -6,6 +6,7 @@
 #include "GameplayAbilitySpec.h"
 #include "BaseUnitWithAbility.generated.h"
 
+class UAbilityEntitlement;
 class UHealthShieldAttributeSet;
 
 UCLASS()
@@ -25,6 +26,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	const TArray<UAttributeSet*>& GetUnitAttributeSets() { return UnitAttributeSets; }
 
+	UFUNCTION(BlueprintCallable)
+	const TArray<TSoftObjectPtr<UAbilityEntitlement>>& GetUnitAbilityEntitlements() const { return UnitAbilityEntitlements; }
+
+	// Begin ISelectable override
+	virtual void Selected_Implementation(bool bInIsSelected) override;
+	// End ISelectable override
+
 protected:
 	template <typename AbilityClass>
 	FGameplayAbilitySpecHandle GetAbilityByClass() const;
@@ -40,6 +48,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "GAS")
 	TArray<TSubclassOf<UGameplayAbility>> UnitAbilities;
+
+	UPROPERTY(EditAnywhere, Category = "GAS")
+	TArray<TSoftObjectPtr<UAbilityEntitlement>> UnitAbilityEntitlements;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "GAS")
+	TArray<UAbilityEntitlement*> AbilityEntitlements;
 
 	UPROPERTY()
 	TArray<UAttributeSet*> UnitAttributeSets;

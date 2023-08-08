@@ -25,12 +25,12 @@ void UMiniMapInfluencerComponent::InitializeComponent()
 		UE_LOG(LogTemp, Error, TEXT("TestController->GameHUD is nullptr in UMiniMapInfluencerComponent::InitializeComponent()"));
 		return;
 	}
-	if (!TestController->GetGameHUD()->MiniMapWidget)
+	if (!TestController->GetGameHUD()->GetMiniMapWidget())
 	{
 		UE_LOG(LogTemp, Error, TEXT("TestController->GameHUD->MiniMapWidget is nullptr in UMiniMapInfluencerComponent::InitializeComponent()"));
 		return;
 	}
-	MiniMapWidget = TestController->GetGameHUD()->MiniMapWidget;
+	MiniMapWidget = TestController->GetGameHUD()->GetMiniMapWidget();
 	MiniMapWidget->RegisterActor(GetOwner());
 }
 

@@ -23,11 +23,19 @@ class RTSPROJECT_API USelectionRectangleWidget : public UUserWidget
 
 	friend class AGameHUD;
 
+	DECLARE_DELEGATE_OneParam(FOnUnitsSelected, const TArray<AActor*>&)
+	DECLARE_DELEGATE_OneParam(FOnSelectionEnded, const TArray<AActor*>&)
+	DECLARE_DELEGATE(FOnUnitsDeselected)
+
 public:
 
 	UPROPERTY(BlueprintReadOnly)
 	ARTSPlayerController* PlayerController = nullptr;
 
+	FOnUnitsSelected OnUnitsSelected;
+	FOnSelectionEnded OnSelectionEnded;
+	FOnUnitsDeselected OnUnitsDeselected;
+	
 private:
 
 	FVector2D StartClick;
@@ -46,7 +54,9 @@ private:
 
 	//FTimerHandle TimerHandle;
 	float StartClickTime = 0;
-	float HoldTime = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+	float HoldTime = 0.25;
 	
 
 public:

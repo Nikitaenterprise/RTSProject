@@ -198,6 +198,7 @@ void USelectionRectangleWidget::EndRectangleSelection(const FGeometry& MovieScen
 	// Adding new actors (ShouldBeSelected) to selection pool (SelectedActors)
 	if (ShouldBeSelected.Num() == 0)
 	{
+		OnUnitsDeselected.ExecuteIfBound();
 		return;
 	}
 	bool bOnlyBuildings = false, bOnlyShips = false;
@@ -256,6 +257,7 @@ void USelectionRectangleWidget::EndRectangleSelection(const FGeometry& MovieScen
 	}
 
 	UpdatePlayerControllerSelectedActors();
+	OnSelectionEnded.ExecuteIfBound(SelectedActors);
 }
 
 void USelectionRectangleWidget::ClearSelection()
@@ -273,8 +275,10 @@ void USelectionRectangleWidget::ClearSelection()
 	{
 		if (!SelectedActors.Contains(Actor))
 		{
-			auto Interface = Cast<ISelectable>(Actor);
-			if (Interface) Interface->Execute_Selected(Actor, false);
+			if (const auto* Interface = Cast<ISelectable>(Actor))
+			{
+				Interface->Execute_Selected(Actor, false);
+			}
 		}
 	}
 }
@@ -291,10 +295,12 @@ void USelectionRectangleWidget::UpdateSelection()
 	}
 
 	// Select actors which came from selection rectangle
-	for (auto& Actor : ShouldBeSelected)
+	for (const auto& Actor : ShouldBeSelected)
 	{
-		auto Interface = Cast<ISelectable>(Actor);
-		if (Interface) Interface->Execute_Highlighted(Actor, true);
+		if (const auto* Interface = Cast<ISelectable>(Actor))
+		{
+			Interface->Execute_Highlighted(Actor, true);
+		}
 	}
 }
 
@@ -316,9 +322,15 @@ void USelectionRectangleWidget::SelectActorUnderCursor()
 		{
 			ShouldBeSelected.AddUnique(Actor);
 			SelectedActors.AddUnique(Actor);
-			auto Interface = Cast<ISelectable>(Actor);
-			if (Interface) Interface->Execute_Highlighted(Actor, true);
+			if (const auto* Interface = Cast<ISelectable>(Actor))
+			{
+				Interface->Execute_Highlighted(Actor, true);
+			}
 			UpdatePlayerControllerSelectedActors();
+		}
+		else
+		{
+			OnUnitsDeselected.ExecuteIfBound();
 		}
 	}
 }
@@ -390,4 +402,5 @@ void USelectionRectangleWidget::UpdatePlayerControllerSelectedActors()
 		return;
 	}
 	PlayerController->GetSelectedActorsRef() = SelectedActors;
+	OnUnitsSelected.ExecuteIfBound(SelectedActors);
 }

@@ -5,6 +5,7 @@
 #include "Interfaces/Selectable.h"
 #include "BaseUnit.generated.h"
 
+class UMouseCursorWidget;
 class UUnitIndicatorAdditionalDescriptionWidget;
 class ARTSPlayerController;
 class ARTSPlayer;
@@ -68,4 +69,7 @@ protected:
 	
 	UPROPERTY(EditInstanceOnly)
 	FGenericTeamId TeamId;
+
+	UPROPERTY()
+	UMouseCursorWidget* MouseCursorWidget {nullptr};
 };

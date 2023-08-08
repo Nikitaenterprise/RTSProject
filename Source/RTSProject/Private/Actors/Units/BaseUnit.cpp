@@ -5,6 +5,7 @@
 #include "Core/RTSPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Systems/RTSPlayerState.h"
+#include "UI/GameHUD.h"
 
 
 ABaseUnit::ABaseUnit(const FObjectInitializer& ObjectInitializer)
@@ -25,6 +26,13 @@ void ABaseUnit::PreInitializeComponents()
 	if (IsValid(PlayerController) == false)
 	{
 		UE_LOG(LogTemp, Error, TEXT("ABaseUnit::PreInitializeComponents() PlayerController is nullptr"));
+	}
+	else
+	{
+		if (const auto* GameHUD = PlayerController->GetGameHUD())
+		{
+			MouseCursorWidget = GameHUD->GetMouseCursorWidget();
+		}
 	}
 
 	if (const auto* RTSPlayerController = Cast<AController>(GetOwner()))

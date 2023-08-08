@@ -3,14 +3,24 @@
 #include "Core/RTSPlayerController.h"
 #include "Actors/Units/Ship.h"
 #include "Actors/Buildings/Building.h"
+#include "UI/SelectionRectangleWidget.h"
+#include "UI/UnitAbilitiesPanel.h"
 
 void UBasicUIWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
 	ARTSPlayerController* TestPlayerController = Cast<ARTSPlayerController>(GetOwningPlayer());
-	if (TestPlayerController) PlayerController = TestPlayerController;
-	else UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in UBasicUIWidget::NativeConstruct()"));
+	if (TestPlayerController)
+	{
+		PlayerController = TestPlayerController;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in UBasicUIWidget::NativeConstruct()"));
+	}
+	
+	UnitAbilitiesPanel->SubscribeToUpdate(SelectionRectangle); 
 }
 
 bool UBasicUIWidget::IsShipsAreSelected() const

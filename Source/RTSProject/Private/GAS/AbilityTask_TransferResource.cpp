@@ -74,6 +74,8 @@ void UAbilityTask_TransferResource::Transfer()
 		EndTask();
 		return;
 	}
+	// This is some kind of REA pattern
+	// https://askeplaat.files.wordpress.com/2013/01/abbadi-resources_entities_actions_a_generalized_design_pattern-118.pdf
 	
 	UGameplayEffect* ToTransferResourceEffect = NewObject<UGameplayEffect>();
 	UGameplayEffect* FromTransferResourceEffect = NewObject<UGameplayEffect>();

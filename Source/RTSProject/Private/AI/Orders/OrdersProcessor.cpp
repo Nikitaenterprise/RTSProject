@@ -13,14 +13,36 @@ void UOrdersProcessor::Initialize(ARTSPlayerController* InRTSPlayerController)
 	Orders.Add(EOrderType::GatherResource, NewObject<UGatherResourceOrder>());
 }
 
-bool UOrdersProcessor::ProcessOrder(EOrderType Order, const FVector& OrderLocation, const FHitResult& HitResult)
+bool UOrdersProcessor::ProcessOrder(EOrderType OrderType, const FVector& OrderLocation, const FHitResult& HitResult)
 {
-	if(!Orders.Contains(Order))
+	if(!Orders.Contains(OrderType))
 	{
-		UE_LOG(LogTemp, Error, TEXT("UOrdersProcessor::ProcessAnOrder() No such order: %d"), Order);
+		UE_LOG(LogTemp, Error, TEXT("UOrdersProcessor::ProcessAnOrder() No such order: %d"), OrderType);
 		return false;
 	}
-	
-	Orders[Order]->Initialize(RTSPlayerController->GetSelectedActors(), OrderLocation, HitResult);
-	return Orders[Order]->Execute();
+
+	UAbstractOrder* Order = Orders[OrderType];
+	OrdersQueue.Enqueue(Order);
+	Order->Initialize(RTSPlayerController->GetSelectedActors(), OrderLocation, HitResult);
+	return Order->Execute();
+}
+
+bool UOrdersProcessor::Undo()
+{
+	UAbstractOrder* Order {nullptr};
+	if (OrdersQueue.Dequeue(Order))
+	{
+		return Order->Undo();
+	}
+	return false;
+}
+
+bool UOrdersProcessor::Redo()
+{
+	UAbstractOrder* Order {nullptr};
+	if (OrdersQueue.Dequeue(Order))
+	{
+		return Order->Execute();
+	}
+	return false;
 }

@@ -18,6 +18,7 @@ public:
 		const FHitResult& InHitResult);
 
 	virtual bool Execute();
+	virtual bool Undo();
 	virtual void ProcessOrder(ARTSAIController* InRTSAIController, UBlackboardComponent* InBlackboard);
 
 protected:

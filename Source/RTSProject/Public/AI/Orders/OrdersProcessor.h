@@ -27,12 +27,17 @@ class RTSPROJECT_API UOrdersProcessor : public UObject
 public:
 	void Initialize(ARTSPlayerController* InRTSPlayerController);
 
-	bool ProcessOrder(EOrderType Order, const FVector& OrderLocation, const FHitResult& HitResult);
-	
+	bool ProcessOrder(EOrderType OrderType, const FVector& OrderLocation, const FHitResult& HitResult);
+	bool Undo();
+	bool Redo();
 protected:
 	UPROPERTY()
 	ARTSPlayerController* RTSPlayerController = nullptr;
 
 	UPROPERTY()
 	TMap<EOrderType, UAbstractOrder*> Orders;
+
+	TQueue<UAbstractOrder*> OrdersQueue;
+
+	int CurrentOrderIndex = 0;
 };
