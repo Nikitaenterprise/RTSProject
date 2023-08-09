@@ -25,6 +25,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	bool IsBuildingsAreSelected() const;
 
+	UFUNCTION(BlueprintCallable)
+	bool IsResourceStorageSelected() const;
+
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	USelectionRectangleWidget* SelectionRectangle {nullptr};
 	

@@ -48,3 +48,23 @@ bool UBasicUIWidget::IsBuildingsAreSelected() const
 		return false;
 	}
 }
+
+bool UBasicUIWidget::IsResourceStorageSelected() const
+{
+	if (PlayerController)
+	{
+		for (const auto& Building : PlayerController->GetSelectedBuildings())
+		{
+			if (Building->GetBuildingType() == EBuildingType::ResourceStorage)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr in UBasicUIWidget::IsShipsAreSelected"));
+		return false;
+	}
+}
