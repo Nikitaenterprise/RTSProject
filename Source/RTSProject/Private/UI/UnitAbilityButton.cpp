@@ -34,7 +34,7 @@ void UUnitAbilityButton::SetupAbilityButton(UAbilitySystemComponent* InAbilitySy
 			UIData.LoadSynchronous();
 		}
 	
-		AbilityImage->Brush = UIData.Get()->Icon;
+		AbilityImage->SetBrush(UIData.Get()->Icon);
 	}
 	
 	Description->SetText(Entitlement->Description);

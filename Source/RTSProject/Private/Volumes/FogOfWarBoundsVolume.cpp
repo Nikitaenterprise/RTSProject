@@ -60,5 +60,5 @@ void AFogOfWarBoundsVolume::PaveVolumeWithGrid()
 	out += FString("\nXMax = ") + FString::SanitizeFloat(XMax);
 	out += FString("\nYMax = ") + FString::SanitizeFloat(YMax);
 	out += FString("\nCreated Grid array with size = ") + FString::SanitizeFloat(Grid.Num());
-	UE_LOG(LogTemp, Log, TEXT("%S"), *out);
+	UE_LOG(LogTemp, Log, TEXT("%s"), *out);
 }

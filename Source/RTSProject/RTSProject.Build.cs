@@ -29,12 +29,11 @@ public class RTSProject : ModuleRules
 			"GameplayAbilities",
 			"GameplayTags",
 			"GameplayTasks",
-			"MeshProcessingPlugin",
 			"ModelingComponents",
 			"DynamicMesh",
 			"Slate",
 			"SlateCore"
-		});
+        });
 		
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");

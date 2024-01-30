@@ -110,7 +110,7 @@ FReply UMiniMapWidget::NativeOnMouseButtonDown(const FGeometry& MovieSceneBlends
 	const FVector NewLocation = FVector(ClickLocation, PlayerController->CameraRef->GetActorLocation().Z);
 	PlayerController->CameraRef->SetActorLocation(NewLocation);*/
 	return FReply::Handled();
-	return Super::NativeOnMouseButtonDown(MovieSceneBlends, InMouseEvent);
+	//return Super::NativeOnMouseButtonDown(MovieSceneBlends, InMouseEvent);
 }
 
 FReply UMiniMapWidget::NativeOnMouseMove(const FGeometry& MovieSceneBlends, const FPointerEvent& InMouseEvent)
@@ -137,7 +137,7 @@ FReply UMiniMapWidget::NativeOnMouseButtonUp(const FGeometry& MovieSceneBlends, 
 		bLMBPressed = false;
 	}
 	return FReply::Handled();
-	return Super::NativeOnMouseButtonUp(MovieSceneBlends, InMouseEvent);
+	//return Super::NativeOnMouseButtonUp(MovieSceneBlends, InMouseEvent);
 }
 
 void UMiniMapWidget::DrawIcons(const FPaintContext& Context) const

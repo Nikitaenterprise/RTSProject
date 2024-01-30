@@ -1,5 +1,5 @@
 #include "UI/HealthShieldWidget.h"
-#include "UMG/Public/Components/ProgressBar.h"
+#include "Components/ProgressBar.h"
 #include "GAS/HealthShieldAttributeSet.h"
 
 

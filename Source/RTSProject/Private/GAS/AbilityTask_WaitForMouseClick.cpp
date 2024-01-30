@@ -19,7 +19,7 @@ void UAbilityTask_WaitForMouseClick::Activate()
 		return;
 	}
 
-	auto* InputComponent = PlayerController->InputComponent;
+	const auto InputComponent = PlayerController->InputComponent;
 	if (InputComponent == nullptr)
 	{
 		EndTask();

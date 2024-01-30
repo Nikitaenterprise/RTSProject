@@ -180,7 +180,7 @@ bool ARTSPlayerController::AttackBySelectedActors(AShip* Ship, FHitResult HitRes
 	UAttackComponent* AttackComponent = Ship->FindComponentByClass<UAttackComponent>();
 	if (AttackComponent)
 	{
-		const AActor* AttackedActor = HitResult.Actor.Get();
+		const AActor* AttackedActor = HitResult.GetActor();
 		const UAttackComponent* AttackedActorAttackComponent = AttackedActor->FindComponentByClass<UAttackComponent>();
 		if (AttackedActorAttackComponent)
 		{

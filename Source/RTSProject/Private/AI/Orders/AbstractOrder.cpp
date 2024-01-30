@@ -24,7 +24,7 @@ bool UAbstractOrder::Execute()
 	// Set one of the orders to selected squads: Move or Attack
 	for (AActor* Actor : SelectedActors)
 	{
-		if (Actor->IsPendingKill())
+		if (Actor->IsPendingKillPending())
 		{
 			continue;
 		}

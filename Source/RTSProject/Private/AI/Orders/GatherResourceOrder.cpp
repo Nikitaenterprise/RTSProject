@@ -8,7 +8,7 @@ void UGatherResourceOrder::ProcessOrder(ARTSAIController* InRTSAIController, UBl
 {
 	Super::ProcessOrder(InRTSAIController, InBlackboard);
 
-	const TWeakObjectPtr<AActor> ActorUnderCursor = HitResultUnderCursor.Actor;
+	const TWeakObjectPtr<AActor> ActorUnderCursor = HitResultUnderCursor.GetActor();
 	if (Cast<AResource>(ActorUnderCursor))
 	{
 		InRTSAIController->ChangeOrder(EOrderType::GatherResource);

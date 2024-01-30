@@ -70,7 +70,8 @@ void AProjectile::OnOverlapBegin_Implementation(UPrimitiveComponent* OverlappedC
 	const auto ShipHealthShieldAttributeSet = Ship->GetHealthShieldAttributeSet();
 	if (ShipAbilityComponent && ShipHealthShieldAttributeSet)
 	{
-		auto DamageEffect = Cast<UGameplayEffect>(DamageEffectClass.Get());
+		//auto DamageEffect = Cast<UGameplayEffect>(DamageEffectClass.Get());
+		auto DamageEffect = NewObject<UGameplayEffect>(this, DamageEffectClass.Get(), TEXT("GE_ProjectileOverlap"));
 		if (DamageEffect == nullptr)
 		{
 			DamageEffect = NewObject<UGameplayEffect>();

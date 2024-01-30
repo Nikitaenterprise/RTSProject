@@ -4,6 +4,7 @@
 #include "HealthShieldWidget.generated.h"
 
 class UProgressBar;
+struct FOnAttributeChangeData;
 
 UCLASS()
 class RTSPROJECT_API UHealthShieldWidget : public UUnitIndicatorAdditionalDescriptionWidget
