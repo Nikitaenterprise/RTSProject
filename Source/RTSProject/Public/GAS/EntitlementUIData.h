@@ -3,6 +3,7 @@
 #include "Engine/DataAsset.h"
 #include "EntitlementUIData.generated.h"
 
+class UEntitlementBase;
 
 UCLASS(BlueprintType)
 class RTSPROJECT_API UEntitlementUIData : public UDataAsset

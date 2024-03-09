@@ -1,12 +1,16 @@
 #include "Actors/RTSPlayer.h"
 
-#include "Core/RTSPlayerController.h"
-#include "Components/StaticMeshComponent.h"
-#include "UObject/ConstructorHelpers.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Core/RTSPlayerController.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Input/PlayerInputDataAsset.h"
+#include "InputMappingContext.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "UObject/ConstructorHelpers.h"
 
 
 ARTSPlayer::ARTSPlayer()
@@ -37,48 +41,144 @@ ARTSPlayer::ARTSPlayer()
 void ARTSPlayer::BeginPlay()
 {
 	Super::BeginPlay();
-	BindInputs();
+
+	EnableInput(Cast<APlayerController>(GetController()));
 }
 
-void ARTSPlayer::BindInputs()
+void ARTSPlayer::EnableInput(APlayerController* PlayerController)
 {
-	if (IsValid(InputComponent) == false)
+	Super::EnableInput(PlayerController);
+
+	if (IsValid(PlayerController) == false)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent is nullptr in ACamera::BeginPlay()"));
-		UE_LOG(LogTemp, Error, TEXT("InputComponent is nullptr in ACamera::BeginPlay()"));
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerController is nullptr in ARTSPlayer::EnableInput()"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr in ARTSPlayer::EnableInput()"));
+		return;
+	}
+
+	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(InputComponent);
+	UEnhancedInputLocalPlayerSubsystem* EnhancedInputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
+    //EnhancedInputSubsystem->ClearAllMappings();
+
+	if (IsValid(PlayerInputDataAsset) == false)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerInputDataAsset is nullptr in ARTSPlayer::EnableInput()"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerInputDataAsset is nullptr in ARTSPlayer::EnableInput()"));
+		return;
+	}
+    EnhancedInputSubsystem->AddMappingContext(PlayerInputDataAsset->InputMappingContext, 0);
+
+	if (IsValid(EIC) == false)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("EnhancedInputComponent is nullptr in ARTSPlayer::EnableInput()"));
+		UE_LOG(LogTemp, Error, TEXT("EnhancedInputComponent is nullptr in ARTSPlayer::EnableInput()"));
 		return;
 	}
 	
-	// Movement
-	InputComponent->BindAxis(TEXT("MoveForward"), this, &ARTSPlayer::MoveForward);
-	InputComponent->BindAxis(TEXT("MoveRight"), this, &ARTSPlayer::MoveRight);
-	InputComponent->BindAction(TEXT("Shift"), IE_Pressed, this, &ARTSPlayer::MovementIncrease);
-	InputComponent->BindAction(TEXT("Shift"), IE_Released, this, &ARTSPlayer::ResetMovementModifier);
-	InputComponent->BindAction(TEXT("Alt"), IE_Pressed, this, &ARTSPlayer::MovementDecrease);
-	InputComponent->BindAction(TEXT("Alt"), IE_Released, this, &ARTSPlayer::ResetMovementModifier);
-	// Edge scrolling
+	EIC->BindAction(PlayerInputDataAsset->IAKeyboardMovement, ETriggerEvent::Triggered, this, &ARTSPlayer::KeyboardMove);
+	//EIC->BindAction(PlayerInputDataAsset->IAMouseMovement, ETriggerEvent::Triggered, this, &ARTSPlayer::MouseMove);
+
 	InputComponent->BindAxis(TEXT("MouseX"), this, &ARTSPlayer::EdgeScrollingX);
 	InputComponent->BindAxis(TEXT("MouseY"), this, &ARTSPlayer::EdgeScrollingY);
-	// Zoom
-	InputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Pressed, this, &ARTSPlayer::MouseWheelYPositiveStart);
-	InputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &ARTSPlayer::MouseWheelYNegativeStart);
-	InputComponent->BindAction(TEXT("ZoomReset"), IE_Pressed, this, &ARTSPlayer::ZoomReset);
-	// Pan rotation
-	InputComponent->BindAction(TEXT("MMB"), IE_Pressed, this, &ARTSPlayer::DisableCameraMovement);
-	InputComponent->BindAction(TEXT("MMB"), IE_Released, this, &ARTSPlayer::EnableCameraMovement);
-	InputComponent->BindAction(TEXT("PanReset"), IE_Pressed, this, &ARTSPlayer::PanReset);
 	InputComponent->BindAxis(TEXT("MouseX"), this, &ARTSPlayer::RotatePanX);
 	InputComponent->BindAxis(TEXT("MouseY"), this, &ARTSPlayer::RotatePanY);
+
+	EIC->BindActionValueLambda(PlayerInputDataAsset->IALMB, ETriggerEvent::Started, [&] (const FInputActionValue& InputActionValue)
+	{
+		OnLeftMouseButtonClicked.Broadcast();
+	});
+	EIC->BindActionValueLambda(PlayerInputDataAsset->IARMB, ETriggerEvent::Started, [&] (const FInputActionValue& InputActionValue)
+	{
+		OnRightMouseButtonClicked.Broadcast();
+	});
+
+	EIC->BindAction(PlayerInputDataAsset->IACameraZoom, ETriggerEvent::Triggered, this, &ARTSPlayer::Zoom);
+	EIC->BindAction(PlayerInputDataAsset->IAZoomReset, ETriggerEvent::Triggered, this, &ARTSPlayer::ZoomReset);
+
+	EIC->BindActionValueLambda(PlayerInputDataAsset->IAPanRotation, ETriggerEvent::Started, [&](const FInputActionValue& InputActionValue)
+	{
+		bEnablePanRotation = true;
+		bDisableZooming = true;
+	});
+	EIC->BindActionValueLambda(PlayerInputDataAsset->IAPanRotation, ETriggerEvent::Completed, [&](const FInputActionValue& InputActionValue)
+	{
+		bEnablePanRotation = false;
+		bDisableZooming = false;
+	});
+	EIC->BindActionValueLambda(PlayerInputDataAsset->IAPanReset, ETriggerEvent::Triggered, [&](const FInputActionValue& InputActionValue)
+	{
+		SetActorRotation(FRotator(0, 0, 0));
+	});
+	EIC->BindActionValueLambda(PlayerInputDataAsset->IAIncreaseMovementSpeed, ETriggerEvent::Started, [&](const FInputActionValue& InputActionValue)
+	{
+		MovementSpeedModifier = 2.f;
+	});
+	EIC->BindActionValueLambda(PlayerInputDataAsset->IAIncreaseMovementSpeed, ETriggerEvent::Completed, [&](const FInputActionValue& InputActionValue)
+	{
+		MovementSpeedModifier = 1.f;
+	});
+	EIC->BindActionValueLambda(PlayerInputDataAsset->IADecreaseMovementSpeed, ETriggerEvent::Started, [&](const FInputActionValue& InputActionValue)
+	{
+		MovementSpeedModifier = 0.3f;
+	});
+	EIC->BindActionValueLambda(PlayerInputDataAsset->IADecreaseMovementSpeed, ETriggerEvent::Completed, [&](const FInputActionValue& InputActionValue)
+	{
+		MovementSpeedModifier = 1.f;
+	});
 }
 
-void ARTSPlayer::MoveForward(float value)
+void ARTSPlayer::KeyboardMove(const FInputActionValue& InputActionValue)
 {
-	if (!bDisablePanRotation) Move(FVector(value, 0, 0));
+	const FVector2D MoveValue = InputActionValue.Get<FVector2D>();
+	if (bEnablePanRotation)
+	{
+		return;
+	}
+	if (MoveValue.X != 0.f)
+	{
+		Move(FVector(MoveValue.X, 0, 0));
+	}
+	if (MoveValue.Y != 0.f)
+	{
+		Move(FVector(0, MoveValue.Y, 0));
+	}
 }
 
-void ARTSPlayer::MoveRight(float value)
+//void ARTSPlayer::MouseMove(const FInputActionValue& InputActionValue)
+//{
+//	const FVector2D MoveValue = InputActionValue.Get<FVector2D>();
+//	if (AllowEdgeScrolling)
+//	{
+//		EdgeScrolling();
+//	}
+//	if (bDisablePanRotation == false)
+//	{
+//		RotatePan(MoveValue.X, MoveValue.Y);
+//	}
+//}
+
+void ARTSPlayer::Zoom(const FInputActionValue& InputActionValue)
 {
-	if (!bDisablePanRotation) Move(FVector(0, value, 0));
+	if (bDisableZooming)
+	{
+		return;
+	}
+	const bool bZoomIn = InputActionValue.Get<float>() < 0;
+	const float AmountToZoom = CameraZoomSpeed * (bZoomIn ? 1 : -1);
+	if (IsValid(SpringArm) == false)
+	{
+		return;
+	}
+	SpringArm->TargetArmLength = FMath::Clamp<float>(SpringArm->TargetArmLength + AmountToZoom, CameraMinZoom, CameraMaxZoom);
+}
+
+void ARTSPlayer::ZoomReset(const FInputActionValue& InputActionValue)
+{
+	if (IsValid(SpringArm) == false)
+	{
+		return;
+	}
+	SpringArm->TargetArmLength = CameraDefaultZoom;
 }
 
 void ARTSPlayer::Move(const FVector& InputVector)
@@ -89,21 +189,6 @@ void ARTSPlayer::Move(const FVector& InputVector)
 	Translation += OldTransform.GetLocation();
 	const FTransform NewTransform = FTransform(OldTransform.GetRotation(), Translation, OldTransform.GetScale3D());
 	SetActorLocation(FVector(NewTransform.GetLocation().X, NewTransform.GetLocation().Y, 100), true);
-}
-
-void ARTSPlayer::MovementIncrease()
-{
-	MovementSpeedModifier = 2;
-}
-
-void ARTSPlayer::MovementDecrease()
-{
-	MovementSpeedModifier = 0.3;
-}
-
-void ARTSPlayer::ResetMovementModifier()
-{
-	MovementSpeedModifier = 1;
 }
 
 void ARTSPlayer::EdgeScrolling()
@@ -139,29 +224,14 @@ void ARTSPlayer::EdgeScrollingY(float MouseY)
 	if (AllowEdgeScrolling) EdgeScrolling();
 }
 
-void ARTSPlayer::MouseWheelYPositiveStart()
+void ARTSPlayer::RotatePanX(float value)
 {
-	if (!bDisableZooming) ZoomIn();
+	if (bEnablePanRotation) RotatePan(value, 0);
 }
 
-void ARTSPlayer::MouseWheelYNegativeStart()
+void ARTSPlayer::RotatePanY(float value)
 {
-	if (!bDisableZooming) ZoomOut();
-}
-
-void ARTSPlayer::ZoomIn() const
-{
-	SpringArm->TargetArmLength = FMath::Clamp<float>(SpringArm->TargetArmLength - CameraZoomSpeed, CameraMinZoom, CameraMaxZoom);
-}
-
-void ARTSPlayer::ZoomOut() const
-{
-	SpringArm->TargetArmLength = FMath::Clamp<float>(SpringArm->TargetArmLength + CameraZoomSpeed, CameraMinZoom, CameraMaxZoom);
-}
-
-void ARTSPlayer::ZoomReset()
-{
-	SpringArm->TargetArmLength = CameraDefaultZoom;
+	if (bEnablePanRotation) RotatePan(0, value);
 }
 
 void ARTSPlayer::RotatePan(float x, float y)
@@ -171,29 +241,4 @@ void ARTSPlayer::RotatePan(float x, float y)
 	Yaw += x * PanRotationSpeed;
 	Pitch += y * PanRotationSpeed;
 	SetActorRotation(FRotator(Pitch, Yaw, Rotation.Roll));
-}
-
-void ARTSPlayer::RotatePanX(float value)
-{
-	if (bDisablePanRotation) RotatePan(value, 0);
-}
-
-void ARTSPlayer::RotatePanY(float value)
-{
-	if (bDisablePanRotation) RotatePan(0, value);
-}
-
-void ARTSPlayer::PanReset()
-{
-	SetActorRotation(FRotator(0, 0, 0));
-}
-
-void ARTSPlayer::EnableCameraMovement()
-{
-	bDisablePanRotation = false;
-}
-
-void ARTSPlayer::DisableCameraMovement()
-{
-	bDisablePanRotation = true;
 }

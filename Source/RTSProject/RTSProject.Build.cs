@@ -22,7 +22,8 @@ public class RTSProject : ModuleRules
 	        "NavigationSystem", 
 	        "GameplayAbilities",
 	        "RHI", 
-	        "RenderCore"
+	        "RenderCore",
+			"EnhancedInput"
         });
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
@@ -32,7 +33,8 @@ public class RTSProject : ModuleRules
 			"ModelingComponents",
 			"DynamicMesh",
 			"Slate",
-			"SlateCore"
+			"SlateCore",
+            "EnhancedInput"
         });
 		
 		// Uncomment if you are using online features

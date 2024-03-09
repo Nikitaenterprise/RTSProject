@@ -10,7 +10,8 @@ public class RTSProjectEditorTarget : TargetRules
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V5;
 		BuildEnvironment = TargetBuildEnvironment.Unique;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
 
-		ExtraModuleNames.AddRange( new string[] { "RTSProject" } );
+        ExtraModuleNames.AddRange( new string[] { "RTSProject" } );
 	}
 }
