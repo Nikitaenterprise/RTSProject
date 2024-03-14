@@ -1,19 +1,20 @@
 #include "Core/RTSPlayerController.h"
 
-#include "AIController.h"
-#include "Components/AttackComponent.h"
-#include "Actors/Units/Ship.h"
 #include "Actors/Buildings/Building.h"
-#include "Actors/RTSPlayer.h"
-#include "Core/FactoryAssets.h"
-#include "UI/GameHUD.h"
-#include "Core/RTSGameMode.h"
-#include "DrawDebugHelpers.h"
 #include "Actors/FogOfWar.h"
+#include "Actors/RTSPlayer.h"
+#include "Actors/Units/Ship.h"
 #include "Actors/Units/Worker.h"
 #include "AI/Orders/OrdersProcessor.h"
+#include "AIController.h"
+#include "Components/AttackComponent.h"
+#include "Core/FactoryAssets.h"
+#include "Core/RTSGameMode.h"
+#include "DrawDebugHelpers.h"
+#include "Input/CommonUIActionRouterBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Math/UnitConversion.h"
+#include "UI/GameHUD.h"
 
 void ARTSPlayerController::BeginPlay()
 {
@@ -83,6 +84,15 @@ void ARTSPlayerController::SetupInputComponent()
 	
 	bShowMouseCursor = true;
 
+	UCommonUIActionRouterBase* ActionRouter = GetLocalPlayer()->GetSubsystem<UCommonUIActionRouterBase>();
+	if (IsValid(ActionRouter))
+	{
+		FUIInputConfig NewInputConfig(ECommonInputMode::All, EMouseCaptureMode::CapturePermanently_IncludingInitialMouseDown, false);
+		NewInputConfig.bIgnoreLookInput = true;
+		NewInputConfig.bIgnoreMoveInput = false;
+		ActionRouter->SetActiveUIInputConfig(NewInputConfig);
+	}
+	
 	InputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &ThisClass::LMBPressed);
 	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ThisClass::RMBReleased);
 	InputComponent->BindAction(TEXT("Damage"), IE_Released, this, &ThisClass::DamagePressed);

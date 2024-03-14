@@ -32,6 +32,7 @@ protected:
 	virtual void EnableInput(class APlayerController* PlayerController) override;
 
 	void KeyboardMove(const FInputActionValue& InputActionValue);
+	void MouseMove(const FInputActionValue& InputActionValue);
 	void Zoom(const FInputActionValue& InputActionValue);
 	void ZoomReset(const FInputActionValue& InputActionValue);
 

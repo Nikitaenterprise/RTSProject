@@ -76,7 +76,7 @@ void ARTSPlayer::EnableInput(APlayerController* PlayerController)
 	}
 	
 	EIC->BindAction(PlayerInputDataAsset->IAKeyboardMovement, ETriggerEvent::Triggered, this, &ARTSPlayer::KeyboardMove);
-	//EIC->BindAction(PlayerInputDataAsset->IAMouseMovement, ETriggerEvent::Triggered, this, &ARTSPlayer::MouseMove);
+	EIC->BindAction(PlayerInputDataAsset->IAMouseMovement, ETriggerEvent::Triggered, this, &ARTSPlayer::MouseMove);
 
 	InputComponent->BindAxis(TEXT("MouseX"), this, &ARTSPlayer::EdgeScrollingX);
 	InputComponent->BindAxis(TEXT("MouseY"), this, &ARTSPlayer::EdgeScrollingY);
@@ -144,18 +144,18 @@ void ARTSPlayer::KeyboardMove(const FInputActionValue& InputActionValue)
 	}
 }
 
-//void ARTSPlayer::MouseMove(const FInputActionValue& InputActionValue)
-//{
-//	const FVector2D MoveValue = InputActionValue.Get<FVector2D>();
-//	if (AllowEdgeScrolling)
-//	{
-//		EdgeScrolling();
-//	}
-//	if (bDisablePanRotation == false)
-//	{
-//		RotatePan(MoveValue.X, MoveValue.Y);
-//	}
-//}
+void ARTSPlayer::MouseMove(const FInputActionValue& InputActionValue)
+{
+	const FVector2D MoveValue = InputActionValue.Get<FVector2D>();
+	if (AllowEdgeScrolling)
+	{
+		EdgeScrolling();
+	}
+	if (bEnablePanRotation)
+	{
+		RotatePan(MoveValue.X, MoveValue.Y);
+	}
+}
 
 void ARTSPlayer::Zoom(const FInputActionValue& InputActionValue)
 {

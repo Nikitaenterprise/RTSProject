@@ -34,7 +34,8 @@ public class RTSProject : ModuleRules
 			"DynamicMesh",
 			"Slate",
 			"SlateCore",
-            "EnhancedInput"
+            "EnhancedInput",
+			"CommonUI"
         });
 		
 		// Uncomment if you are using online features
