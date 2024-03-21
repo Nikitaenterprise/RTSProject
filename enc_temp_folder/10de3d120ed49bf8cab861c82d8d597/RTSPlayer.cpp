@@ -159,6 +159,8 @@ void ARTSPlayer::KeyboardMove(const FInputActionValue& InputActionValue)
 
 void ARTSPlayer::MouseMove(const FInputActionValue& InputActionValue)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::White, FString("MouseMove"));
+
 	const FVector2D MoveValue = InputActionValue.Get<FVector2D>();
 	if (AllowEdgeScrolling)
 	{

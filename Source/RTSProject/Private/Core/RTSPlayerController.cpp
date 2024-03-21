@@ -69,9 +69,6 @@ void ARTSPlayerController::BeginPlay()
 	}
 	//FogOfWar->Initialize(this);
 
-	const FInputModeGameAndUI InputMode;
-	SetInputMode(InputMode);
-
 	OrdersProcessor = NewObject<UOrdersProcessor>();
 	OrdersProcessor->Initialize(this);
 
@@ -83,6 +80,9 @@ void ARTSPlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 	
 	bShowMouseCursor = true;
+
+	const FInputModeGameAndUI InputMode;
+	SetInputMode(InputMode);
 
 	UCommonUIActionRouterBase* ActionRouter = GetLocalPlayer()->GetSubsystem<UCommonUIActionRouterBase>();
 	if (IsValid(ActionRouter))

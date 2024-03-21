@@ -29,6 +29,7 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 	virtual void EnableInput(class APlayerController* PlayerController) override;
 
 	void KeyboardMove(const FInputActionValue& InputActionValue);
@@ -40,11 +41,6 @@ protected:
 
 	// Edge scrolling
 	void EdgeScrolling();
-	void EdgeScrollingX(float MouseX);
-	void EdgeScrollingY(float MouseY);
-	
-	void RotatePanX(float value);
-	void RotatePanY(float value);
 	void RotatePan(float x, float y);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
