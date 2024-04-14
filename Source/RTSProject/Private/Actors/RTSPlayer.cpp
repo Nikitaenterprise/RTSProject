@@ -75,6 +75,13 @@ void ARTSPlayer::EnableInput(APlayerController* PlayerController)
 	}
 
 	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(InputComponent);
+	if (IsValid(EIC) == false)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("EnhancedInputComponent is nullptr in ARTSPlayer::EnableInput()"));
+		UE_LOG(LogTemp, Error, TEXT("EnhancedInputComponent is nullptr in ARTSPlayer::EnableInput()"));
+		return;
+	}
+
 	UEnhancedInputLocalPlayerSubsystem* EnhancedInputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
     //EnhancedInputSubsystem->ClearAllMappings();
 
@@ -85,26 +92,10 @@ void ARTSPlayer::EnableInput(APlayerController* PlayerController)
 		return;
 	}
     EnhancedInputSubsystem->AddMappingContext(PlayerInputDataAsset->InputMappingContext, 0);
-
-	if (IsValid(EIC) == false)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("EnhancedInputComponent is nullptr in ARTSPlayer::EnableInput()"));
-		UE_LOG(LogTemp, Error, TEXT("EnhancedInputComponent is nullptr in ARTSPlayer::EnableInput()"));
-		return;
-	}
+	
 	
 	EIC->BindAction(PlayerInputDataAsset->IAKeyboardMovement, ETriggerEvent::Triggered, this, &ARTSPlayer::KeyboardMove);
 	EIC->BindAction(PlayerInputDataAsset->IAMouseMovement, ETriggerEvent::Triggered, this, &ARTSPlayer::MouseMove);
-
-	EIC->BindActionValueLambda(PlayerInputDataAsset->IALMB, ETriggerEvent::Started, [&] (const FInputActionValue& InputActionValue)
-	{
-		OnLeftMouseButtonClicked.Broadcast();
-	});
-	EIC->BindActionValueLambda(PlayerInputDataAsset->IARMB, ETriggerEvent::Started, [&] (const FInputActionValue& InputActionValue)
-	{
-		OnRightMouseButtonClicked.Broadcast();
-	});
-
 	EIC->BindAction(PlayerInputDataAsset->IACameraZoom, ETriggerEvent::Triggered, this, &ARTSPlayer::Zoom);
 	EIC->BindAction(PlayerInputDataAsset->IAZoomReset, ETriggerEvent::Triggered, this, &ARTSPlayer::ZoomReset);
 

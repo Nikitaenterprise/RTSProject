@@ -15,17 +15,12 @@ class RTSPROJECT_API ARTSPlayer : public APawn
 {
 	GENERATED_BODY()
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftMouseButtonClicked);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRightMouseButtonClicked);
-
 public:
 	ARTSPlayer();
 
 	void SetIsZoomDisabled(bool bInDisableZoom) { bDisableZooming = bInDisableZoom; } 
 	bool GetIsZoomDisabled() const { return bDisableZooming; }
 
-	FOnLeftMouseButtonClicked OnLeftMouseButtonClicked;
-	FOnRightMouseButtonClicked OnRightMouseButtonClicked;
 	
 protected:
 	virtual void BeginPlay() override;

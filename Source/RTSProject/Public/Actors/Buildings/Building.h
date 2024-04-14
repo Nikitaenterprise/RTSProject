@@ -52,8 +52,8 @@ public:
 	void RequestBuildingUnit(TSubclassOf<AActor> ActorClass);
 	
 protected:
-	void LMBPressed();
-	void LMBReleased();
+	UFUNCTION()
+	void LMBPressed(ETriggerEvent Event);
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base")
 	UStaticMeshComponent* StaticMesh = nullptr;

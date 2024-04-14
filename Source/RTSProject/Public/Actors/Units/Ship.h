@@ -59,7 +59,8 @@ public:
 	void MouseYPositiveStart();
 	void MouseYNegativeStart();
 
-	void LMBPressed();
+	UFUNCTION()
+	void LMBPressed(ETriggerEvent Event);
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base")

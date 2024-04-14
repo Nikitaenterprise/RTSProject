@@ -58,16 +58,9 @@ void AShip::BeginPlay()
 
 	if (PlayerController)
 	{
-		DebugInputComponent = PlayerController->InputComponent;
-		if (!IsValid(DebugInputComponent))
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent in AShip->Initialize() is nullptr"));
-			UE_LOG(LogTemp, Error, TEXT("InputComponent in AShip->Initialize() is nullptr"));
-			return;
-		}
-		DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Pressed, this, &AShip::MouseYPositiveStart);
-		DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
-		DebugInputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &AShip::LMBPressed);
+		//DebugInputComponent->BindAction(TEXT("MouseWheelYPositive"), IE_Pressed, this, &AShip::MouseYPositiveStart);
+		//DebugInputComponent->BindAction(TEXT("MouseWheelYNegative"), IE_Pressed, this, &AShip::MouseYNegativeStart);
+		PlayerController->OnLeftMouseButtonClicked.AddUniqueDynamic(this, &ThisClass::LMBPressed);
 	}
 	
 	
@@ -161,7 +154,7 @@ void AShip::MouseYNegativeStart()
 	GEngine->AddOnScreenDebugMessage(-1, 0.1, FColor::White, GetActorForwardVector().Rotation().ToString());
 }
 
-void AShip::LMBPressed()
+void AShip::LMBPressed(ETriggerEvent Event)
 {
 	if (RTSPlayer)
 	{
@@ -171,6 +164,7 @@ void AShip::LMBPressed()
 	if (PlayerController->GetGameHUD())
 	{
 		PlayerController->GetGameHUD()->UnlockSelectionRectangle();
+		PlayerController->OnLeftMouseButtonClicked.RemoveDynamic(this, &ThisClass::LMBPressed);
 	}
 	
 	bJustCreated = false;

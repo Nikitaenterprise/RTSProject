@@ -16,3 +16,5 @@ Saved
 .vsconfig
 /Plugins/*
 .idea/*
+
+enc_temp_folder/*

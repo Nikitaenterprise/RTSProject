@@ -5,6 +5,7 @@
 class ABuilding;
 class AShip;
 class UInputController;
+class UPlayerInputDataAsset;
 class AGameHUD;
 class UShipHUD;
 class UBuildingHUD;
@@ -18,7 +19,10 @@ UCLASS()
 class RTSPROJECT_API ARTSPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLeftMouseButtonClicked, ETriggerEvent, Type);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRightMouseButtonClicked, ETriggerEvent, Type);
+
 public:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
@@ -55,8 +59,16 @@ public:
 	// FactoryAssets	
 	UFUNCTION(BlueprintCallable, Category = "Getters")
 	AFogOfWar* GetFOWManager() const { return FogOfWar; }
+
+	UPROPERTY(BlueprintAssignable)
+	FOnLeftMouseButtonClicked OnLeftMouseButtonClicked;
+	UPROPERTY(BlueprintAssignable)
+	FOnRightMouseButtonClicked OnRightMouseButtonClicked;
 	
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UPlayerInputDataAsset* PlayerInputDataAsset { nullptr };
+
 	/** Saves the current selection to the specified control group. */
 	UFUNCTION(BlueprintCallable)
 	void SaveControlGroup(int32 Index);

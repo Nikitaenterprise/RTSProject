@@ -39,14 +39,7 @@ void ABuilding::BeginPlay()
 	Super::BeginPlay();
 
 	bJustCreated = HasAnyFlags(RF_WasLoaded) == false;
-	DebugInputComponent = PlayerController->InputComponent;
-	if (!IsValid(DebugInputComponent))
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("InputComponent is nullptr in AShip::Initialize()"));
-		UE_LOG(LogTemp, Error, TEXT("InputComponent is nullptr in AShip::Initialize()"));
-	}
-	DebugInputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &ABuilding::LMBPressed);
-	DebugInputComponent->BindAction(TEXT("LMB"), IE_Released, this, &ABuilding::LMBReleased);
+	PlayerController->OnLeftMouseButtonClicked.AddUniqueDynamic(this, &ThisClass::LMBPressed);
 
 	SpawnPoint->SetRelativeLocation(FVector(150, 0, 0));
 	SpawnPoint->SetVisibility(false);
@@ -69,6 +62,7 @@ void ABuilding::Tick(float DeltaTime)
 		{
 			bJustCreated = false;
 			if (PlayerController->GetGameHUD()) PlayerController->GetGameHUD()->UnlockSelectionRectangle();
+			PlayerController->OnLeftMouseButtonClicked.RemoveDynamic(this, &ThisClass::LMBPressed);
 		}
 	}
 }
@@ -80,14 +74,9 @@ void ABuilding::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void ABuilding::LMBPressed()
+void ABuilding::LMBPressed(ETriggerEvent Event)
 {
 	bLMBPressed = true;
-}
-
-void ABuilding::LMBReleased()
-{
-	bLMBPressed = false;
 }
 
 void ABuilding::UpdatePositionWhenCreated()

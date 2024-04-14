@@ -11,10 +11,14 @@
 #include "Core/FactoryAssets.h"
 #include "Core/RTSGameMode.h"
 #include "DrawDebugHelpers.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 #include "Input/CommonUIActionRouterBase.h"
+#include "Input/PlayerInputDataAsset.h"
 #include "Kismet/GameplayStatics.h"
 #include "Math/UnitConversion.h"
 #include "UI/GameHUD.h"
+
 
 void ARTSPlayerController::BeginPlay()
 {
@@ -92,9 +96,34 @@ void ARTSPlayerController::SetupInputComponent()
 		NewInputConfig.bIgnoreMoveInput = false;
 		ActionRouter->SetActiveUIInputConfig(NewInputConfig);
 	}
+
+	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(InputComponent);
+	if (IsValid(EIC) == false)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("EnhancedInputComponent is nullptr in ARTSPlayerController::SetupInputComponent()"));
+		UE_LOG(LogTemp, Error, TEXT("EnhancedInputComponent is nullptr in ARTSPlayerController::SetupInputComponent()"));
+		return;
+	}
+
+	UEnhancedInputLocalPlayerSubsystem* EnhancedInputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+	if (IsValid(PlayerInputDataAsset) == false)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerInputDataAsset is nullptr in ARTSPlayerController::SetupInputComponent()"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerInputDataAsset is nullptr in ARTSPlayerController::SetupInputComponent()"));
+		return;
+	}
+    EnhancedInputSubsystem->AddMappingContext(PlayerInputDataAsset->InputMappingContext, 0);
+
+	EIC->BindActionValueLambda(PlayerInputDataAsset->IALMB, ETriggerEvent::Completed, [&] (const FInputActionValue& InputActionValue)
+	{
+		OnLeftMouseButtonClicked.Broadcast(ETriggerEvent::Completed);
+	});
+	EIC->BindActionValueLambda(PlayerInputDataAsset->IARMB, ETriggerEvent::Completed, [&] (const FInputActionValue& InputActionValue)
+	{
+		RMBReleased();
+		OnRightMouseButtonClicked.Broadcast(ETriggerEvent::Completed);
+	});
 	
-	InputComponent->BindAction(TEXT("LMB"), IE_Pressed, this, &ThisClass::LMBPressed);
-	InputComponent->BindAction(TEXT("RMB"), IE_Pressed, this, &ThisClass::RMBReleased);
 	InputComponent->BindAction(TEXT("Damage"), IE_Released, this, &ThisClass::DamagePressed);
 
 	InputComponent->BindAction(TEXT("SaveControlGroup0"), IE_Released, this, &ThisClass::SaveControlGroup0);
@@ -134,33 +163,33 @@ void ARTSPlayerController::RMBReleased()
 
 		return Order(Args...);
 	});
-	// ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
-	// {
-	// 	if (This.IsValid() == false)
-	// 	{
-	// 		return false;  
-	// 	}
-	// 	if (This->OrdersProcessor == nullptr)
-	// 	{
-	// 		return false;
-	// 	}
-	// 	
-	// 	auto Order = [This](const AShip* InShip, const FHitResult& HitResult)
-	// 	{
-	// 		const FVector OrderLocation(HitResult.Location.X, HitResult.Location.Y, InShip->GetActorLocation().Z);
-	// 		return This->OrdersProcessor->ProcessOrder(EOrderType::MoveOrder, OrderLocation, HitResult);
-	// 	};
-	// 	
-	// 	return Order(Args...);
-	// });
-	// ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
-	// {
-	// 	if (This.IsValid())
-	// 	{
-	// 		return This->AttackBySelectedActors(Args...);
-	// 	}
-	// 	return false;
-	// });
+	ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
+	{
+		if (This.IsValid() == false)
+		{
+	 		return false;  
+		}
+		if (This->OrdersProcessor == nullptr)
+		{
+	 		return false;
+		}
+	 	
+		auto Order = [This](const AShip* InShip, const FHitResult& HitResult)
+		{
+	 		const FVector OrderLocation(HitResult.Location.X, HitResult.Location.Y, InShip->GetActorLocation().Z);
+	 		return This->OrdersProcessor->ProcessOrder(EOrderType::MoveOrder, OrderLocation, HitResult);
+		};
+	 	
+		return Order(Args...);
+	});
+	ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
+	{
+		if (This.IsValid())
+		{
+	 		return This->AttackBySelectedActors(Args...);
+		}
+		return false;
+	});
 	ExecuteCommandToSelectedActors<ABuilding>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
 	{
 		if (This.IsValid())
