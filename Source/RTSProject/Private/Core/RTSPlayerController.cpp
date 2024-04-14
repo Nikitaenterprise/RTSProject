@@ -4,6 +4,7 @@
 #include "Actors/FogOfWar.h"
 #include "Actors/RTSPlayer.h"
 #include "Actors/Units/Ship.h"
+#include "Actors/Units/Squad.h"
 #include "Actors/Units/Worker.h"
 #include "AI/Orders/OrdersProcessor.h"
 #include "AIController.h"
@@ -198,6 +199,14 @@ void ARTSPlayerController::RMBReleased()
 		}
 		return false;
 	});
+	ExecuteCommandToSelectedActors<ASquad>([This = TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
+	{
+		if (This.IsValid())
+		{
+			return This->MoveSquadron(Args...);
+		}
+		return false;
+	});
 }
 
 void ARTSPlayerController::DamagePressed()
@@ -241,6 +250,12 @@ bool ARTSPlayerController::SetSpawnPointForSelectedBuildings(ABuilding* Building
 {
 	Building->SetSpawnPointLocation(FVector(HitResult.Location.X, HitResult.Location.Y, Building->GetActorLocation().Z));
 	return true;
+}
+
+bool ARTSPlayerController::MoveSquadron(ASquad* Squadron, FHitResult HitResult)
+{
+	Squadron->MoveTo(FVector(HitResult.Location.X, HitResult.Location.Y, 150));
+	return false;
 }
 
 void ARTSPlayerController::SaveControlGroup0() { SaveControlGroup(0); }

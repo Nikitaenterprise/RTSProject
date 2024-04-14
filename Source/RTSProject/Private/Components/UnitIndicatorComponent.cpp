@@ -24,6 +24,7 @@ void UUnitIndicatorComponent::BeginPlay()
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("UUnitIndicatorComponent::BeginPlay() UnitIndicatorWidget is nullptr"));
 		UE_LOG(LogTemp, Error, TEXT("UUnitIndicatorComponent::BeginPlay() UnitIndicatorWidget is nullptr"));
+		return;
 	}
 	SetVisibility(false);
 	

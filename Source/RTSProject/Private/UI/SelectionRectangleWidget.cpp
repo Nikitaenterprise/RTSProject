@@ -207,7 +207,7 @@ void USelectionRectangleWidget::EndRectangleSelection(const FGeometry& MovieScen
 	// e.d. buildings or ships are already in SelectedActors
 	if (SelectedActors.Num() != 0)
 	{
-		if (PlayerController->IsArrayContainThisTypeActors<AShip>(SelectedActors))
+		if (PlayerController->IsArrayContainThisTypeActors<AShip>(SelectedActors) || PlayerController->IsArrayContainThisTypeActors<ASquad>(SelectedActors))
 		{
 			bOnlyShips = true;
 		}
@@ -235,7 +235,7 @@ void USelectionRectangleWidget::EndRectangleSelection(const FGeometry& MovieScen
 			}
 			// If SelectedActors has at least one ship then add
 			// ship but not building
-			else if (!bOnlyBuildings && Cast<AShip>(Actor))
+			else if (!bOnlyBuildings && (Cast<AShip>(Actor) || Cast<ASquad>(Actor)))
 			{
 				SelectedActors.AddUnique(Actor);
 				bOnlyShips = true;

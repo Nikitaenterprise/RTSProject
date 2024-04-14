@@ -3,9 +3,9 @@
 #include "Components/Movement/BoidMovementComponent.h"
 
 AFighter::AFighter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.SetDefaultSubobjectClass<USimpleMovementComponent>(FName("SimpleMovementComponent")))
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UBoidMovementComponent>(FName("BoidMovementComponent")))
 {
-	MovementComponent = CreateDefaultSubobject<USimpleMovementComponent>(TEXT("SimpleMovementComponent"));
+	MovementComponent = CreateDefaultSubobject<UBoidMovementComponent>(TEXT("BoidMovementComponent"));
 }
 
 void AFighter::BeginPlay()

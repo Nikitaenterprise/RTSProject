@@ -59,12 +59,13 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "BaseUnit")
 	ARTSPlayer* RTSPlayer {nullptr};
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite, Category = "BaseUnit")
 	bool bIsSelected = false;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite, Category = "BaseUnit")
 	bool bIsHighlighted = false;
 	
+	UPROPERTY(BlueprintReadWrite, Category = "BaseUnit")
 	bool bJustCreated = false;
 	
 	UPROPERTY(EditInstanceOnly)

@@ -4,6 +4,7 @@
 
 class ABuilding;
 class AShip;
+class ASquad;
 class UInputController;
 class UPlayerInputDataAsset;
 class AGameHUD;
@@ -53,6 +54,7 @@ public:
 
 	bool AttackBySelectedActors(AShip* Ship, FHitResult HitResult);
 	bool SetSpawnPointForSelectedBuildings(ABuilding* Building,FHitResult HitResult);
+	bool MoveSquadron(ASquad* Squadron, FHitResult HitResult);
 	template <typename ActorType>
 	bool ExecuteCommandToSelectedActors(TFunction<bool(ActorType* Actor, FHitResult HitResult)> Function);
 

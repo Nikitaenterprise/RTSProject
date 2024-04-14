@@ -3,7 +3,7 @@
 #include "Components/WidgetComponent.h"
 #include "UnitIndicatorComponent.generated.h"
 
-
+class UUnitIndicatorAdditionalDescriptionWidget;
 class UUnitIndicatorWidget;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))

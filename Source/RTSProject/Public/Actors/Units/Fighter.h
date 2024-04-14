@@ -2,6 +2,8 @@
 
 #include "Components/Movement/SimpleMovementComponent.h"
 #include "Interfaces/Squadable.h"
+#include "Components/Movement/BoidMovementComponent.h"
+
 #include "Fighter.generated.h"
 
 UCLASS()
@@ -18,6 +20,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fighter")
-	USimpleMovementComponent* MovementComponent = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fighter")
+	UBoidMovementComponent* MovementComponent = nullptr;
 };

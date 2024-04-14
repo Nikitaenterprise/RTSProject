@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Actors/Units/Ship.h"
+#include "Actors/Units/Squad.h"
 #include "Blueprint/UserWidget.h"
 #include "EngineUtils.h"
 #include "Core/RTSPlayerController.h"
