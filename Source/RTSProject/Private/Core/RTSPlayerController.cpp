@@ -2,13 +2,9 @@
 
 #include "Actors/Buildings/Building.h"
 #include "Actors/FogOfWar.h"
-#include "Actors/RTSPlayer.h"
 #include "Actors/Units/Ship.h"
-#include "Actors/Units/Squad.h"
-#include "Actors/Units/Worker.h"
-#include "AI/Orders/OrdersProcessor.h"
-#include "AIController.h"
-#include "Components/AttackComponent.h"
+#include "AI/Orders/OrdersAcceptorComponent.h"
+#include "AI/Orders/OrdersAcceptorInterface.h"
 #include "Core/FactoryAssets.h"
 #include "Core/RTSGameMode.h"
 #include "DrawDebugHelpers.h"
@@ -17,9 +13,7 @@
 #include "Input/CommonUIActionRouterBase.h"
 #include "Input/PlayerInputDataAsset.h"
 #include "Kismet/GameplayStatics.h"
-#include "Math/UnitConversion.h"
 #include "UI/GameHUD.h"
-
 
 void ARTSPlayerController::BeginPlay()
 {
@@ -73,9 +67,6 @@ void ARTSPlayerController::BeginPlay()
 		}
 	}
 	//FogOfWar->Initialize(this);
-
-	OrdersProcessor = NewObject<UOrdersProcessor>();
-	OrdersProcessor->Initialize(this);
 
 	UE_LOG(LogTemp, Display, TEXT("Success of ARTSPlayerController::BeginPlay()"));
 }
@@ -145,68 +136,28 @@ void ARTSPlayerController::LMBPressed()
 
 void ARTSPlayerController::RMBReleased()
 {
-	ExecuteCommandToSelectedActors<AWorker>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
+	FHitResult HitResult;
+	if (GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, HitResult) == false)
 	{
-		if (This.IsValid() == false)
+		return;
+	}
+
+	for (const auto& Actor : SelectedActors)
+	{
+		if (IsValid(Actor) == false || Actor->Implements<UOrdersAcceptorInterface>() == false)
 		{
-			return false;  
-		}
-		if (This->OrdersProcessor == nullptr)
-		{
-			return false;
+			continue;
 		}
 
-		auto Order = [This](const AShip* InShip, const FHitResult& HitResult)
+		const IOrdersAcceptorInterface* Interface = Cast<IOrdersAcceptorInterface>(Actor);
+		UOrdersAcceptorComponent* OrdersAcceptor =  Interface->GetOrdersAcceptorComponent();
+		if (IsValid(OrdersAcceptor) == false)
 		{
-			const FVector OrderLocation(HitResult.Location.X, HitResult.Location.Y, InShip->GetActorLocation().Z);
-			return This->OrdersProcessor->ProcessOrder(EOrderType::GatherResource, OrderLocation, HitResult);
-		};
+			continue;
+		}
 
-		return Order(Args...);
-	});
-	ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
-	{
-		if (This.IsValid() == false)
-		{
-	 		return false;  
-		}
-		if (This->OrdersProcessor == nullptr)
-		{
-	 		return false;
-		}
-	 	
-		auto Order = [This](const AShip* InShip, const FHitResult& HitResult)
-		{
-	 		const FVector OrderLocation(HitResult.Location.X, HitResult.Location.Y, InShip->GetActorLocation().Z);
-	 		return This->OrdersProcessor->ProcessOrder(EOrderType::MoveOrder, OrderLocation, HitResult);
-		};
-	 	
-		return Order(Args...);
-	});
-	ExecuteCommandToSelectedActors<AShip>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
-	{
-		if (This.IsValid())
-		{
-	 		return This->AttackBySelectedActors(Args...);
-		}
-		return false;
-	});
-	ExecuteCommandToSelectedActors<ABuilding>([This=TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
-	{
-		if (This.IsValid())
-		{
-			return This->SetSpawnPointForSelectedBuildings(Args...);
-		}
-		return false;
-	});
-	ExecuteCommandToSelectedActors<ASquad>([This = TWeakObjectPtr<ThisClass>(this)](auto&& ...Args)-> bool
-	{
-		if (This.IsValid())
-		{
-			return This->MoveSquadron(Args...);
-		}
-		return false;
-	});
+		OrdersAcceptor->ProcessOrder(HitResult);
+	}
 }
 
 void ARTSPlayerController::DamagePressed()
@@ -221,41 +172,6 @@ TArray<ABuilding*> ARTSPlayerController::GetSelectedBuildings()
 TArray<AShip*> ARTSPlayerController::GetSelectedShips()
 {
 	return GetSelectedActorsByType<AShip>();
-}
-
-bool ARTSPlayerController::AttackBySelectedActors(AShip* Ship, FHitResult HitResult)
-{
-	UAttackComponent* AttackComponent = Ship->FindComponentByClass<UAttackComponent>();
-	if (AttackComponent)
-	{
-		const AActor* AttackedActor = HitResult.GetActor();
-		const UAttackComponent* AttackedActorAttackComponent = AttackedActor->FindComponentByClass<UAttackComponent>();
-		if (AttackedActorAttackComponent)
-		{
-			if (AttackComponent->GetCanAttack() &&
-				AttackedActor != Ship &&
-				AttackedActorAttackComponent->GetCanBeAttacked())
-			{
-				AttackComponent->RequestAttack(AttackedActor);
-			}
-			else return false;
-		}
-		else return false;
-	}
-	else return false;
-	return true;
-}
-
-bool ARTSPlayerController::SetSpawnPointForSelectedBuildings(ABuilding* Building, FHitResult HitResult)
-{
-	Building->SetSpawnPointLocation(FVector(HitResult.Location.X, HitResult.Location.Y, Building->GetActorLocation().Z));
-	return true;
-}
-
-bool ARTSPlayerController::MoveSquadron(ASquad* Squadron, FHitResult HitResult)
-{
-	Squadron->MoveTo(FVector(HitResult.Location.X, HitResult.Location.Y, 150));
-	return false;
 }
 
 void ARTSPlayerController::SaveControlGroup0() { SaveControlGroup(0); }
