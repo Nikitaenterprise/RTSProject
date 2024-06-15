@@ -12,3 +12,9 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
+
+.vsconfig
+/Plugins/*
+.idea/*
+
+enc_temp_folder/*

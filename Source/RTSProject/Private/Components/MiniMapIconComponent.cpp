@@ -18,17 +18,17 @@ void UMiniMapIconComponent::InitializeComponent()
 		UE_LOG(LogTemp, Error, TEXT("TestController is nullptr in UMiniMapIconComponent::InitializeComponent()"));
 		return;
 	}
-	if (!TestController->FogOfWar)
+	if (!TestController->GetFogOfWar())
 	{
 		UE_LOG(LogTemp, Error, TEXT("TestController->FogOfWar is nullptr in UMiniMapIconComponent::InitializeComponent()"));
 		return;
 	}
-	if (!TestController->FogOfWar->FOWBoundsVolume)
+	if (!TestController->GetFogOfWar()->FOWBoundsVolume)
 	{
 		UE_LOG(LogTemp, Error, TEXT("TestController->FogOfWar->FOWBoundsVolume in UMiniMapIconComponent::InitializeComponent() is nullptr"));
 		return;
 	}
-	FOWBoundsVolume = TestController->FogOfWar->FOWBoundsVolume;
+	FOWBoundsVolume = TestController->GetFogOfWar()->FOWBoundsVolume;
 }
 
 void UMiniMapIconComponent::BeginPlay()

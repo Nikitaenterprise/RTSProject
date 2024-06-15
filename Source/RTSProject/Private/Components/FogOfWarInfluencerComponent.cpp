@@ -21,12 +21,12 @@ void UFogOfWarInfluencerComponent::InitializeComponent()
 		UE_LOG(LogTemp, Error, TEXT("TestController is nullptr in UFogOfWarInfluencerComponent::InitializeComponent()"));
 		return;
 	}
-	if (!IsValid(TestController->FogOfWar))
+	if (!IsValid(TestController->GetFogOfWar()))
 	{
 		UE_LOG(LogTemp, Error, TEXT("TestController->FogOfWar is nullptr in UFogOfWarInfluencerComponent::InitializeComponent()"));
 		return;
 	}
-	FOW = TestController->FogOfWar;
+	FOW = TestController->GetFogOfWar();
 }
 
 void UFogOfWarInfluencerComponent::BeginPlay()

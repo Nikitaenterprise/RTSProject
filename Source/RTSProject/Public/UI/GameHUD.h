@@ -1,14 +1,13 @@
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "EngineUtils.h"
-#include "Actors/Ship.h"
+#include "Actors/Units/Ship.h"
 #include "GameFramework/HUD.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 #include "GameHUD.generated.h"
 
+class UMouseCursorWidget;
 class USelectionRectangleWidget;
 class ARTSPlayerController;
 class UMiniMapWidget;
@@ -17,38 +16,46 @@ UCLASS()
 class RTSPROJECT_API AGameHUD : public AHUD
 {
 	GENERATED_BODY()
-
+	
 public:
+	UFUNCTION(BlueprintCallable)
+	void SetMinimapWidget(UMiniMapWidget* InMinimapWidget) { MiniMapWidget = InMinimapWidget; }
+	UMiniMapWidget* GetMiniMapWidget() const { return MiniMapWidget; }
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	ARTSPlayerController* PlayerController = nullptr;
+	UFUNCTION(BlueprintCallable)
+	void SetSelectionRectangleWidget(USelectionRectangleWidget* InSelectionRectangleWidget) { SelectionRectangleWidget = InSelectionRectangleWidget; }
+	USelectionRectangleWidget* GetSelectionRectangleWidget() const { return SelectionRectangleWidget; }
 
-	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
-	TSubclassOf<UMiniMapWidget> MiniMapWidgetClass;
+	UFUNCTION(BlueprintCallable)
+	UMouseCursorWidget* GetMouseCursorWidget() const { return MouseCursorWidget; }
 
-	// This pointer is set in blueprint
-	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	UMiniMapWidget* MiniMapWidget = nullptr;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
-	TSubclassOf<USelectionRectangleWidget> SelectionRectangleWidgetClass;
-
-	// This pointer is set in blueprint
-	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	USelectionRectangleWidget* SelectionRectangleWidget = nullptr;
-
-public:
-
+protected:
 	virtual void BeginPlay() override;
-	virtual void DrawHUD() override;
-	virtual void Tick(float DeltaTime) override;
-
-	void LockSelectionRectangle() const;
-	void UnlockSelectionRectangle() const;
 
 	template<class T>
 	bool SetupWidget(T*& WidgetReference, TSubclassOf<T>& WidgetTemplate);
+	
+	UPROPERTY(BlueprintReadOnly)
+	ARTSPlayerController* PlayerController {nullptr};
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UMiniMapWidget> MiniMapWidgetClass;
 
+	UPROPERTY(BlueprintReadOnly)
+	UMiniMapWidget* MiniMapWidget {nullptr};
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<USelectionRectangleWidget> SelectionRectangleWidgetClass;
+	
+	UPROPERTY(BlueprintReadOnly)
+	USelectionRectangleWidget* SelectionRectangleWidget {nullptr};
+
+	UPROPERTY(BlueprintReadOnly, Category = "Widgets")
+	UMouseCursorWidget* MouseCursorWidget {nullptr};
+
+public:
+	void LockSelectionRectangle() const;
+	void UnlockSelectionRectangle() const;
 };
 
 template<class T>

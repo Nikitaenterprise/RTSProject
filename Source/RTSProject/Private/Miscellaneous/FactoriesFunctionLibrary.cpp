@@ -1,38 +1,42 @@
 #include "Miscellaneous/FactoriesFunctionLibrary.h"
 
-#include "Actors/AsteroidField.h"
-#include "Actors/Building.h"
+#include "Actors/Buildings/Building.h"
 #include "Core/RTSPlayerController.h"
-#include "Actors/Ship.h"
-#include "Actors/Turret.h"
+#include "Actors/Units/Ship.h"
+#include "Actors/Units/Turret.h"
 #include "Core/FactoryAssets.h"
 
-#include "Chaos/AABB.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/GameplayStatics.h"
 #include "Components/StaticMeshComponent.h"
 #include "DrawDebugHelpers.h"
-#include "Actors/Rocket.h"
+#include "Actors/Projectile.h"
+#include "Actors/Units/Fighter.h"
+#include "Actors/Units/Squad.h"
+#include "Core/RTSGameMode.h"
+#include "Systems/RTSPlayerState.h"
+#include "Systems/UnitMovement/BoidsMovementSystem.h"
 
 
-AShip* UFactoriesFunctionLibrary::NewShip(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location, const FRotator& Rotation)
+AShip* UFactoriesFunctionLibrary::NewShip(const UObject* WorldContext, UClass* ClassType, AController* PlayerController, const FVector& Location, const FRotator& Rotation)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
-	if (World) return NewShip(World, ClassType, Controller, Location, Rotation);
-	else
+	if (!World)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn ship, GetWorldFromContextObject() returns nullptr"));
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn ship, GetWorldFromContextObject() returns nullptr"));
 		return nullptr;
 	}
+	return NewShip(World, ClassType, PlayerController, Location, Rotation);
 }
 
 
-AShip* UFactoriesFunctionLibrary::NewShip(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location, const FRotator& Rotation)
+AShip* UFactoriesFunctionLibrary::NewShip(UWorld* World, UClass* ClassType, AController* PlayerController, const FVector& Location, const FRotator& Rotation)
 {
-	if (!Controller)
+	if (!PlayerController)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn ship, ARTSPlayerController is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("Failed to spawn ship, ARTSPlayerController is nullptr"));
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn ship, AController is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn ship, AController is nullptr"));
 		return nullptr;
 	}
 
@@ -44,9 +48,9 @@ AShip* UFactoriesFunctionLibrary::NewShip(UWorld* World, UClass* ClassType, ARTS
 	}
 
 	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-	Params.Owner = Controller;
-	//Some shit happens here. Before calling SpawnActor the Controller is ARTSPlayerController type. After calling SpawnActor
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	Params.Owner = PlayerController;
+	//Some shit happens here. Before calling SpawnActor the Controller is AController type. After calling SpawnActor
 	// the Controller becomes RTSAIController
 	// APawn::PossessedBy changes the ownership when setting up AIController
 	AShip* SpawnedShip = World->SpawnActor<AShip>(ClassType, FVector(Location.X, Location.Y, 150), Rotation, Params);
@@ -56,30 +60,141 @@ AShip* UFactoriesFunctionLibrary::NewShip(UWorld* World, UClass* ClassType, ARTS
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn ship"));
 		return nullptr;
 	}
-	Controller->PlayersActors.AddUnique(SpawnedShip);
-	SpawnedShip->bJustCreated = true;
+	
+	if (auto* PlayerState = PlayerController->GetPlayerState<ARTSPlayerState>())
+	{
+		PlayerState->AddToPlayersUnits(SpawnedShip);
+		SpawnedShip->SetGenericTeamId(PlayerState->GetGenericTeamId());
+	}
 
 	return SpawnedShip;
 }
 
-
-void UFactoriesFunctionLibrary::AddTurretsToShip(AShip* Ship)
+AFighter* UFactoriesFunctionLibrary::NewFighter(const UObject* WorldContext, UClass* ClassType, AController* PlayerController, ASquad* Squadron, const FVector& Location, const FRotator& Rotation)
 {
-	if (!IsValid(Ship) || Ship->bHasWorkingTurrets)
+	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
+	if (!World)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn fighter, GetWorldFromContextObject() returns nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn fighter, GetWorldFromContextObject() returns nullptr"));
+		return nullptr;
+	}
+	return NewFighter(World, ClassType, PlayerController, Squadron, Location, Rotation);
+}
+
+AFighter* UFactoriesFunctionLibrary::NewFighter(UWorld* World, UClass* ClassType, AController* PlayerController, ASquad* Squadron, const FVector& Location, const FRotator& Rotation)
+{
+	if (!PlayerController)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn fighter, AController is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn fighter, AController is nullptr"));
+		return nullptr;
+	}
+
+	if (!ClassType)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn fighter, UClass is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn fighter, UClass is nullptr"));
+		return nullptr;
+	}
+
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	Params.Owner = PlayerController;
+	AFighter* SpawnedFighter = World->SpawnActor<AFighter>(ClassType, FVector(Location.X, Location.Y, 150), Rotation, Params);
+	if (!IsValid(SpawnedFighter))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn fighter"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn fighter"));
+		return nullptr;
+	}
+
+	if (auto* PlayerState = PlayerController->GetPlayerState<ARTSPlayerState>())
+	{
+		PlayerState->AddToPlayersUnits(SpawnedFighter);
+	}
+	
+	if (IsValid(Squadron))
+	{
+		Squadron->AddToSquad(SpawnedFighter);
+	}
+
+	return SpawnedFighter;
+}
+
+ASquad* UFactoriesFunctionLibrary::NewFighterSquadron(const UObject* WorldContext, UClass* ClassType, AController* PlayerController, const FVector& Location, const FRotator& Rotation)
+{
+	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
+	if (!World)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn fighter squadron, GetWorldFromContextObject() returns nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn fighter squadron, GetWorldFromContextObject() returns nullptr"));
+		return nullptr;
+	}
+	return NewFighterSquadron(World, ClassType, PlayerController, Location, Rotation);
+}
+
+ASquad* UFactoriesFunctionLibrary::NewFighterSquadron(UWorld* World, UClass* ClassType, AController* PlayerController, const FVector& Location, const FRotator& Rotation)
+{
+	if (!PlayerController)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn fighter, AController is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn fighter squadron, AController is nullptr"));
+		return nullptr;
+	}
+
+	if (!ClassType)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn fighter, UClass is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn fighter squadron, UClass is nullptr"));
+		return nullptr;
+	}
+
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	Params.Owner = PlayerController;
+	ASquad* SpawnedSquadron = World->SpawnActor<ASquad>(ClassType, FVector(Location.X, Location.Y, 150), Rotation, Params);
+	if (!IsValid(SpawnedSquadron))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn fighter"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn fighter"));
+		return nullptr;
+	}
+	
+	if (auto* PlayerState = PlayerController->GetPlayerState<ARTSPlayerState>())
+	{
+		PlayerState->AddToPlayersUnits(SpawnedSquadron);
+	}
+
+	return SpawnedSquadron;
+}
+
+
+void UFactoriesFunctionLibrary::AddTurretsToShip(UWorld* World, AShip* Ship)
+{
+	if (!IsValid(Ship) || Ship->GetHasWorkingTurrets())
 	{
 		UE_LOG(LogTemp, Error, TEXT("Ship is not valid in UFactoriesFunctionLibrary::AddTurretsToShip()"));
 		return;
 	}
-	if(!IsValid(Ship->PlayerController))
+	if(!IsValid(Ship->GetPlayerController()))
 	{
 		UE_LOG(LogTemp, Error, TEXT("Ship->PlayerController is not valid in UFactoriesFunctionLibrary::AddTurretsToShip()"));
 		return;
 	}
+
+	auto* GameMode = Cast<ARTSGameMode>(UGameplayStatics::GetGameMode(World));
+	if (GameMode == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("UFactoriesFunctionLibrary::AddTurretsToShip ARTSGameMode is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("UFactoriesFunctionLibrary::AddTurretsToShip ARTSGameMode is nullptr"));
+		return;
+	}
 	
-	const TSubclassOf<ATurret> TurretClass = Ship->PlayerController->GetFactoryAssets()->GetTurretClass(0);
+	const TSubclassOf<ATurret> TurretClass = GameMode->GetFactoryAssets()->GetTurretClass(0);
 	if (TurretClass)
 	{
-		UStaticMeshComponent* StaticMesh = Ship->StaticMesh;
+		UStaticMeshComponent* StaticMesh = Ship->GetStaticMeshComponent();
 
 		for (auto& Socket : StaticMesh->GetAllSocketNames())
 		{
@@ -130,30 +245,30 @@ void UFactoriesFunctionLibrary::AddTurretsToShip(AShip* Ship)
 				true);
 			SpawnedTurret->AttachToComponent(StaticMesh, AttachmentRules, Socket);
 		}
-		Ship->bHasWorkingTurrets = true;
+		Ship->SetHasWorkingTurrets(true);
 	}
 }
 
 
-ABuilding* UFactoriesFunctionLibrary::NewBuilding(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location, const FRotator& Rotation)
+ABuilding* UFactoriesFunctionLibrary::NewBuilding(const UObject* WorldContext, UClass* ClassType, AController* PlayerController, const FVector& Location, const FRotator& Rotation)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
-	if (World) return NewBuilding(World, ClassType, Controller, Location, Rotation);
-	else
+	if (!World)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn building, GetWorldFromContextObject() returns nullptr"));
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn building, GetWorldFromContextObject() returns nullptr"));
 		return nullptr;
 	}
+	return NewBuilding(World, ClassType, PlayerController, Location, Rotation);
 }
 
 
-ABuilding* UFactoriesFunctionLibrary::NewBuilding(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location, const FRotator& Rotation)
+ABuilding* UFactoriesFunctionLibrary::NewBuilding(UWorld* World, UClass* ClassType, AController* PlayerController, const FVector& Location, const FRotator& Rotation)
 {
-	if (!Controller)
+	if (!PlayerController)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn building, ARTSPlayerController is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("Failed to spawn building, ARTSPlayerController is nullptr"));
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn building, AController is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn building, AController is nullptr"));
 		return nullptr;
 	}
 
@@ -165,8 +280,8 @@ ABuilding* UFactoriesFunctionLibrary::NewBuilding(UWorld* World, UClass* ClassTy
 	}
 
 	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-	Params.Owner = Controller;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	Params.Owner = PlayerController;
 
 	ABuilding* SpawnedBuilding = World->SpawnActor<ABuilding>(
 		ClassType,
@@ -179,86 +294,40 @@ ABuilding* UFactoriesFunctionLibrary::NewBuilding(UWorld* World, UClass* ClassTy
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn ship"));
 		return nullptr;
 	}
-	
-	SpawnedBuilding->bJustCreated = true;
-	Controller->PlayersActors.AddUnique(SpawnedBuilding);
 
+	if (auto* PlayerState = PlayerController->GetPlayerState<ARTSPlayerState>())
+	{
+		PlayerState->AddToPlayersUnits(SpawnedBuilding);
+		SpawnedBuilding->SetGenericTeamId(PlayerState->GetGenericTeamId());
+	}
+	
 	return SpawnedBuilding;
 }
 
-AAsteroidField* UFactoriesFunctionLibrary::NewAsteroidField(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location, const FRotator& Rotation)
+AProjectile* UFactoriesFunctionLibrary::NewRocket(const UObject* WorldContext, UClass* ClassType, AController* Controller, ATurret* Turret, const FVector& Location, const FRotator& Rotation)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
-	if (World) return NewAsteroidField(World, ClassType, Controller, Location, Rotation);
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn asteroid field, GetWorldFromContextObject() returns nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("Failed to spawn asteroid field, GetWorldFromContextObject() returns nullptr"));
-		return nullptr;
-	}
-}
-
-AAsteroidField* UFactoriesFunctionLibrary::NewAsteroidField(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, const FVector& Location, const FRotator& Rotation)
-{
-	if (!Controller)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn building, ARTSPlayerController is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("Failed to spawn asteroid field, ARTSPlayerController is nullptr"));
-		return nullptr;
-	}
-
-	if (!ClassType)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn ship, UClass is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("Failed to spawn asteroid field, UClass is nullptr"));
-		return nullptr;
-	}
-
-	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-	Params.Instigator = nullptr;
-	Params.Owner = Controller;
-
-	AAsteroidField* SpawnedAsteroidField = World->SpawnActor<AAsteroidField>(
-		ClassType,
-		Location, 
-		Rotation,
-		Params);
-	if (!SpawnedAsteroidField)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn asteroid field"));
-		UE_LOG(LogTemp, Error, TEXT("Failed to spawn asteroid field"));
-		return nullptr;
-	}
-	
-	SpawnedAsteroidField->AddRandomNumberOfAsteroidsToField();
-	return SpawnedAsteroidField;
-}
-
-ARocket* UFactoriesFunctionLibrary::NewRocket(const UObject* WorldContext, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location, const FRotator& Rotation)
-{
-	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
-	if (World) return NewRocket(World, ClassType, Controller, Turret, Location, Rotation);
-	else
+	if (!World)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn rocket, GetWorldFromContextObject() returns nullptr"));
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn rocket, GetWorldFromContextObject() returns nullptr"));
 		return nullptr;
 	}
+	return NewRocket(World, ClassType, Controller, Turret, Location, Rotation);
 }
 
-ARocket* UFactoriesFunctionLibrary::NewRocket(UWorld* World, UClass* ClassType, ARTSPlayerController* Controller, ATurret* Turret, const FVector& Location, const FRotator& Rotation)
+AProjectile* UFactoriesFunctionLibrary::NewRocket(UWorld* World, UClass* ClassType, AController* Controller, ATurret* Turret, const FVector& Location, const FRotator& Rotation)
 {
 	if (!Controller)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn building, ARTSPlayerController is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("Failed to spawn rocket, ARTSPlayerController is nullptr"));
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn rocket, AController is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to spawn rocket, AController is nullptr"));
 		return nullptr;
 	}
 
 	if (!ClassType)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn ship, UClass is nullptr"));
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn rocket, UClass is nullptr"));
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn rocket, UClass is nullptr"));
 		return nullptr;
 	}
@@ -268,7 +337,7 @@ ARocket* UFactoriesFunctionLibrary::NewRocket(UWorld* World, UClass* ClassType, 
 	Params.Instigator = nullptr;
 	Params.Owner = Turret;
 
-	ARocket* SpawnedRocket = World->SpawnActor<ARocket>(
+	AProjectile* SpawnedRocket = World->SpawnActor<AProjectile>(
 		ClassType,
 		Location,
 		Rotation,

@@ -1,7 +1,8 @@
 #include "UI/SelectionRectangleWidget.h"
 
-#include "Actors/Building.h"
+#include "Actors/Buildings/Building.h"
 #include "Core/RTSPlayerController.h"
+#include "Systems/RTSPlayerState.h"
 #include "UI/GameHUD.h"
 
 void USelectionRectangleWidget::NativeConstruct()
@@ -178,7 +179,7 @@ void USelectionRectangleWidget::StartRectangleSelection(const FGeometry& MovieSc
 	if (!bIsLeftShiftPressed)
 	{
 		SelectedActors.Empty();
-		PlayerController->SelectedActors.Empty();
+		PlayerController->GetSelectedActorsRef().Empty();
 	}
 	ShouldBeSelected.Empty();
 
@@ -197,6 +198,7 @@ void USelectionRectangleWidget::EndRectangleSelection(const FGeometry& MovieScen
 	// Adding new actors (ShouldBeSelected) to selection pool (SelectedActors)
 	if (ShouldBeSelected.Num() == 0)
 	{
+		OnUnitsDeselected.ExecuteIfBound();
 		return;
 	}
 	bool bOnlyBuildings = false, bOnlyShips = false;
@@ -205,7 +207,7 @@ void USelectionRectangleWidget::EndRectangleSelection(const FGeometry& MovieScen
 	// e.d. buildings or ships are already in SelectedActors
 	if (SelectedActors.Num() != 0)
 	{
-		if (PlayerController->IsArrayContainThisTypeActors<AShip>(SelectedActors))
+		if (PlayerController->IsArrayContainThisTypeActors<AShip>(SelectedActors) || PlayerController->IsArrayContainThisTypeActors<ASquad>(SelectedActors))
 		{
 			bOnlyShips = true;
 		}
@@ -216,7 +218,7 @@ void USelectionRectangleWidget::EndRectangleSelection(const FGeometry& MovieScen
 	}
 	for (const auto& Actor : ShouldBeSelected)
 	{
-		if (PlayerController->PlayersActors.Contains(Actor))
+		if (PlayerController->GetPlayerState<ARTSPlayerState>()->GetPlayersUnits().Contains(Actor))
 		{
 			// If SelectedActors has no actors then add first
 			if (SelectedActors.Num() == 0)
@@ -233,7 +235,7 @@ void USelectionRectangleWidget::EndRectangleSelection(const FGeometry& MovieScen
 			}
 			// If SelectedActors has at least one ship then add
 			// ship but not building
-			else if (!bOnlyBuildings && Cast<AShip>(Actor))
+			else if (!bOnlyBuildings && (Cast<AShip>(Actor) || Cast<ASquad>(Actor)))
 			{
 				SelectedActors.AddUnique(Actor);
 				bOnlyShips = true;
@@ -244,17 +246,18 @@ void USelectionRectangleWidget::EndRectangleSelection(const FGeometry& MovieScen
 	// because actors was highlighted while rectangle was drawn
 	for (auto& Actor : ShouldBeSelected)
 	{
-		IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
+		auto Interface = Cast<ISelectable>(Actor);
 		if (Interface) Interface->Execute_Highlighted(Actor, false);
 	}
 	// Set actors Execute_Selected to true
 	for (auto& Actor : SelectedActors)
 	{
-		IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
+		auto Interface = Cast<ISelectable>(Actor);
 		if (Interface) Interface->Execute_Selected(Actor, true);
 	}
 
 	UpdatePlayerControllerSelectedActors();
+	OnSelectionEnded.ExecuteIfBound(SelectedActors);
 }
 
 void USelectionRectangleWidget::ClearSelection()
@@ -268,12 +271,14 @@ void USelectionRectangleWidget::ClearSelection()
 
 	// All actors should be deselected unless shift is pressed
 	// in this case SelectedActors won't be deselected
-	for (auto& Actor : PlayerController->PlayersActors)
+	for (auto& Actor : PlayerController->GetPlayerState<ARTSPlayerState>()->GetPlayersUnits())
 	{
 		if (!SelectedActors.Contains(Actor))
 		{
-			IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
-			if (Interface) Interface->Execute_Selected(Actor, false);
+			if (const auto* Interface = Cast<ISelectable>(Actor))
+			{
+				Interface->Execute_Selected(Actor, false);
+			}
 		}
 	}
 }
@@ -290,10 +295,12 @@ void USelectionRectangleWidget::UpdateSelection()
 	}
 
 	// Select actors which came from selection rectangle
-	for (auto& Actor : ShouldBeSelected)
+	for (const auto& Actor : ShouldBeSelected)
 	{
-		IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
-		if (Interface) Interface->Execute_Highlighted(Actor, true);
+		if (const auto* Interface = Cast<ISelectable>(Actor))
+		{
+			Interface->Execute_Highlighted(Actor, true);
+		}
 	}
 }
 
@@ -311,13 +318,19 @@ void USelectionRectangleWidget::SelectActorUnderCursor()
 	if (bHit)
 	{
 		AActor* Actor = Hit.GetActor();
-		if (PlayerController->PlayersActors.Contains(Actor))
+		if (PlayerController->GetPlayerState<ARTSPlayerState>()->GetPlayersUnits().Contains(Actor))
 		{
 			ShouldBeSelected.AddUnique(Actor);
 			SelectedActors.AddUnique(Actor);
-			IBaseBehavior* Interface = Cast<IBaseBehavior>(Actor);
-			if (Interface) Interface->Execute_Highlighted(Actor, true);
+			if (const auto* Interface = Cast<ISelectable>(Actor))
+			{
+				Interface->Execute_Highlighted(Actor, true);
+			}
 			UpdatePlayerControllerSelectedActors();
+		}
+		else
+		{
+			OnUnitsDeselected.ExecuteIfBound();
 		}
 	}
 }
@@ -332,7 +345,7 @@ void USelectionRectangleWidget::HighlightActorsUnderCursor()
 	}
 
 	// Dehighlight unit
-	IBaseBehavior* Interface = Cast<IBaseBehavior>(HighlightedActor);
+	auto Interface = Cast<ISelectable>(HighlightedActor);
 	if (Interface) Interface->Execute_Highlighted(HighlightedActor, false);
 
 	if (!PlayerController)
@@ -348,7 +361,7 @@ void USelectionRectangleWidget::HighlightActorsUnderCursor()
 	{
 		HighlightedActor = Hit.GetActor();
 		// Highlight unit
-		Interface = Cast<IBaseBehavior>(HighlightedActor);
+		Interface = Cast<ISelectable>(HighlightedActor);
 		if (Interface) Interface->Execute_Highlighted(HighlightedActor, true);
 	}
 }
@@ -388,5 +401,6 @@ void USelectionRectangleWidget::UpdatePlayerControllerSelectedActors()
 		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("PlayerController is nullptr in USelectionRectangleWidget::HighlightActorsUnderCursor"));
 		return;
 	}
-	PlayerController->SelectedActors = SelectedActors;
+	PlayerController->GetSelectedActorsRef() = SelectedActors;
+	OnUnitsSelected.ExecuteIfBound(SelectedActors);
 }

@@ -1,7 +1,10 @@
 #include "UI/GameHUD.h"
 
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Core/RTSPlayerController.h"
+#include "Engine/UserInterfaceSettings.h"
 #include "UI/MiniMapWidget.h"
+#include "UI/MouseCursorWidget.h"
 #include "UI/SelectionRectangleWidget.h"
 
 void AGameHUD::BeginPlay()
@@ -17,23 +20,17 @@ void AGameHUD::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("TestPlayerController is nullptr in AGameHUD::BeginPlay()"));
 	}
-	//if (SetupWidget<UMiniMapHUD>(MiniMapHUD, MiniMapHUDClass))
-	//{
-	//	MiniMapHUD->Initialize(PlayerController);
-	//	//MiniMapHUD->AddToViewport();
-	//}
-	//else UE_LOG(LogTemp, Error, TEXT("Couldn't add UMiniMapHUD to viewport"));
-}
 
-void AGameHUD::DrawHUD()
-{
-	Super::DrawHUD();
-	//DrawSelectionRectAndSelectActors();
-}
-
-void AGameHUD::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
+	if (auto* UserInterfaceSettings = GetDefault<UUserInterfaceSettings>())
+	{
+		//check(Cast<UMouseCursorWidget>(UserInterfaceSettings->SoftwareCursors[EMouseCursor::Default].ResolveClass()));
+		TArray<UUserWidget*> FoundWidgets;
+		UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetGameInstance(), FoundWidgets, UMouseCursorWidget::StaticClass(), false);
+		if (FoundWidgets.Num() != 0)
+		{
+			MouseCursorWidget = Cast<UMouseCursorWidget>(FoundWidgets[0]);
+		}
+	}
 }
 
 void AGameHUD::LockSelectionRectangle() const
@@ -51,49 +48,3 @@ void AGameHUD::UnlockSelectionRectangle() const
 		SelectionRectangleWidget->bIsSelectionShouldBeBlocked = false;
 	}
 }
-
-//TArray<AActor*>& AGameHUD::GetSelectedActors() 
-//{
-//	return SelectedActors;
-//}
-//
-//void AGameHUD::OnInputStart() 
-//{
-//	PlayerController->GetMousePosition(StartClick.X, StartClick.Y);
-//	HoldingLocation = StartClick;
-//	SelectedActors.Empty();
-//	bIsDrawingSelectionRectangle = true;
-//}
-//
-//void AGameHUD::OnInputHold() 
-//{
-//	PlayerController->GetMousePosition(HoldingLocation.X, HoldingLocation.Y);
-//}
-//
-//void AGameHUD::OnInputRelease() 
-//{
-//	bIsDrawingSelectionRectangle = false;
-//}
-//
-//void AGameHUD::DrawMarquee()
-//{
-//	DrawLine(StartClick.X, StartClick.Y, HoldingLocation.X, StartClick.Y, FColor::Green, 1);
-//	DrawLine(HoldingLocation.X, StartClick.Y, HoldingLocation.X, HoldingLocation.Y, FColor::Green, 1);
-//	DrawLine(HoldingLocation.X, HoldingLocation.Y, StartClick.X, HoldingLocation.Y, FColor::Green, 1);
-//	DrawLine(StartClick.X, HoldingLocation.Y, StartClick.X, StartClick.Y, FColor::Green, 1);
-//	
-//	const FVector2D RectSize = HoldingLocation - StartClick;
-//	const FLinearColor Color(0, 1, 0, 0.2);
-//	DrawRect(Color, StartClick.X, StartClick.Y, RectSize.X, RectSize.Y);
-//
-//	GetActorsInSelectionRectangle<AActor>(StartClick, HoldingLocation, SelectedActors, false);
-//}
-//
-//void AGameHUD::DrawSelectionRectAndSelectActors()
-//{
-//	if (bIsDrawingSelectionRectangle) {
-//		DrawMarquee();
-//		PlayerController->ShouldBeSelected = SelectedActors;
-//		SelectedActors.Empty();
-//	}
-//}

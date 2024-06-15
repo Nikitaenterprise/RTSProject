@@ -1,13 +1,12 @@
 #pragma once
-
-#include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "RTSPlayerController.generated.h"
 
 class ABuilding;
 class AShip;
+class ASquad;
 class UInputController;
-class ACamera;
+class UPlayerInputDataAsset;
 class AGameHUD;
 class UShipHUD;
 class UBuildingHUD;
@@ -21,79 +20,27 @@ class RTSPROJECT_API ARTSPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
-public:
-
-	// Key press
-	bool bShiftPressed = false;
-
-	// Mouse clicks
-	bool bLMBPressed = false;
-	bool bRMBPressed = false;
-
-	// Mouse wheel
-	bool bDisableZooming = false;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Camera")
-	ACamera* CameraRef = nullptr;
-
-	// True if FogOfWar was placed on level in editor
-	// Checked in GameMode class
-	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
-	bool bIsFOWPlacedOnLevel = false;
-	// True if FogOfWarBoundsVolume was placed on level in editor
-	// Checked in GameMode class
-	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
-	// Pointer to FogOfWar class
-	bool bIsFOWBoundsVolumePlacedOnLevel = false;
-	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
-	AFogOfWar* FogOfWar = nullptr;
-
-	// Units selection
-	//Array of actors that should appear in SelectedActors array
-	UPROPERTY(BlueprintReadOnly, Category = "Selection")
-	TArray<AActor*> ShouldBeSelected;
-	// Array of currently selected actors for this controller
-	UPROPERTY(BlueprintReadOnly, Category = "Selection")
-	TArray<AActor*> SelectedActors;
-	// Array of all created and owned by this controller actors
-	UPROPERTY(BlueprintReadOnly, Category = "Selection")
-	TArray<AActor*> PlayersActors;
-	// Currently highlighted actor
-	UPROPERTY(BlueprintReadOnly, Category = "Selection")
-	AActor* HighlightedActor = nullptr;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Factory")
-	UFactoryAssets* FactoryAssets = nullptr;
-
-	UPROPERTY(BlueprintReadOnly, Category = "HUD")
-	AGameHUD* GameHUD = nullptr;
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLeftMouseButtonClicked, ETriggerEvent, Type);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRightMouseButtonClicked, ETriggerEvent, Type);
 
 public:
-
-	ARTSPlayerController();
-	virtual void PreInitializeComponents() override;
 	virtual void BeginPlay() override;
-	virtual void Tick(float mainDeltaTime) override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void SetupInputComponent() override;
 
-	virtual void SetupInputComponent() override; //(class UInputComponent* PlayerInputComponent)
+	void AddToSelectedActors(AActor* ActorToAdd) { SelectedActors.AddUnique(ActorToAdd); }
+	void RemoveFromSelectedActors(AActor* ActorToRemove) { SelectedActors.Remove(ActorToRemove); }
+	const TArray<AActor*>& GetSelectedActors() const { return SelectedActors; }
+	TArray<AActor*>& GetSelectedActorsRef() { return SelectedActors; }
 	
-	void TestThis();
-
-	void ShiftPressed();
-	void ShiftReleased();
-
+	AGameHUD* GetGameHUD() const { return GameHUD; }
+	AFogOfWar* GetFogOfWar() const { return FogOfWar; }
+	
 	// Mouse clicks
 	void LMBPressed();
-	void LMBReleased();
-	void RMBPressed();
 	void RMBReleased();
 
 	void DamagePressed();
 	
-	// Units selection
-	void UpdateSelection();
-	void HighlightActorsUnderCursor();
 	template <class ActorType>
 	bool IsArrayContainThisTypeActors(const TArray<AActor*>& Array);
 
@@ -102,21 +49,58 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TArray<ABuilding*> GetSelectedBuildings(); 
 	UFUNCTION(BlueprintCallable)
-	TArray<AShip*> GetSelectedShips(); 
+	TArray<AShip*> GetSelectedShips();
 
-	bool MoveSelectedActors(AShip* Ship, FHitResult HitResult);
-	bool AttackBySelectedActors(AShip* Ship, FHitResult HitResult);
-	bool SetSpawnPointForSelectedBuildings(ABuilding* Building,FHitResult HitResult);
-	template <typename ActorType>
-	bool ExecuteCommandToSelectedActors(bool(ARTSPlayerController::* FnCommand)(ActorType* Actor, FHitResult HitResult));
-
-	
 	// FactoryAssets	
 	UFUNCTION(BlueprintCallable, Category = "Getters")
-	UFactoryAssets* GetFactoryAssets() const { return FactoryAssets; }
-	UFUNCTION(BlueprintCallable, Category = "Getters")
 	AFogOfWar* GetFOWManager() const { return FogOfWar; }
+
+	UPROPERTY(BlueprintAssignable)
+	FOnLeftMouseButtonClicked OnLeftMouseButtonClicked;
+	UPROPERTY(BlueprintAssignable)
+	FOnRightMouseButtonClicked OnRightMouseButtonClicked;
 	
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UPlayerInputDataAsset* PlayerInputDataAsset { nullptr };
+
+	/** Saves the current selection to the specified control group. */
+	UFUNCTION(BlueprintCallable)
+	void SaveControlGroup(int32 Index);
+
+	UFUNCTION(BlueprintCallable) void SaveControlGroup0();
+	UFUNCTION(BlueprintCallable) void SaveControlGroup1();
+	UFUNCTION(BlueprintCallable) void SaveControlGroup2();
+
+	/** Restores the selection saved in the specified control group. */
+	UFUNCTION(BlueprintCallable)
+	void LoadControlGroup(int32 Index);
+
+	UFUNCTION(BlueprintCallable) void LoadControlGroup0();
+	UFUNCTION(BlueprintCallable) void LoadControlGroup1();
+	UFUNCTION(BlueprintCallable) void LoadControlGroup2();
+
+	/** Saved selections of this player. */
+	TArray<TArray<AActor*>> ControlGroups;
+	
+	// True if FogOfWar was placed on level in editor
+	// Checked in GameMode class
+	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
+	bool bIsFOWPlacedOnLevel {false};
+	// True if FogOfWarBoundsVolume was placed on level in editor
+	// Checked in GameMode class
+	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
+	bool bIsFOWBoundsVolumePlacedOnLevel {false};
+	UPROPERTY(BlueprintReadOnly, Category = "FogOfWar")
+	AFogOfWar* FogOfWar {nullptr};
+
+	// Units selection
+	// Array of currently selected actors for this controller
+	UPROPERTY(BlueprintReadOnly, Category = "Selection")
+	TArray<AActor*> SelectedActors;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "HUD")
+	AGameHUD* GameHUD {nullptr};
 };
 
 template <class ActorType>
@@ -141,25 +125,4 @@ TArray<ActorType*> ARTSPlayerController::GetSelectedActorsByType()
 		if (TestActor) Actors.AddUnique(TestActor);
 	}
 	return Actors;
-}
-
-template <typename ActorType>
-bool ARTSPlayerController::ExecuteCommandToSelectedActors(bool(ARTSPlayerController::* FnCommand)(ActorType* Actor, FHitResult HitResult))
-{
-	if (SelectedActors.Num() == 0) return false;
-	for (auto& Actor : SelectedActors)
-	{
-		ActorType* ThisActor = Cast<ActorType>(Actor);
-		if (ThisActor)
-		{
-			FHitResult Hit;
-			const bool bHit = GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
-			if (bHit)
-			{
-				// Calling std::invoke to avoid this monstrosity: (this->*FnCommand)(Actor1, HitResult1);
-				bool bSuccess = std::invoke(FnCommand, this, ThisActor, Hit);
-			}
-		}
-	}
-	return true;
 }

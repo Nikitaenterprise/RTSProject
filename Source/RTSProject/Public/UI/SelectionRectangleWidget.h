@@ -1,16 +1,15 @@
 #pragma once
 
-#include "CoreMinimal.h"
-
-#include "Actors/Ship.h"
+#include "Actors/Units/Ship.h"
+#include "Actors/Units/Squad.h"
 #include "Blueprint/UserWidget.h"
 #include "EngineUtils.h"
 #include "Core/RTSPlayerController.h"
 #include "GameFramework/HUD.h"
 
 #include "DrawDebugHelpers.h"
-#include "Actors/Building.h"
-#include "Actors/Camera.h"
+#include "Actors/Buildings/Building.h"
+#include "Actors/RTSPlayer.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 
 #include "SelectionRectangleWidget.generated.h"
@@ -25,11 +24,19 @@ class RTSPROJECT_API USelectionRectangleWidget : public UUserWidget
 
 	friend class AGameHUD;
 
+	DECLARE_DELEGATE_OneParam(FOnUnitsSelected, const TArray<AActor*>&)
+	DECLARE_DELEGATE_OneParam(FOnSelectionEnded, const TArray<AActor*>&)
+	DECLARE_DELEGATE(FOnUnitsDeselected)
+
 public:
 
 	UPROPERTY(BlueprintReadOnly)
 	ARTSPlayerController* PlayerController = nullptr;
 
+	FOnUnitsSelected OnUnitsSelected;
+	FOnSelectionEnded OnSelectionEnded;
+	FOnUnitsDeselected OnUnitsDeselected;
+	
 private:
 
 	FVector2D StartClick;
@@ -48,7 +55,9 @@ private:
 
 	//FTimerHandle TimerHandle;
 	float StartClickTime = 0;
-	float HoldTime = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+	float HoldTime = 0.25;
 	
 
 public:
@@ -165,7 +174,7 @@ bool USelectionRectangleWidget::GetActorsInSelectionRectangle(const FVector2D& F
 		// If selected actor is a ship then select not by ROotComp
 		// but by static mesh collision box
 		AShip* Ship = Cast<AShip>(EachActor);
-		if (Ship) EachActorBounds = Ship->StaticMesh->Bounds.GetBox();
+		if (Ship) EachActorBounds = Ship->GetStaticMeshComponent()->Bounds.GetBox();
 
 		//Center
 		const FVector BoxCenter = EachActorBounds.GetCenter();
