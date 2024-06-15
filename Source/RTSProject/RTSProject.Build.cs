@@ -30,8 +30,6 @@ public class RTSProject : ModuleRules
 			"GameplayAbilities",
 			"GameplayTags",
 			"GameplayTasks",
-			"ModelingComponents",
-			"DynamicMesh",
 			"Slate",
 			"SlateCore",
             "EnhancedInput",

@@ -5,11 +5,14 @@
 
 #include "AI/RTSAIController.h"
 
-void UAbstractOrder::Initialize(const TArray<AActor*>& InSelectedActors,
+void UAbstractOrder::Initialize(
+	const TArray<AActor*>& InSelectedActors,
+	AActor* InOrderCarrier,
 	const FVector& InOrderLocation,
 	const FHitResult& InHitResult)
 {
 	SelectedActors = InSelectedActors;
+	OrderCarrier = InOrderCarrier;
 	OrderLocation = InOrderLocation;
 	HitResultUnderCursor = InHitResult;
 }
@@ -55,5 +58,3 @@ bool UAbstractOrder::Undo()
 void UAbstractOrder::ProcessOrder(ARTSAIController* InRTSAIController, UBlackboardComponent* InBlackboard)
 {
 }
-
-

@@ -12,7 +12,6 @@ class UShipHUD;
 class UBuildingHUD;
 class UBasicButtonsHUD;
 class UFactoryAssets;
-class UOrdersProcessor;
 class AFogOfWar;
 
 
@@ -50,13 +49,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TArray<ABuilding*> GetSelectedBuildings(); 
 	UFUNCTION(BlueprintCallable)
-	TArray<AShip*> GetSelectedShips(); 
-
-	bool AttackBySelectedActors(AShip* Ship, FHitResult HitResult);
-	bool SetSpawnPointForSelectedBuildings(ABuilding* Building,FHitResult HitResult);
-	bool MoveSquadron(ASquad* Squadron, FHitResult HitResult);
-	template <typename ActorType>
-	bool ExecuteCommandToSelectedActors(TFunction<bool(ActorType* Actor, FHitResult HitResult)> Function);
+	TArray<AShip*> GetSelectedShips();
 
 	// FactoryAssets	
 	UFUNCTION(BlueprintCallable, Category = "Getters")
@@ -105,9 +98,6 @@ protected:
 	// Array of currently selected actors for this controller
 	UPROPERTY(BlueprintReadOnly, Category = "Selection")
 	TArray<AActor*> SelectedActors;
-
-	UPROPERTY(Transient)
-	UOrdersProcessor* OrdersProcessor {nullptr};
 	
 	UPROPERTY(BlueprintReadOnly, Category = "HUD")
 	AGameHUD* GameHUD {nullptr};
@@ -135,27 +125,4 @@ TArray<ActorType*> ARTSPlayerController::GetSelectedActorsByType()
 		if (TestActor) Actors.AddUnique(TestActor);
 	}
 	return Actors;
-}
-
-template <typename ActorType>
-bool ARTSPlayerController::ExecuteCommandToSelectedActors(TFunction<bool(ActorType* Actor, FHitResult HitResult)> Function)
-{
-	if (SelectedActors.Num() == 0)
-	{
-		return false;
-	}
-	for (auto& Actor : SelectedActors)
-	{
-		ActorType* ThisActor = Cast<ActorType>(Actor);
-		if (ThisActor)
-		{
-			FHitResult Hit;
-			const bool bHit = GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, Hit);
-			if (bHit)
-			{
-				bool bSuccess = Function(ThisActor, Hit);
-			}
-		}
-	}
-	return true;
 }

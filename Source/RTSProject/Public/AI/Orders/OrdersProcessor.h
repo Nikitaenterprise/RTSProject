@@ -4,6 +4,8 @@
 
 #include "OrdersProcessor.generated.h"
 
+class UOrdersAcceptorComponent;
+
 UENUM(BlueprintType)
 enum class EOrderType : uint8
 {
@@ -13,7 +15,9 @@ enum class EOrderType : uint8
 	MoveAndAttackOrder,
 	StopOrder,
 	HoldPositionOrder,
-	GatherResource
+	GatherResource,
+	SetSpawnPoint,
+	ActivateAbility
 };
 
 class UAbstractOrder;
@@ -27,9 +31,10 @@ class RTSPROJECT_API UOrdersProcessor : public UObject
 public:
 	void Initialize(ARTSPlayerController* InRTSPlayerController);
 
-	bool ProcessOrder(EOrderType OrderType, const FVector& OrderLocation, const FHitResult& HitResult);
+	bool ProcessOrder(const TArray<EOrderType>& PossibleOrders, const UOrdersAcceptorComponent* InOrderAcceptorComponent, const FVector& OrderLocation, const FHitResult& HitResult);
 	bool Undo();
 	bool Redo();
+
 protected:
 	UPROPERTY()
 	ARTSPlayerController* RTSPlayerController = nullptr;

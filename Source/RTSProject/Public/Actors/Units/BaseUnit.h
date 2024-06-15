@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "GenericTeamAgentInterface.h"
+#include "AI/Orders/OrdersAcceptorInterface.h"
 #include "GameFramework/Pawn.h"
 #include "Interfaces/Selectable.h"
 #include "BaseUnit.generated.h"
@@ -14,10 +15,11 @@ class USceneComponent;
 class UUnitIndicatorComponent;
 
 UCLASS()
-class RTSPROJECT_API ABaseUnit
-	: public APawn,
-	  public ISelectable,
-	  public IGenericTeamAgentInterface
+class RTSPROJECT_API ABaseUnit :
+	public APawn,
+	public ISelectable,
+	public IOrdersAcceptorInterface,
+	public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -38,6 +40,10 @@ public:
 	virtual void Highlighted_Implementation(bool bInIsHighlighted) override;
 	// End ISelectable override
 
+	// Begin IOrdersAcceptorInterface
+	virtual UOrdersAcceptorComponent* GetOrdersAcceptorComponent() const override { return OrdersAcceptorComponent; }
+	// End IOrdersAcceptorInterface
+
 	// Begin IGenericTeamAgentInterface override
 	virtual void SetGenericTeamId(const FGenericTeamId& InTeamID) override { TeamId = InTeamID; }
 	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
@@ -45,7 +51,7 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base")
-	USceneComponent* SceneComponent = nullptr;
+	USceneComponent* SceneComponent {nullptr};
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "BaseUnit")
 	UUnitIndicatorComponent* UnitIndicatorComponent {nullptr};
@@ -58,6 +64,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "BaseUnit")
 	ARTSPlayer* RTSPlayer {nullptr};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "BaseUnit")
+	UOrdersAcceptorComponent* OrdersAcceptorComponent {nullptr};
 
 	UPROPERTY(BlueprintReadWrite, Category = "BaseUnit")
 	bool bIsSelected = false;

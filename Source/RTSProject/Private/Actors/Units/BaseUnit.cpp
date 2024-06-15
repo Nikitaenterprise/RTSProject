@@ -1,6 +1,7 @@
 ﻿#include "Actors/Units/BaseUnit.h"
 
 #include "Actors/RTSPlayer.h"
+#include "AI/Orders/OrdersAcceptorComponent.h"
 #include "Components/UnitIndicatorComponent.h"
 #include "Core/RTSPlayerController.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,6 +19,8 @@ ABaseUnit::ABaseUnit(const FObjectInitializer& ObjectInitializer)
 
 	UnitIndicatorComponent = CreateDefaultSubobject<UUnitIndicatorComponent>(TEXT("UnitIndicatorComponent"));
 	UnitIndicatorComponent->SetupAttachment(GetRootComponent());
+
+	OrdersAcceptorComponent = CreateDefaultSubobject<UOrdersAcceptorComponent>(TEXT("OrdersAcceptorComponent"));
 }
 
 void ABaseUnit::PreInitializeComponents()
