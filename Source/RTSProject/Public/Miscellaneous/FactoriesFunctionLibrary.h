@@ -23,10 +23,6 @@ public:
 	static AShip* NewShip(UWorld* World, UClass* ClassType, AController* PlayerController, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContext"))
-	static AFighter* NewFighter(const UObject* WorldContext, UClass* ClassType, AController* PlayerController, ASquad* Squadron, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
-	static AFighter* NewFighter(UWorld* World, UClass* ClassType, AController* PlayerController, ASquad* Squadron, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
-
-	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContext"))
 	static ASquad* NewFighterSquadron(const UObject* WorldContext, UClass* ClassType, AController* PlayerController, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
 	static ASquad* NewFighterSquadron(UWorld* World, UClass* ClassType, AController* PlayerController, const FVector& Location = FVector(0, 0, 0), const FRotator& Rotation = FRotator(0, 0, 0));
 

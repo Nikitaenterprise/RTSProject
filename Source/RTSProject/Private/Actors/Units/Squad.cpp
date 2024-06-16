@@ -17,24 +17,21 @@ void ASquad::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Squadron.Reserve(InitialSquadronSize);
 	TArray<FVector> Positions;
 	GeneratePositions(Positions);
 
+	HISMComponent->SetStaticMesh(StaticMeshToUseInHISM);
+
 	for (int32 Index = 0; Index < InitialSquadronSize; Index++)
 	{
-		/*FActorSpawnParameters Params;
-		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		AActor* NewFighter = GetWorld()->SpawnActor<AFighter>(FighterClass, Positions[Index], FRotator::ZeroRotator, Params);*/
 		FTransform Transform;
 		Transform.SetLocation(Positions[Index]);
-		HISMComponent->AddInstance(Transform);
-		Squadron.Add(NewFighter);
+		Transform.SetScale3D(FVector(HISMScaleFactor));
+		HISMComponent->AddInstance(Transform, bUsingWorldTransformForHISM);
 	}
-	SquadLeader = Squadron[0];
 
-	BoidSystem = NewObject<UBoidsMovementSystem>(this);
-	BoidSystem->InitializeMovementSystem(this, MovementComponent);
+	BoidsSystem = NewObject<UBoidsMovementSystem>(this);
+	BoidsSystem->InitializeMovementSystem(this, MovementComponent);
 
 	FTimerHandle Temp;
 	GetWorld()->GetTimerManager().SetTimer(Temp, [this]()
@@ -72,118 +69,79 @@ void ASquad::GeneratePositions(TArray<FVector>& OutPositions)
 	}
 }
 
-FVector ASquad::CalculateCohesion(AActor* Fighter)
+bool ASquad::CalculateBoidsParameters(int32 InstanceIndex, const FVector& InstanceLocation, FVector& Cohesion, FVector& Alignment, FVector& Separation)
 {
-	FVector CenterOfMass(0.f);
-    int32 NeighborCount = 0;
+	Cohesion = FVector::ZeroVector;
+	Alignment = FVector::ZeroVector;
+	Separation = FVector::ZeroVector;
 
-    for (AActor* Other : Squadron)
-    {
-        if (Other != Fighter && FVector::Dist(Fighter->GetActorLocation(), Other->GetActorLocation()) < NeighborRadius)
+	int32 NeighborCount = 0;
+	// Cohesion parameter
+	FVector CenterOfMass = FVector::ZeroVector;
+	// Alignment parameter
+	FVector AverageVelocity = FVector::ZeroVector;
+	// Separation parameter
+	FVector SeparationForce = FVector::ZeroVector;
+
+	for (int32 Index = 0; Index < HISMComponent->GetNumInstances(); Index++)
+	{
+		if (InstanceIndex == Index)
+		{
+			continue;
+		}
+
+		FTransform Transform;
+		HISMComponent->GetInstanceTransform(Index, Transform, bUsingWorldTransformForHISM);
+		const FVector& Location = Transform.GetLocation();
+		
+        if (FVector::Dist(InstanceLocation, Location) < NeighborRadius)
         {
-            CenterOfMass += Other->GetActorLocation();
-            NeighborCount++;
+	        NeighborCount++;
+	        CenterOfMass += Location;
+	        AverageVelocity += Location;
+			SeparationForce += (InstanceLocation - Location).GetSafeNormal();
         }
     }
 
-    if (NeighborCount == 0) return FVector(0.f);
+    if (NeighborCount == 0) return false;
 
     CenterOfMass /= NeighborCount;
-    return (CenterOfMass - Fighter->GetActorLocation()).GetSafeNormal() * CohesionWeight;
-}
+	AverageVelocity /= NeighborCount;
 
-FVector ASquad::CalculateAlignment(AActor* Fighter)
-{
-	FVector AverageVelocity(0.f);
-    int32 NeighborCount = 0;
-
-    for (AActor* Other : Squadron)
-    {
-        if (Other != Fighter && FVector::Dist(Fighter->GetActorLocation(), Other->GetActorLocation()) < NeighborRadius)
-        {
-            AverageVelocity += Other->GetVelocity();
-            NeighborCount++;
-        }
-    }
-
-    if (NeighborCount == 0) return FVector(0.f);
-
-    AverageVelocity /= NeighborCount;
-    return AverageVelocity.GetSafeNormal() * AlignmentWeight;
-
-}
-
-FVector ASquad::CalculateSeparation(AActor* Fighter)
-{
-	FVector SeparationForce(0.f);
-
-    for (AActor* Other : Squadron)
-    {
-        if (Other != Fighter && FVector::Dist(Fighter->GetActorLocation(), Other->GetActorLocation()) < NeighborRadius)
-        {
-            SeparationForce += (Fighter->GetActorLocation() - Other->GetActorLocation()).GetSafeNormal();
-        }
-    }
-
-    return SeparationForce.GetSafeNormal() * SeparationWeight;
+	Cohesion = (CenterOfMass - InstanceLocation).GetSafeNormal() * CohesionWeight;
+	Alignment = AverageVelocity.GetSafeNormal() * AlignmentWeight;
+	Separation = SeparationForce.GetSafeNormal() * SeparationWeight;
+	return true;
 }
 
 void ASquad::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (Squadron.Num() == 0)
+	for (int32 Index = 0; Index < HISMComponent->GetNumInstances(); Index++)
 	{
-		return;
-	}
+		FTransform Transform;
+		HISMComponent->GetInstanceTransform(Index, Transform, bUsingWorldTransformForHISM);
+		const FVector& Location = Transform.GetLocation();
 
-	for (AActor* Fighter : Squadron)
-    {
-        FVector Cohesion = CalculateCohesion(Fighter);
-        FVector Alignment = CalculateAlignment(Fighter);
-        FVector Separation = CalculateSeparation(Fighter);
+		FVector Cohesion = FVector::ZeroVector;
+        FVector Alignment = FVector::ZeroVector;
+		FVector Separation = FVector::ZeroVector;
 
-        FVector MoveDirection = Cohesion + Alignment + Separation;
+		CalculateBoidsParameters(Index, Location, Cohesion, Alignment, Separation);
 
-        // Направление к новой локации
-        FVector ToNewLocation = (NewLocation - Fighter->GetActorLocation()).GetSafeNormal() * MaxSpeed;
+        const FVector& MoveDirection = Cohesion + Alignment + Separation;
 
-        // Итоговое направление
+        const FVector& ToNewLocation = (NewLocation - Location).GetSafeNormal() * MaxSpeed;
+
+        // Final direction with speed clamping
         FVector FinalDirection = MoveDirection + ToNewLocation;
-
-        // Ограничение скорости
         FinalDirection = FinalDirection.GetClampedToMaxSize(MaxSpeed);
 
-        // Обновление позиции
-        FVector NewPosition = Fighter->GetActorLocation() + FinalDirection * DeltaTime;
-        Fighter->SetActorLocation(NewPosition);
-    }
-}
-
-void ASquad::AddToSquad(AActor* InActor)
-{
-	if (IsValid(InActor) == false)
-	{
-		return;
-	}
-	
-	if (const ISquadable* Squadable = Cast<ISquadable>(InActor))
-	{
-		Squadron.Add(InActor);
-		auto* ActorMovementComponent = Squadable->GetMovementComponent();
-	}
-}
-
-void ASquad::RemoveFromSquad(AActor* InActor)
-{
-	Squadron.Remove(InActor);
-}
-
-void ASquad::SetSquadLeader(AActor* InSquadLeader)
-{
-	if (InSquadLeader && Squadron.Contains(InSquadLeader))
-	{
-		SquadLeader = InSquadLeader;
+        const FVector& NewPosition = Location + FinalDirection * DeltaTime;
+		FTransform NewTransform = Transform;
+		NewTransform.SetLocation(NewPosition);
+		HISMComponent->UpdateInstanceTransform(Index, NewTransform, bUsingWorldTransformForHISM);
 	}
 }
 

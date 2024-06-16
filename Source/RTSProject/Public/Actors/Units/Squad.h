@@ -4,6 +4,7 @@
 
 #include "Squad.generated.h"
 
+class UHierarchicalInstancedStaticMeshComponent;
 class USimpleMovementComponent;
 class UBoidsMovementSystem;
 class AFighter;
@@ -16,31 +17,56 @@ class RTSPROJECT_API ASquad : public ABaseUnitWithAbility
 public:
 	ASquad(const FObjectInitializer& OI);
 	virtual void Tick(float DeltaTime) override;
-	void AddToSquad(AActor* InActor);
-	void RemoveFromSquad(AActor* InActor);
-	void SetSquadLeader(AActor* InSquadLeader);
-	const TArray<AActor*>& GetSquad() const { return Squadron; }
 
 	void MoveTo(const FVector& Location);
 
 protected:
 	virtual void BeginPlay() override;
+	void GeneratePositions(TArray<FVector>& OutPositions);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Squadron")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Squadron")
 	USimpleMovementComponent* MovementComponent = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Squadron")
-	UBoidsMovementSystem* BoidSystem = nullptr;
-	
-	UPROPERTY(BlueprintReadWrite, Category = "Squadron")
-	TArray<AActor*> Squadron;
+	UBoidsMovementSystem* BoidsSystem = nullptr;
 
-	UPROPERTY(BlueprintReadWrite, Category = "Squadron")
-	AActor* SquadLeader = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Squadron")
+	UHierarchicalInstancedStaticMeshComponent* HISMComponent = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "Squadron")
-	TSubclassOf<AFighter> FighterClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Squadron")
+	UStaticMesh* StaticMeshToUseInHISM = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "Squadron")
+	UPROPERTY(EditDefaultsOnly, Category = "Squadron")
 	int32 InitialSquadronSize = 10;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Squadron")
+	float HISMScaleFactor = 1;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Squadron")
+	float Spacing = 20.f;
+
+	bool bUsingWorldTransformForHISM = true;
+
+	// BEGIN EXPERIMENTAL
+protected:
+	UPROPERTY(EditAnywhere, Category = "Boids")
+	float CohesionWeight;
+
+	UPROPERTY(EditAnywhere, Category = "Boids")
+	float AlignmentWeight;
+
+	UPROPERTY(EditAnywhere, Category = "Boids")
+	float SeparationWeight;
+
+	UPROPERTY(EditAnywhere, Category = "Boids")
+	float MaxSpeed;
+
+	UPROPERTY(EditAnywhere, Category = "Boids")
+	float NeighborRadius;
+
+	FVector NewLocation;
+
+	bool CalculateBoidsParameters(int32 InstanceIndex, const FVector& InstanceLocation, FVector& Cohesion, FVector& Alignment, FVector& Separation);
+	// END EXPERIMENTAL
+
 };

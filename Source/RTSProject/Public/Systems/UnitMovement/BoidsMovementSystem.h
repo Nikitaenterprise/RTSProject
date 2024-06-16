@@ -7,15 +7,6 @@
 
 class ASquad;
 
-USTRUCT()
-struct FBoidSquadron
-{
-	GENERATED_BODY()
-	
-	UPROPERTY()
-	TArray<AActor*> BoidSquadron;
-};
-
 UCLASS()
 class RTSPROJECT_API UBoidsMovementSystem : public UObject, public IUnitMovementSystem
 {
@@ -39,15 +30,6 @@ public:
 	
 protected:
 	virtual void MakePath() override;
-	// Keeps boids from getting too close to one another
-	void Separation(const ASquad* Squadron);
-	// Calculates the average velocity of boids in the field of vision and
-	// manipulates the velocity of the current boid in order to match it
-	void Alignment(const ASquad* Squadron);
-	// Finds the average location of nearby boids and manipulates the
-	// steering force to move in that direction.
-	void Cohesion(const ASquad* Squadron);
-	void Apply();
 
 	UPROPERTY()
 	UWorld* World {nullptr};
@@ -57,9 +39,6 @@ protected:
 
 	UPROPERTY()
 	UPawnMovementComponent* MovementComponent {nullptr};
-	
-	UPROPERTY()
-	TMap<ASquad*, FBoidSquadron> UnitsRegister;
 
 	FVector LocationForTick = FVector::ZeroVector;
 	FRotator RotationForTick = FRotator::ZeroRotator;

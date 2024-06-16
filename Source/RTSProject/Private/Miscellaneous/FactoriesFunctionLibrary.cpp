@@ -70,58 +70,6 @@ AShip* UFactoriesFunctionLibrary::NewShip(UWorld* World, UClass* ClassType, ACon
 	return SpawnedShip;
 }
 
-AFighter* UFactoriesFunctionLibrary::NewFighter(const UObject* WorldContext, UClass* ClassType, AController* PlayerController, ASquad* Squadron, const FVector& Location, const FRotator& Rotation)
-{
-	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
-	if (!World)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn fighter, GetWorldFromContextObject() returns nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("Failed to spawn fighter, GetWorldFromContextObject() returns nullptr"));
-		return nullptr;
-	}
-	return NewFighter(World, ClassType, PlayerController, Squadron, Location, Rotation);
-}
-
-AFighter* UFactoriesFunctionLibrary::NewFighter(UWorld* World, UClass* ClassType, AController* PlayerController, ASquad* Squadron, const FVector& Location, const FRotator& Rotation)
-{
-	if (!PlayerController)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn fighter, AController is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("Failed to spawn fighter, AController is nullptr"));
-		return nullptr;
-	}
-
-	if (!ClassType)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn fighter, UClass is nullptr"));
-		UE_LOG(LogTemp, Error, TEXT("Failed to spawn fighter, UClass is nullptr"));
-		return nullptr;
-	}
-
-	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	Params.Owner = PlayerController;
-	AFighter* SpawnedFighter = World->SpawnActor<AFighter>(ClassType, FVector(Location.X, Location.Y, 150), Rotation, Params);
-	if (!IsValid(SpawnedFighter))
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, TEXT("Failed to spawn fighter"));
-		UE_LOG(LogTemp, Error, TEXT("Failed to spawn fighter"));
-		return nullptr;
-	}
-
-	if (auto* PlayerState = PlayerController->GetPlayerState<ARTSPlayerState>())
-	{
-		PlayerState->AddToPlayersUnits(SpawnedFighter);
-	}
-	
-	if (IsValid(Squadron))
-	{
-		Squadron->AddToSquad(SpawnedFighter);
-	}
-
-	return SpawnedFighter;
-}
-
 ASquad* UFactoriesFunctionLibrary::NewFighterSquadron(const UObject* WorldContext, UClass* ClassType, AController* PlayerController, const FVector& Location, const FRotator& Rotation)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
