@@ -25,8 +25,7 @@ public:
 	FGameplayTag EntitlementID;
 
 #if WITH_EDITOR
-	EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
-	void PreSave(const class ITargetPlatform* TargetPlatform) override;
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 	void ValidateUIData(TArray<FString>& ValidationErrors) const;
 #endif
 };

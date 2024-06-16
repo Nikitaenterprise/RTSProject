@@ -5,7 +5,7 @@
 
 void UMouseCursorWidget::SetCursorToDefault() const
 {
-	CursorImage->Brush = DefaultCursor;
+	CursorImage->SetBrush(DefaultCursor);
 }
 
 void UMouseCursorWidget::SetCursorFromAbility(UEntitlementUIData* UIData) const
@@ -15,7 +15,7 @@ void UMouseCursorWidget::SetCursorFromAbility(UEntitlementUIData* UIData) const
 		return;
 	}
 
-	CursorImage->Brush = UIData->Icon;
+	CursorImage->SetBrush(UIData->Icon);
 }
 
 void UMouseCursorWidget::NativeConstruct()

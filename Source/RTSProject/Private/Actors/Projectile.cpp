@@ -34,7 +34,7 @@ void AProjectile::BeginPlay()
 	}
 	OwnerTurret = TestOwner;
 
-	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(ProjectileAttributeSet);
+	AbilitySystemComponent->AddSpawnedAttribute(ProjectileAttributeSet);
 	
 	FTimerDelegate TimerDelegate;
 	TimerDelegate.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()

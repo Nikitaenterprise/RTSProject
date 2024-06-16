@@ -25,13 +25,13 @@ void UHealthShieldWidget::BindAttributes()
 	const auto ShieldAttribute = HealthShieldAttributeSet->GetCurrentShieldAttribute();
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(ShieldAttribute).AddUObject(this, &ThisClass::UpdateShieldValue);
 
-	HealthProgressBar->Percent = HealthShieldAttributeSet->GetCurrentHealth() / HealthShieldAttributeSet->GetMaxHealth();
-	ShieldProgressBar->Percent = HealthShieldAttributeSet->GetCurrentShield() / HealthShieldAttributeSet->GetMaxShield();
+	HealthProgressBar->SetPercent(HealthShieldAttributeSet->GetCurrentHealth() / HealthShieldAttributeSet->GetMaxHealth());
+	ShieldProgressBar->SetPercent(HealthShieldAttributeSet->GetCurrentShield() / HealthShieldAttributeSet->GetMaxShield());
 }
 
 void UHealthShieldWidget::UpdateHealthValue(const FOnAttributeChangeData& Data)
 {
-	HealthProgressBar->Percent = Data.NewValue / MaxHealth;
+	HealthProgressBar->SetPercent(Data.NewValue / MaxHealth);
 }
 
 void UHealthShieldWidget::UpdateMaxHealthValue(const FOnAttributeChangeData& Data)
@@ -41,7 +41,7 @@ void UHealthShieldWidget::UpdateMaxHealthValue(const FOnAttributeChangeData& Dat
 
 void UHealthShieldWidget::UpdateShieldValue(const FOnAttributeChangeData& Data)
 {
-	ShieldProgressBar->Percent = Data.NewValue / MaxShield;
+	ShieldProgressBar->SetPercent(Data.NewValue / MaxShield);
 }
 
 void UHealthShieldWidget::UpdateMaxShieldValue(const FOnAttributeChangeData& Data)

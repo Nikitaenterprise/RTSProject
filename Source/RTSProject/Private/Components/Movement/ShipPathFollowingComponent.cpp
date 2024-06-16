@@ -182,7 +182,7 @@ void UShipPathFollowingComponent::DrawDebugSpline(const bool bDraw)
 {
 	if (Path && bDraw && SplinePath)
 	{
-		Path->DebugDraw(MyNavData, FColor::White, nullptr, false);
+		Path->DebugDraw(MyNavData, FColor::White, nullptr, false, 10, 0);
 		// Draw the start point of the current path segment we are traveling.
 		FNavPathPoint CurrentPathPoint{};
 		FNavigationPath::GetPathPoint(&Path->AsShared().Get(), GetCurrentPathIndex(), CurrentPathPoint);

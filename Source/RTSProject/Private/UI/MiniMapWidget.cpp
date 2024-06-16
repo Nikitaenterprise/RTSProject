@@ -48,7 +48,7 @@ void UMiniMapWidget::NativeConstruct()
 		return;
 	}
 
-	Clipping = EWidgetClipping::ClipToBounds;
+	SetClipping(EWidgetClipping::ClipToBounds);
 }
 
 void UMiniMapWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)

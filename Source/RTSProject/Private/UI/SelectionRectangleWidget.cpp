@@ -20,9 +20,8 @@ void USelectionRectangleWidget::NativeConstruct()
 	}
 
 	// For NativeOnKeyDown event to work properly the flag IsFocusable should be true in Widget->Designer->Interaction
-	bIsFocusable = true;
-
-	Visibility = ESlateVisibility::Visible;
+	SetIsFocusable(true);
+	SetVisibility(ESlateVisibility::Visible);
 }
 
 void USelectionRectangleWidget::NativeTick(const FGeometry& MovieSceneBlends, float InDeltaTime)

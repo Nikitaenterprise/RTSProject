@@ -52,8 +52,8 @@ void ATurret::BeginPlay()
 	}
 	PlayerController = OwnerShip->GetPlayerController();
 
-	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(HealthShieldAttributeSet);
-	AbilitySystemComponent->GetSpawnedAttributes_Mutable().AddUnique(TurretAttributeSet);
+	AbilitySystemComponent->AddSpawnedAttribute(HealthShieldAttributeSet);
+	AbilitySystemComponent->AddSpawnedAttribute(TurretAttributeSet);
 	TurretFireAbilityHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(TurretFireAbility, 1, INDEX_NONE, this));
 	HealthShieldAttributeSet->OnHealthZeroed.BindLambda([This = TWeakObjectPtr<ThisClass>(this)]()
 	{

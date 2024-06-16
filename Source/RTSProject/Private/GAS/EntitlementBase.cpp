@@ -2,17 +2,18 @@
 
 #include "GameplayTagContainer.h"
 #include "GAS/EntitlementUIData.h"
+#include "Misc/DataValidation.h"
 
 #if WITH_EDITOR
 // right now all code is just for validation so its all in a #if WITH_EDITOR
-EDataValidationResult UEntitlementBase::IsDataValid(TArray<FText>& ValidationErrors)
+EDataValidationResult UEntitlementBase::IsDataValid(FDataValidationContext& Context) const
 {
 	// Assets are validated on-save, and freshly created assets may not yet have sub-objects created. Make sure
 	// they are created by calling PostLoad() here.
-	PostLoad();
+	//PostLoad();
 
 	TArray<FString> Errors;
-	auto bOk = Super::IsDataValid(ValidationErrors) != EDataValidationResult::Invalid;
+	auto bOk = Super::IsDataValid(Context) != EDataValidationResult::Invalid;
 
 	// other checks: will add to Errors if there is a problem
 	ValidateUIData(Errors);
@@ -21,10 +22,10 @@ EDataValidationResult UEntitlementBase::IsDataValid(TArray<FText>& ValidationErr
 	{
 		bOk = false;
 		// name the object as its hard to find individual entitlements
-		ValidationErrors.Add(FText::FromString(FString::Printf(TEXT("UEntitlementBase %s failed validation"), *GetName())));
+		Context.AddError(FText::FromString(FString::Printf(TEXT("UEntitlementBase %s failed validation"), *GetName())));
 		for (const auto& Err : Errors)
 		{
-			ValidationErrors.Add(FText::FromString(Err));
+			Context.AddError(FText::FromString(Err));
 		}
 	}
 
@@ -40,7 +41,7 @@ void UEntitlementBase::ValidateUIData(TArray<FString>& ValidationErrors) const
 	else
 	{
 		// missing UIData might be just a warning or error, depending upon the type 
-		bool bIsWarning = true;
+		const bool bIsWarning = true;
 
 		if (bIsWarning)
 		{
@@ -51,11 +52,6 @@ void UEntitlementBase::ValidateUIData(TArray<FString>& ValidationErrors) const
 			ValidationErrors.Add(TEXT("No UIData"));
 		}
 	}
-}
-
-void UEntitlementBase::PreSave(const class ITargetPlatform* TargetPlatform)
-{
-	Super::PreSave(TargetPlatform);
 }
 
 #endif // WITH_EDITOR
